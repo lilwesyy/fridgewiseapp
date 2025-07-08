@@ -1,0 +1,132 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "retry": "Retry",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "yes": "Yes",
+    "no": "No",
+    "welcome": "Welcome, {{name}}!",
+    "startOver": "Start Over",
+    "or": "or"
+  },
+  "navigation": {
+    "home": "Home",
+    "camera": "Camera",
+    "recipes": "Recipes",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "signOut": "Sign Out",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "invalidCredentials": "Invalid credentials",
+    "passwordTooShort": "Password too short",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required"
+  },
+  "camera": {
+    "title": "Scan Ingredients",
+    "takePicture": "Take Picture",
+    "retakePicture": "Retake Picture",
+    "analyzeImage": "Analyze Image",
+    "analyzing": "Analyzing ingredients...",
+    "noIngredientsFound": "No ingredients found",
+    "scanFailed": "Scan failed",
+    "cameraPermissionDenied": "Camera permission denied",
+    "enableCamera": "Enable Camera",
+    "ingredients": "Ingredients",
+    "addIngredient": "Add Ingredient",
+    "removeIngredient": "Remove Ingredient",
+    "dragDropHere": "Drag and drop your image here",
+    "selectFile": "Select File"
+  },
+  "recipe": {
+    "title": "Recipe",
+    "generateRecipe": "Generate Recipe",
+    "generating": "Generating recipe...",
+    "ingredients": "Ingredients",
+    "instructions": "Instructions",
+    "cookingTime": "Cooking Time",
+    "servings": "Servings",
+    "difficulty": "Difficulty",
+    "saveRecipe": "Save Recipe",
+    "recipeSaved": "Recipe saved successfully",
+    "recipeGenerated": "Recipe generated successfully",
+    "generationFailed": "Recipe generation failed",
+    "noIngredientsProvided": "No ingredients provided",
+    "dietary": {
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "glutenFree": "Gluten Free",
+      "dairyFree": "Dairy Free",
+      "nutFree": "Nut Free"
+    },
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    }
+  },
+  "recipes": {
+    "title": "My Recipes",
+    "noRecipes": "No recipes found",
+    "searchRecipes": "Search recipes...",
+    "filterBy": "Filter by",
+    "sortBy": "Sort by",
+    "dateCreated": "Date Created",
+    "name": "Name",
+    "cookingTime": "Cooking Time",
+    "delete": "Delete Recipe",
+    "confirmDelete": "Are you sure you want to delete this recipe?",
+    "recipeDeleted": "Recipe deleted successfully"
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": "Personal Information",
+    "preferences": "Preferences",
+    "language": "Language",
+    "dietaryRestrictions": "Dietary Restrictions",
+    "notifications": "Notifications",
+    "about": "About",
+    "version": "Version",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "notifications": "Notifications",
+    "camera": "Camera",
+    "storage": "Storage",
+    "clearCache": "Clear Cache",
+    "cacheCleared": "Cache cleared successfully",
+    "exportData": "Export Data",
+    "importData": "Import Data"
+  },
+  "errors": {
+    "networkError": "Network error. Please check your connection.",
+    "serverError": "Server error. Please try again later.",
+    "unknownError": "An unknown error occurred.",
+    "fileUploadError": "File upload failed.",
+    "fileTooLarge": "File too large. Maximum size is 10MB.",
+    "invalidFileType": "Invalid file type. Please select an image.",
+    "cameraError": "Camera error occurred.",
+    "storageError": "Storage error occurred."
+  }
+}

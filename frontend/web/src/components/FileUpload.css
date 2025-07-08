@@ -1,0 +1,96 @@
+.file-upload-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.drop-zone {
+  border: 2px dashed #007AFF;
+  border-radius: 12px;
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.drop-zone:hover {
+  border-color: #0056b3;
+  background-color: #e9ecef;
+}
+
+.drop-zone-content p {
+  margin: 10px 0;
+  color: #6c757d;
+  font-size: 16px;
+}
+
+.upload-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #007AFF;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.upload-button:hover {
+  background-color: #0056b3;
+}
+
+.preview-container {
+  text-align: center;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.primary-button {
+  padding: 12px 24px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.primary-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.primary-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  padding: 12px 24px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.secondary-button:hover {
+  background-color: #5a6268;
+}

@@ -1,0 +1,132 @@
+{
+  "common": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "success": "Successo",
+    "retry": "Riprova",
+    "back": "Indietro",
+    "next": "Avanti",
+    "done": "Fatto",
+    "yes": "Sì",
+    "no": "No",
+    "welcome": "Benvenuto, {{name}}!",
+    "startOver": "Ricomincia",
+    "or": "oppure"
+  },
+  "navigation": {
+    "home": "Home",
+    "camera": "Camera",
+    "recipes": "Ricette",
+    "profile": "Profilo",
+    "settings": "Impostazioni"
+  },
+  "auth": {
+    "signIn": "Accedi",
+    "signUp": "Registrati",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Conferma Password",
+    "forgotPassword": "Password dimenticata?",
+    "signOut": "Esci",
+    "createAccount": "Crea Account",
+    "alreadyHaveAccount": "Hai già un account?",
+    "dontHaveAccount": "Non hai un account?",
+    "invalidCredentials": "Credenziali non valide",
+    "passwordTooShort": "Password troppo corta",
+    "emailRequired": "Email richiesta",
+    "passwordRequired": "Password richiesta"
+  },
+  "camera": {
+    "title": "Scansiona Ingredienti",
+    "takePicture": "Scatta Foto",
+    "retakePicture": "Scatta di Nuovo",
+    "analyzeImage": "Analizza Immagine",
+    "analyzing": "Analizzando ingredienti...",
+    "noIngredientsFound": "Nessun ingrediente trovato",
+    "scanFailed": "Scansione fallita",
+    "cameraPermissionDenied": "Permesso camera negato",
+    "enableCamera": "Abilita Camera",
+    "ingredients": "Ingredienti",
+    "addIngredient": "Aggiungi Ingrediente",
+    "removeIngredient": "Rimuovi Ingrediente",
+    "dragDropHere": "Trascina e rilascia la tua immagine qui",
+    "selectFile": "Seleziona File"
+  },
+  "recipe": {
+    "title": "Ricetta",
+    "generateRecipe": "Genera Ricetta",
+    "generating": "Generando ricetta...",
+    "ingredients": "Ingredienti",
+    "instructions": "Istruzioni",
+    "cookingTime": "Tempo di Cottura",
+    "servings": "Porzioni",
+    "difficulty": "Difficoltà",
+    "saveRecipe": "Salva Ricetta",
+    "recipeSaved": "Ricetta salvata con successo",
+    "recipeGenerated": "Ricetta generata con successo",
+    "generationFailed": "Generazione ricetta fallita",
+    "noIngredientsProvided": "Nessun ingrediente fornito",
+    "dietary": {
+      "vegetarian": "Vegetariano",
+      "vegan": "Vegano",
+      "glutenFree": "Senza Glutine",
+      "dairyFree": "Senza Lattosio",
+      "nutFree": "Senza Noci"
+    },
+    "difficulty": {
+      "easy": "Facile",
+      "medium": "Medio",
+      "hard": "Difficile"
+    }
+  },
+  "recipes": {
+    "title": "Le Mie Ricette",
+    "noRecipes": "Nessuna ricetta trovata",
+    "searchRecipes": "Cerca ricette...",
+    "filterBy": "Filtra per",
+    "sortBy": "Ordina per",
+    "dateCreated": "Data Creazione",
+    "name": "Nome",
+    "cookingTime": "Tempo di Cottura",
+    "delete": "Elimina Ricetta",
+    "confirmDelete": "Sei sicuro di voler eliminare questa ricetta?",
+    "recipeDeleted": "Ricetta eliminata con successo"
+  },
+  "profile": {
+    "title": "Profilo",
+    "personalInfo": "Informazioni Personali",
+    "preferences": "Preferenze",
+    "language": "Lingua",
+    "dietaryRestrictions": "Restrizioni Dietetiche",
+    "notifications": "Notifiche",
+    "about": "Informazioni",
+    "version": "Versione",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Termini di Servizio"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "language": "Lingua",
+    "notifications": "Notifiche",
+    "camera": "Camera",
+    "storage": "Archiviazione",
+    "clearCache": "Svuota Cache",
+    "cacheCleared": "Cache svuotata con successo",
+    "exportData": "Esporta Dati",
+    "importData": "Importa Dati"
+  },
+  "errors": {
+    "networkError": "Errore di rete. Controlla la connessione.",
+    "serverError": "Errore del server. Riprova più tardi.",
+    "unknownError": "Si è verificato un errore sconosciuto.",
+    "fileUploadError": "Caricamento file fallito.",
+    "fileTooLarge": "File troppo grande. Dimensione massima 10MB.",
+    "invalidFileType": "Tipo file non valido. Seleziona un'immagine.",
+    "cameraError": "Errore della camera.",
+    "storageError": "Errore di archiviazione."
+  }
+}
