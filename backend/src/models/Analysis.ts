@@ -14,6 +14,7 @@ export interface IAnalysis extends Document {
   processingTime: number;
   status: 'pending' | 'completed' | 'failed';
   errorMessage?: string;
+  cloudinaryPublicId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +69,10 @@ const analysisSchema = new Schema<IAnalysis>({
     default: 'pending'
   },
   errorMessage: {
+    type: String,
+    trim: true
+  },
+  cloudinaryPublicId: {
     type: String,
     trim: true
   }

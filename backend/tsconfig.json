@@ -31,8 +31,7 @@
     "emitDecoratorMetadata": true
   },
   "include": [
-    "src/**/*",
-    "../frontend/shared/types/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

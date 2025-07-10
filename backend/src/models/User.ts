@@ -21,7 +21,7 @@ const userSchema = new Schema<IUser>({
     trim: true,
     validate: {
       validator: function(v: string) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v);
       },
       message: 'Please enter a valid email address'
     }

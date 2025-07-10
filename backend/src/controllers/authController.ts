@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
-import { APIResponse } from '@/types';
+import { APIResponse } from '../types';
 
 const signToken = (id: string): string => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-  });
+  } as jwt.SignOptions);
 };
 
 const sendTokenResponse = (user: any, statusCode: number, res: Response): void => {
@@ -24,6 +24,8 @@ const sendTokenResponse = (user: any, statusCode: number, res: Response): void =
 export const register = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
   try {
     const { email, password, name, preferredLanguage } = req.body;
+    console.log('🚀 Registration request:', { email, password: '***', name, preferredLanguage });
+    console.log('📧 Email validation test:', /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email));
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });

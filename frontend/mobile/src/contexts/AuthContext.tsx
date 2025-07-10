@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
   useEffect(() => {
     loadStoredAuth();
@@ -92,6 +92,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (email: string, password: string, name?: string, preferredLanguage: 'en' | 'it' = 'en') => {
     try {
+      console.log('🚀 Registration attempt:', { API_URL, email });
+      console.log('📍 Full URL:', `${API_URL}/api/auth/register`);
+      
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
@@ -100,7 +103,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ email, password, name, preferredLanguage }),
       });
 
+      console.log('📡 Response status:', response.status);
       const data = await response.json();
+      console.log('📋 Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Registration failed');
@@ -115,7 +120,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(token);
       setUser(user);
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('🚨 Registration error details:', error);
+      console.error('🚨 Error type:', typeof error);
+      console.error('🚨 Error message:', error?.message);
+      console.error('🚨 Error cause:', error?.cause);
       throw error;
     }
   };

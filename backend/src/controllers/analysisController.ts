@@ -5,22 +5,11 @@ import fs from 'fs';
 import { AuthRequest } from '../middleware/auth';
 import { Analysis } from '../models/Analysis';
 import { RecognizeService } from '../services/recognizeService';
+import { cloudinaryService } from '../services/cloudinaryService';
 import { APIResponse } from '@/types';
 
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'image-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for memory storage (Cloudinary)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req: any, file: any, cb: any) => {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
@@ -41,43 +30,86 @@ export const upload = multer({
 
 export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
   try {
+    console.log('🔍 analyzeImage called');
+    console.log('📄 req.file:', req.file);
+    console.log('📦 req.body:', req.body);
+    console.log('📋 req.headers:', req.headers);
+    
     if (!req.file) {
+      console.log('❌ No file received');
       res.status(400).json({
         success: false,
         error: 'No image file provided'
       });
       return;
     }
+    
+    console.log('✅ File received:', req.file.originalname, req.file.size, 'bytes');
 
     const user = req.user!;
-    const imagePath = req.file.path;
-    const imageUrl = `/uploads/${req.file.filename}`;
-
-    // Create analysis record
-    const analysis = new Analysis({
-      imageUrl,
-      userId: user._id,
-      status: 'pending',
-      processingTime: 0,
-      ingredients: []
-    });
-
-    await analysis.save();
-
-    // Perform image analysis
+    
+    // Create temporary file for recognition service
+    const tempDir = path.join(__dirname, '../../temp');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    const tempFilePath = path.join(tempDir, `temp_${Date.now()}.jpg`);
+    fs.writeFileSync(tempFilePath, req.file.buffer);
+    
+    // Perform image analysis FIRST
+    console.log('🔍 Starting image recognition...');
     const startTime = Date.now();
     const recognizeService = new RecognizeService();
 
     try {
-      const ingredients = await recognizeService.analyzeImage(imagePath);
+      const ingredients = await recognizeService.analyzeImage(tempFilePath);
+      
+      // Clean up temporary file
+      fs.unlinkSync(tempFilePath);
       const processingTime = Date.now() - startTime;
 
-      // Update analysis with results
-      analysis.ingredients = ingredients;
-      analysis.status = 'completed';
-      analysis.processingTime = processingTime;
+      // Check if ingredients were found
+      if (!ingredients || ingredients.length === 0) {
+        console.log('⚠️ No ingredients found in image - not uploading to Cloudinary');
+        res.status(200).json({
+          success: true,
+          data: {
+            ingredients: [],
+            processingTime,
+            message: 'No ingredients found in image'
+          }
+        });
+        return;
+      }
+
+      // Only upload to Cloudinary if ingredients were found
+      console.log('☁️ Ingredients found - uploading to Cloudinary...');
+      const cloudinaryResult = await cloudinaryService.uploadBuffer(
+        req.file.buffer,
+        {
+          folder: 'fridgewiseai/analyses',
+          public_id: `analysis_${user._id}_${Date.now()}`,
+        }
+      );
+      
+      const imageUrl = cloudinaryResult.secure_url;
+      const cloudinaryPublicId = cloudinaryResult.public_id;
+      console.log('✅ Cloudinary upload successful:', imageUrl);
+
+      // Create analysis record only if ingredients were found
+      const analysis = new Analysis({
+        imageUrl,
+        userId: user._id,
+        status: 'completed',
+        processingTime,
+        ingredients,
+        cloudinaryPublicId
+      });
+
       await analysis.save();
 
+      console.log('✅ Image analysis completed successfully');
       res.status(200).json({
         success: true,
         data: {
@@ -88,14 +120,13 @@ export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<a
         }
       });
     } catch (error: any) {
-      console.error('Image analysis failed:', error);
+      console.error('❌ Image analysis failed:', error);
       
-      // Update analysis with error
-      analysis.status = 'failed';
-      analysis.errorMessage = error.message;
-      analysis.processingTime = Date.now() - startTime;
-      await analysis.save();
-
+      // Clean up temporary file if it exists
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+      
       res.status(500).json({
         success: false,
         error: 'Image analysis failed'
@@ -186,10 +217,13 @@ export const deleteAnalysis = async (req: AuthRequest, res: Response<APIResponse
       return;
     }
 
-    // Delete image file
-    const imagePath = path.join(__dirname, '../../uploads', path.basename(analysis.imageUrl));
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
+    // Delete image from Cloudinary
+    if (analysis.cloudinaryPublicId) {
+      try {
+        await cloudinaryService.deleteImage(analysis.cloudinaryPublicId);
+      } catch (error) {
+        console.error('Failed to delete image from Cloudinary:', error);
+      }
     }
 
     // Delete analysis record

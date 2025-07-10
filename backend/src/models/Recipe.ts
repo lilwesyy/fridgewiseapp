@@ -19,6 +19,7 @@ export interface IRecipe extends Document {
   userId: mongoose.Types.ObjectId;
   imageUrl?: string;
   originalIngredients: string[];
+  isSaved: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -125,6 +126,10 @@ const recipeSchema = new Schema<IRecipe>({
       },
       message: 'Recipe must have original ingredients list'
     }
+  },
+  isSaved: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
@@ -132,6 +137,7 @@ const recipeSchema = new Schema<IRecipe>({
 
 // Index for efficient querying
 recipeSchema.index({ userId: 1, createdAt: -1 });
+recipeSchema.index({ userId: 1, isSaved: 1 });
 recipeSchema.index({ dietaryTags: 1 });
 recipeSchema.index({ language: 1 });
 

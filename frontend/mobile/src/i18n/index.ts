@@ -2,8 +2,8 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import en from '../../../localization/en.json';
-import it from '../../../localization/it.json';
+import en from '../localization/en.json';
+import it from '../localization/it.json';
 
 const LANGUAGE_DETECTOR = {
   type: 'languageDetector' as const,

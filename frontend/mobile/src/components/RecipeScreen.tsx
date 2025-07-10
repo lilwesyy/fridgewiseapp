@@ -7,9 +7,16 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  PanResponder,
+  Dimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import Svg, { Path } from 'react-native-svg';
+import { LoadingAnimation } from './LoadingAnimation';
+import { ShareModal } from './ShareModal';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface Recipe {
   id: string;
@@ -32,18 +39,72 @@ interface RecipeScreenProps {
   recipe: Recipe;
   onGoBack: () => void;
   onStartOver: () => void;
+  onGoToSaved: () => void;
+  onGoToRecipes: () => void;
+  isJustGenerated?: boolean;
+  recipes?: Recipe[]; // Array of all recipes for navigation
+  currentIndex?: number; // Current recipe index
+  onNavigateToRecipe?: (index: number) => void; // Navigate to specific recipe
 }
 
 export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   recipe,
   onGoBack,
   onStartOver,
+  onGoToSaved,
+  onGoToRecipes,
+  isJustGenerated = false,
+  recipes = [],
+  currentIndex = 0,
+  onNavigateToRecipe,
 }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+
+  const handleShare = () => {
+    setShowShareModal(true);
+  };
+
+  // Swipe gestures for navigation
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      const { dx, dy } = gestureState;
+      const { locationX } = evt.nativeEvent;
+      
+      // Respond to horizontal swipes
+      return Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 20;
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      // Optional: Add visual feedback during swipe
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      const { dx } = gestureState;
+      const { locationX } = evt.nativeEvent;
+      
+      // Swipe from left edge to go back
+      if (locationX < 50 && dx > 100) {
+        onGoBack();
+        return;
+      }
+      
+      // Recipe navigation (only if we have recipes and navigation function)
+      if (recipes.length > 1 && onNavigateToRecipe) {
+        if (dx > 100) {
+          // Swipe right - go to previous recipe
+          const prevIndex = currentIndex > 0 ? currentIndex - 1 : recipes.length - 1;
+          onNavigateToRecipe(prevIndex);
+        } else if (dx < -100) {
+          // Swipe left - go to next recipe
+          const nextIndex = currentIndex < recipes.length - 1 ? currentIndex + 1 : 0;
+          onNavigateToRecipe(nextIndex);
+        }
+      }
+    },
+  });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -62,20 +123,165 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     setIsSaving(true);
     
     try {
-      // Recipe is already saved when generated, so we just show success
-      Alert.alert(
-        t('common.success'),
-        t('recipe.recipeSaved'),
-        [
-          { text: t('common.done'), onPress: onStartOver }
-        ]
-      );
+      // Check if recipe already has isSaved = true
+      if (recipe.isSaved) {
+        Alert.alert(
+          t('recipe.alreadySavedTitle'),
+          t('recipe.alreadySavedMessage'),
+          [
+            { text: t('common.ok') }
+          ]
+        );
+        return;
+      }
+
+      const recipeId = recipe.id || recipe._id;
+      let saveResponse;
+
+      if (recipeId) {
+        // Recipe already exists in database, just mark as saved
+        saveResponse = await fetch(`${API_URL}/api/recipe/save/${recipeId}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+      } else {
+        // Temporary recipe, save it to database
+        saveResponse = await fetch(`${API_URL}/api/recipe/save`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(recipe),
+        });
+      }
+
+      if (saveResponse.ok) {
+        Alert.alert(
+          t('common.success'),
+          t('recipe.recipeSaved'),
+          [
+            { text: t('common.done'), onPress: onGoToSaved }
+          ]
+        );
+      } else {
+        throw new Error('Failed to save recipe');
+      }
     } catch (error) {
       console.error('Error saving recipe:', error);
-      Alert.alert(t('common.error'), t('common.error'));
+      Alert.alert(t('common.error'), t('recipe.saveError'));
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleStartCooking = async () => {
+    try {
+      const recipeId = recipe.id || recipe._id;
+      
+      if (!recipeId) {
+        // Temporary recipe, save it to database first
+        const saveResponse = await fetch(`${API_URL}/api/recipe/save`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(recipe),
+        });
+
+        if (saveResponse.ok) {
+          // Recipe saved successfully, go to recipes screen
+          onGoToRecipes();
+        } else {
+          throw new Error('Failed to save recipe');
+        }
+      } else {
+        // Recipe already exists, just go back
+        onGoBack();
+      }
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      Alert.alert(t('common.error'), t('recipe.saveError'));
+    }
+  };
+
+  const deleteRecipe = async () => {
+    Alert.alert(
+      t('recipe.deleteTitle'),
+      t('recipe.deleteMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { 
+          text: t('common.delete'), 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const recipeId = recipe.id || recipe._id;
+              
+              if (!recipeId) {
+                // Temporary recipe, just go back
+                Alert.alert(
+                  t('common.success'),
+                  t('recipe.deleteSuccess'),
+                  [
+                    { text: t('common.ok'), onPress: onGoBack }
+                  ]
+                );
+                return;
+              }
+
+              if (recipe.isSaved) {
+                // If recipe is saved, just unsave it (keep it in generated recipes)
+                const unsaveResponse = await fetch(`${API_URL}/api/recipe/saved/${recipeId}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                });
+
+                if (unsaveResponse.ok) {
+                  Alert.alert(
+                    t('common.success'),
+                    t('recipe.deleteSuccess'),
+                    [
+                      { text: t('common.ok'), onPress: onGoBack }
+                    ]
+                  );
+                } else {
+                  throw new Error('Failed to unsave recipe');
+                }
+              } else {
+                // If recipe is not saved, delete it completely
+                const deleteResponse = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                });
+
+                if (deleteResponse.ok) {
+                  Alert.alert(
+                    t('common.success'),
+                    t('recipe.deleteSuccess'),
+                    [
+                      { text: t('common.ok'), onPress: onGoBack }
+                    ]
+                  );
+                } else {
+                  throw new Error('Failed to delete recipe');
+                }
+              }
+            } catch (error) {
+              console.error('Error deleting recipe:', error);
+              Alert.alert(t('common.error'), t('recipe.deleteError'));
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderIngredient = (ingredient: any, index: number) => (
@@ -97,19 +303,54 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...panResponder.panHandlers}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{t('recipe.title')}</Text>
-        <TouchableOpacity style={styles.saveButton} onPress={saveRecipe} disabled={isSaving}>
-          {isSaving ? (
-            <ActivityIndicator size=\"small\" color=\"#007AFF\" />
-          ) : (
-            <Text style={styles.saveButtonText}>💾</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{t('recipe.title')}</Text>
+          {recipes.length > 1 && (
+            <Text style={styles.recipeCounter}>
+              {currentIndex + 1} / {recipes.length}
+            </Text>
           )}
-        </TouchableOpacity>
+        </View>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.shareButton} onPress={() => handleShare()}>
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
+                stroke="rgb(22, 163, 74)"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.saveButton} onPress={saveRecipe} disabled={isSaving}>
+          {isSaving ? (
+            <LoadingAnimation size={20} color="rgb(22, 163, 74)" />
+          ) : (
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+                stroke="rgb(22, 163, 74)"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d="M17 21v-8H7v8M7 3v5h8"
+                stroke="rgb(22, 163, 74)"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -128,7 +369,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             <Text style={styles.metadataValue}>{recipe.servings}</Text>
           </View>
           <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>{t('recipe.difficulty')}</Text>
+            <Text style={styles.metadataLabel}>{t('recipe.difficultyLabel')}</Text>
             <Text style={[styles.metadataValue, { color: getDifficultyColor(recipe.difficulty) }]}>
               {t(`recipe.difficulty.${recipe.difficulty}`)}
             </Text>
@@ -139,10 +380,10 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           <View style={styles.dietaryTagsContainer}>
             <Text style={styles.sectionTitle}>{t('recipe.dietary')}</Text>
             <View style={styles.dietaryTags}>
-              {recipe.dietaryTags.map((tag, index) => (
-                <View key={index} style={styles.dietaryTag}>
+              {recipe.dietaryTags.map((tag) => (
+                <View key={tag} style={styles.dietaryTag}>
                   <Text style={styles.dietaryTagText}>
-                    {t(`recipe.dietary.${tag.replace('-', '')}`)}
+                    {t(`recipes.dietary.${tag.replace('-', '')}`)}
                   </Text>
                 </View>
               ))}
@@ -163,13 +404,45 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             {recipe.instructions.map(renderInstruction)}
           </View>
         </View>
+
+        <View style={styles.deleteSection}>
+          <TouchableOpacity style={styles.deleteButton} onPress={deleteRecipe}>
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
+              <Path
+                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
+                stroke="#DC3545"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={styles.deleteButtonText}>{t('recipe.deleteRecipe')}</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.startOverButton} onPress={onStartOver}>
-          <Text style={styles.startOverButtonText}>{t('common.startOver')}</Text>
-        </TouchableOpacity>
+        {isJustGenerated ? (
+          <View style={styles.dualButtonContainer}>
+            <TouchableOpacity style={styles.startOverButton} onPress={onStartOver}>
+              <Text style={styles.startOverButtonText}>{t('common.startOver')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.startCookingButton} onPress={handleStartCooking}>
+              <Text style={styles.startCookingButtonText}>{t('recipe.startCooking')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.startCookingButtonSingle} onPress={onGoBack}>
+            <Text style={styles.startCookingButtonText}>{t('recipe.startCooking')}</Text>
+          </TouchableOpacity>
+        )}
       </View>
+      
+      <ShareModal
+        visible={showShareModal}
+        recipe={recipe}
+        onClose={() => setShowShareModal(false)}
+      />
     </View>
   );
 };
@@ -196,12 +469,29 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: 'rgb(22, 163, 74)',
+  },
+  titleContainer: {
+    alignItems: 'center',
+    flex: 1,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#212529',
+  },
+  recipeCounter: {
+    fontSize: 12,
+    color: '#6C757D',
+    marginTop: 2,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  shareButton: {
+    padding: 10,
+    marginRight: 8,
   },
   saveButton: {
     padding: 10,
@@ -339,20 +629,68 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     flex: 1,
   },
+  deleteSection: {
+    padding: 20,
+    backgroundColor: 'white',
+    marginTop: 8,
+    alignItems: 'center',
+  },
   footer: {
     padding: 20,
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#E9ECEF',
   },
+  dualButtonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
   startOverButton: {
     backgroundColor: '#6C757D',
     borderRadius: 8,
     paddingVertical: 15,
     alignItems: 'center',
+    flex: 1,
   },
   startOverButtonText: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  startCookingButton: {
+    backgroundColor: 'rgb(22, 163, 74)',
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: 'center',
+    flex: 1,
+  },
+  startCookingButtonSingle: {
+    backgroundColor: 'rgb(22, 163, 74)',
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  startCookingButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  deleteButton: {
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FEB2B2',
+    width: '100%',
+  },
+  deleteIcon: {
+    marginRight: 8,
+  },
+  deleteButtonText: {
+    color: '#DC3545',
     fontSize: 16,
     fontWeight: 'bold',
   },

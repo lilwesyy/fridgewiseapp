@@ -25,16 +25,18 @@ interface GeneratedRecipe {
 }
 
 export class GeminiService {
-  private genAI: GoogleGenerativeAI;
+  private genAI: GoogleGenerativeAI | null;
   private model: any;
 
   constructor() {
     if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
+      console.warn('⚠️ GEMINI_API_KEY environment variable is not set. Using mock recipe generation.');
+      this.genAI = null;
+      this.model = null;
+    } else {
+      this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     }
-    
-    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   }
 
   async generateRecipe(options: RecipeGenerationOptions): Promise<GeneratedRecipe> {
@@ -47,6 +49,12 @@ export class GeminiService {
       difficulty
     } = options;
 
+    // If no API key is configured, return a mock recipe
+    if (!this.model) {
+      console.log('🎭 Using mock recipe generation (no Gemini API key configured)');
+      return this.createMockRecipe(ingredients, language, servings, cookingTime || 30, difficulty || 'easy');
+    }
+
     const prompt = this.buildPrompt(ingredients, language, dietaryRestrictions, servings, cookingTime, difficulty);
 
     try {
@@ -57,7 +65,8 @@ export class GeminiService {
       return this.parseRecipeResponse(text, language);
     } catch (error) {
       console.error('Error generating recipe with Gemini:', error);
-      throw new Error('Failed to generate recipe');
+      console.log('🔄 Falling back to mock recipe due to error');
+      return this.createMockRecipe(ingredients, language, servings, cookingTime || 30, difficulty || 'easy');
     }
   }
 
@@ -103,7 +112,9 @@ Important:
 - You can add common seasonings and basic ingredients (salt, pepper, oil, etc.)
 - Ensure the recipe is practical and achievable
 - Include dietary tags if applicable
-- Instructions should be clear and detailed`
+- Instructions should be clear and detailed
+- For ingredients without specific units (like spices), use "to taste", "pinch", "dash", etc.
+- Never leave the "unit" field empty - always provide a unit`
       },
       it: {
         base: `Crea una ricetta usando questi ingredienti: ${ingredients.join(', ')}`,
@@ -138,7 +149,9 @@ Importante:
 - Puoi aggiungere condimenti comuni e ingredienti di base (sale, pepe, olio, ecc.)
 - Assicurati che la ricetta sia pratica e realizzabile
 - Includi tag dietetici se applicabile
-- Le istruzioni devono essere chiare e dettagliate`
+- Le istruzioni devono essere chiare e dettagliate
+- Per ingredienti senza unità specifiche (come spezie), usa "q.b.", "pizzico", "spolverata", ecc.
+- Non lasciare mai il campo "unit" vuoto - fornisci sempre un'unità`
       }
     };
 
@@ -192,6 +205,77 @@ Importante:
       // Return a basic fallback recipe
       return this.createFallbackRecipe(language);
     }
+  }
+
+  private createMockRecipe(
+    ingredients: string[], 
+    language: 'en' | 'it', 
+    servings: number, 
+    cookingTime: number, 
+    difficulty: string
+  ): GeneratedRecipe {
+    const mockRecipes = {
+      en: {
+        title: `Delicious ${ingredients.join(' & ')} Dish`,
+        description: `A tasty recipe using ${ingredients.join(', ')} perfect for ${servings} people`,
+        baseIngredients: ingredients.map(ing => ({
+          name: ing,
+          amount: servings > 4 ? '2-3' : '1-2',
+          unit: ing.toLowerCase().includes('oil') ? 'tbsp' : ing.toLowerCase().includes('rice') || ing.toLowerCase().includes('pasta') ? 'cups' : 'pieces'
+        })),
+        additionalIngredients: [
+          { name: 'olive oil', amount: '2', unit: 'tbsp' },
+          { name: 'salt', amount: '1', unit: 'tsp' },
+          { name: 'black pepper', amount: '1/2', unit: 'tsp' }
+        ],
+        instructions: [
+          'Prepare and wash all ingredients thoroughly',
+          'Heat olive oil in a large pan over medium heat',
+          `Add ${ingredients.slice(0, 2).join(' and ')} to the pan and cook for 5-7 minutes`,
+          'Season with salt and pepper to taste',
+          `Add remaining ingredients (${ingredients.slice(2).join(', ')}) and cook for ${Math.max(10, cookingTime - 10)} minutes`,
+          'Stir occasionally and adjust seasoning if needed',
+          `Serve hot for ${servings} people and enjoy!`
+        ]
+      },
+      it: {
+        title: `Deliziosa Ricetta con ${ingredients.join(' e ')}`,
+        description: `Una ricetta gustosa usando ${ingredients.join(', ')} perfetta per ${servings} persone`,
+        baseIngredients: ingredients.map(ing => ({
+          name: ing,
+          amount: servings > 4 ? '2-3' : '1-2',
+          unit: ing.toLowerCase().includes('olio') ? 'cucchiai' : ing.toLowerCase().includes('riso') || ing.toLowerCase().includes('pasta') ? 'tazze' : 'pezzi'
+        })),
+        additionalIngredients: [
+          { name: 'olio di oliva', amount: '2', unit: 'cucchiai' },
+          { name: 'sale', amount: '1', unit: 'cucchiaino' },
+          { name: 'pepe nero', amount: '1/2', unit: 'cucchiaino' }
+        ],
+        instructions: [
+          'Preparare e lavare tutti gli ingredienti accuratamente',
+          'Scaldare l\'olio di oliva in una padella grande a fuoco medio',
+          `Aggiungere ${ingredients.slice(0, 2).join(' e ')} alla padella e cuocere per 5-7 minuti`,
+          'Condire con sale e pepe a piacere',
+          `Aggiungere gli ingredienti rimanenti (${ingredients.slice(2).join(', ')}) e cuocere per ${Math.max(10, cookingTime - 10)} minuti`,
+          'Mescolare occasionalmente e aggiustare il condimento se necessario',
+          `Servire caldo per ${servings} persone e buon appetito!`
+        ]
+      }
+    };
+
+    const selectedRecipe = mockRecipes[language];
+    const allIngredients = [...selectedRecipe.baseIngredients, ...selectedRecipe.additionalIngredients];
+
+    return {
+      title: selectedRecipe.title,
+      description: selectedRecipe.description,
+      ingredients: allIngredients,
+      instructions: selectedRecipe.instructions,
+      cookingTime: cookingTime,
+      servings: servings,
+      difficulty: difficulty as 'easy' | 'medium' | 'hard',
+      dietaryTags: []
+    };
   }
 
   private createFallbackRecipe(language: 'en' | 'it'): GeneratedRecipe {
