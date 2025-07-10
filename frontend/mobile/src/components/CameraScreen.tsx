@@ -187,6 +187,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       });
 
       if (!result.canceled && result.assets[0]) {
+        setCapturedImage(null); // Reset camera to normal view SOLO dopo la selezione
         setCapturedImage(result.assets[0].uri);
         // Avvia automaticamente l'analisi anche per le immagini dalla galleria
         await analyzeImage(result.assets[0].uri);
@@ -213,11 +214,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
 
   const handleSelectFromGallery = () => {
     setShowNoIngredientsModal(false);
-    setCapturedImage(null); // Reset camera to normal view
-    // Small delay to let React update the state
+    setCapturedImage(null); // resetta la camera
     setTimeout(() => {
-      pickImageFromGallery(); // Same call as the gallery button in controls
-    }, 50);
+      // workaround: apri la galleria DOPO che la camera è stata renderizzata
+      requestAnimationFrame(() => {
+        pickImageFromGallery();
+      });
+    }, 400); // delay leggermente aumentato
   };
 
   const handleManualInputFromModal = () => {

@@ -15,6 +15,7 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  withSpring,
   Easing,
 } from 'react-native-reanimated';
 
@@ -41,6 +42,9 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
 
   // Animation for the warning icon background pulse
   const pulseScale = useSharedValue(1);
+  // Modal animation (like ShareModal)
+  const slideY = useSharedValue(screenHeight);
+  const opacity = useSharedValue(0);
 
   React.useEffect(() => {
     if (visible) {
@@ -52,11 +56,24 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
         -1,
         true
       );
+      opacity.value = withTiming(1, { duration: 200 });
+      slideY.value = withSpring(0, { damping: 20, stiffness: 300 });
+    } else {
+      opacity.value = withTiming(0, { duration: 200 });
+      slideY.value = withTiming(screenHeight, { duration: 200 });
     }
   }, [visible]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
+  }));
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  const modalStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideY.value }],
   }));
 
   const handleRetakePhoto = () => {
@@ -76,23 +93,20 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
     onClose();
   };
 
-  
   if (!visible) return null;
 
   return (
     <Modal
       transparent
       visible={visible}
-      animationType="slide"
-      onRequestClose={() => {
-        // Don't automatically close, let user choose
-      }}
+      animationType="none"
+      onRequestClose={() => {}}
     >
-      <View style={styles.backdrop}>
-        <TouchableWithoutFeedback>
-          <View style={styles.modal}>
+      <TouchableWithoutFeedback>
+        <Animated.View style={[styles.backdrop, backdropStyle]}>
+          <TouchableWithoutFeedback>
+            <Animated.View style={[styles.modal, modalStyle]}>
               <View style={styles.handle} />
-              
               <View style={styles.header}>
                 <Animated.View style={[styles.iconContainer, pulseStyle]}>
                   <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
@@ -111,7 +125,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
                   <View style={styles.actionIcon}>
                     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                       <Path
-                        d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+                        d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96071 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
                         stroke="white"
                         strokeWidth="2"
                         strokeLinecap="round"
@@ -163,9 +177,10 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
               <TouchableOpacity style={styles.cancelButton} onPress={onCancel || onClose}>
                 <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
-            </View>
+            </Animated.View>
           </TouchableWithoutFeedback>
-        </View>
+        </Animated.View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };

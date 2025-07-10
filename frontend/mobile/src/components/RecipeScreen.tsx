@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,14 @@ import {
   ActivityIndicator,
   PanResponder,
   Dimensions,
+  Animated, // aggiunto Animated
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import Svg, { Path } from 'react-native-svg';
 import { LoadingAnimation } from './LoadingAnimation';
 import { ShareModal } from './ShareModal';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -33,6 +35,8 @@ interface Recipe {
   difficulty: 'easy' | 'medium' | 'hard';
   dietaryTags: string[];
   language: 'en' | 'it';
+  isSaved?: boolean;
+  _id?: string;
 }
 
 interface RecipeScreenProps {
@@ -62,6 +66,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   const { token } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
@@ -208,80 +213,57 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     }
   };
 
-  const deleteRecipe = async () => {
-    Alert.alert(
-      t('recipe.deleteTitle'),
-      t('recipe.deleteMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { 
-          text: t('common.delete'), 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const recipeId = recipe.id || recipe._id;
-              
-              if (!recipeId) {
-                // Temporary recipe, just go back
-                Alert.alert(
-                  t('common.success'),
-                  t('recipe.deleteSuccess'),
-                  [
-                    { text: t('common.ok'), onPress: onGoBack }
-                  ]
-                );
-                return;
-              }
+  // Sostituisci la chiamata Alert.alert per la deleteRecipe con apertura modale
+  const deleteRecipe = () => {
+    setShowDeleteModal(true);
+  };
 
-              if (recipe.isSaved) {
-                // If recipe is saved, just unsave it (keep it in generated recipes)
-                const unsaveResponse = await fetch(`${API_URL}/api/recipe/saved/${recipeId}`, {
-                  method: 'DELETE',
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                  },
-                });
-
-                if (unsaveResponse.ok) {
-                  Alert.alert(
-                    t('common.success'),
-                    t('recipe.deleteSuccess'),
-                    [
-                      { text: t('common.ok'), onPress: onGoBack }
-                    ]
-                  );
-                } else {
-                  throw new Error('Failed to unsave recipe');
-                }
-              } else {
-                // If recipe is not saved, delete it completely
-                const deleteResponse = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
-                  method: 'DELETE',
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                  },
-                });
-
-                if (deleteResponse.ok) {
-                  Alert.alert(
-                    t('common.success'),
-                    t('recipe.deleteSuccess'),
-                    [
-                      { text: t('common.ok'), onPress: onGoBack }
-                    ]
-                  );
-                } else {
-                  throw new Error('Failed to delete recipe');
-                }
-              }
-            } catch (error) {
-              console.error('Error deleting recipe:', error);
-              Alert.alert(t('common.error'), t('recipe.deleteError'));
-            }
-          }
+  // Funzione che esegue la cancellazione vera e propria
+  const confirmDeleteRecipe = async () => {
+    setShowDeleteModal(false);
+    try {
+      const recipeId = (recipe as any).id || (recipe as any)._id;
+      if (!recipeId) {
+        Alert.alert(
+          t('common.success'),
+          t('recipe.deleteSuccess'),
+          [ { text: t('common.ok'), onPress: onGoBack } ]
+        );
+        return;
+      }
+      if ((recipe as any).isSaved) {
+        const unsaveResponse = await fetch(`${API_URL}/api/recipe/saved/${recipeId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (unsaveResponse.ok) {
+          Alert.alert(
+            t('common.success'),
+            t('recipe.deleteSuccess'),
+            [ { text: t('common.ok'), onPress: onGoBack } ]
+          );
+        } else {
+          throw new Error('Failed to unsave recipe');
         }
-      ]
-    );
+      } else {
+        const deleteResponse = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (deleteResponse.ok) {
+          Alert.alert(
+            t('common.success'),
+            t('recipe.deleteSuccess'),
+            [ { text: t('common.ok'), onPress: onGoBack } ]
+          );
+        } else {
+          throw new Error('Failed to delete recipe');
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      Alert.alert(t('common.error'), t('recipe.deleteError'));
+    }
   };
 
   const renderIngredient = (ingredient: any, index: number) => (
@@ -302,123 +284,178 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     </View>
   );
 
+  // Animazioni di ingresso a cascata per le sezioni principali
+  const animatedBlocks = [useRef(new Animated.Value(0)), useRef(new Animated.Value(0)), useRef(new Animated.Value(0)), useRef(new Animated.Value(0)), useRef(new Animated.Value(0))];
+  useEffect(() => {
+    Animated.stagger(90, animatedBlocks.map((ref, i) =>
+      Animated.timing(ref.current, {
+        toValue: 1,
+        duration: 420,
+        delay: i * 40,
+        useNativeDriver: true,
+      })
+    )).start();
+  }, [recipe]);
+
   return (
     <View style={styles.container} {...panResponder.panHandlers}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{t('recipe.title')}</Text>
-          {recipes.length > 1 && (
-            <Text style={styles.recipeCounter}>
-              {currentIndex + 1} / {recipes.length}
-            </Text>
-          )}
-        </View>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.shareButton} onPress={() => handleShare()}>
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
-                stroke="rgb(22, 163, 74)"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
+      <Animated.View
+        style={{
+          opacity: animatedBlocks[0].current,
+          transform: [{ translateY: animatedBlocks[0].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
+        }}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+            <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.saveButton} onPress={saveRecipe} disabled={isSaving}>
-          {isSaving ? (
-            <LoadingAnimation size={20} color="rgb(22, 163, 74)" />
-          ) : (
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
-                stroke="rgb(22, 163, 74)"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <Path
-                d="M17 21v-8H7v8M7 3v5h8"
-                stroke="rgb(22, 163, 74)"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-          )}
-          </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{t('recipe.title')}</Text>
+            {recipes.length > 1 && (
+              <Text style={styles.recipeCounter}>
+                {currentIndex + 1} / {recipes.length}
+              </Text>
+            )}
+          </View>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity style={styles.shareButton} onPress={() => handleShare()}>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
+                  stroke="rgb(22, 163, 74)"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.saveButton} onPress={saveRecipe} disabled={isSaving}>
+            {isSaving ? (
+              <LoadingAnimation size={20} color="rgb(22, 163, 74)" />
+            ) : (
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+                  stroke="rgb(22, 163, 74)"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <Path
+                  d="M17 21v-8H7v8M7 3v5h8"
+                  stroke="rgb(22, 163, 74)"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            )}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </Animated.View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.recipeHeader}>
-          <Text style={styles.recipeTitle}>{recipe.title}</Text>
-          <Text style={styles.recipeDescription}>{recipe.description}</Text>
-        </View>
+        <Animated.View
+          style={{
+            opacity: animatedBlocks[1].current,
+            transform: [{ translateY: animatedBlocks[1].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
+          }}
+        >
+          <View style={styles.recipeHeader}>
+            <Text style={styles.recipeTitle}>{recipe.title}</Text>
+            <Text style={styles.recipeDescription}>{recipe.description}</Text>
+          </View>
+        </Animated.View>
 
-        <View style={styles.recipeMetadata}>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>{t('recipe.cookingTime')}</Text>
-            <Text style={styles.metadataValue}>{recipe.cookingTime} min</Text>
-          </View>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>{t('recipe.servings')}</Text>
-            <Text style={styles.metadataValue}>{recipe.servings}</Text>
-          </View>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>{t('recipe.difficultyLabel')}</Text>
-            <Text style={[styles.metadataValue, { color: getDifficultyColor(recipe.difficulty) }]}>
-              {t(`recipe.difficulty.${recipe.difficulty}`)}
-            </Text>
-          </View>
-        </View>
-
-        {recipe.dietaryTags.length > 0 && (
-          <View style={styles.dietaryTagsContainer}>
-            <Text style={styles.sectionTitle}>{t('recipe.dietary')}</Text>
-            <View style={styles.dietaryTags}>
-              {recipe.dietaryTags.map((tag) => (
-                <View key={tag} style={styles.dietaryTag}>
-                  <Text style={styles.dietaryTagText}>
-                    {t(`recipes.dietary.${tag.replace('-', '')}`)}
-                  </Text>
-                </View>
-              ))}
+        <Animated.View
+          style={{
+            opacity: animatedBlocks[2].current,
+            transform: [{ translateY: animatedBlocks[2].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
+          }}
+        >
+          <View style={styles.recipeMetadata}>
+            <View style={styles.metadataItem}>
+              <Text style={styles.metadataLabel}>{t('recipe.cookingTime')}</Text>
+              <Text style={styles.metadataValue}>{recipe.cookingTime} min</Text>
+            </View>
+            <View style={styles.metadataItem}>
+              <Text style={styles.metadataLabel}>{t('recipe.servings')}</Text>
+              <Text style={styles.metadataValue}>{recipe.servings}</Text>
+            </View>
+            <View style={styles.metadataItem}>
+              <Text style={styles.metadataLabel}>{t('recipe.difficultyLabel')}</Text>
+              <Text style={[styles.metadataValue, { color: getDifficultyColor(recipe.difficulty) }]}> 
+                {t(`recipe.difficulty.${recipe.difficulty}`)}
+              </Text>
             </View>
           </View>
+        </Animated.View>
+
+        {recipe.dietaryTags.length > 0 && (
+          <Animated.View
+            style={{
+              opacity: animatedBlocks[3].current,
+              transform: [{ translateY: animatedBlocks[3].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
+            }}
+          >
+            <View style={styles.dietaryTagsContainer}>
+              <Text style={styles.sectionTitle}>{t('recipe.dietary')}</Text>
+              <View style={styles.dietaryTags}>
+                {recipe.dietaryTags.map((tag) => (
+                  <View key={tag} style={styles.dietaryTag}>
+                    <Text style={styles.dietaryTagText}>
+                      {t(`recipes.dietary.${tag.replace('-', '')}`)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </Animated.View>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('recipe.ingredients')}</Text>
-          <View style={styles.ingredientsList}>
-            {recipe.ingredients.map(renderIngredient)}
+        <Animated.View
+          style={{
+            opacity: animatedBlocks[4].current,
+            transform: [{ translateY: animatedBlocks[4].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
+          }}
+        >
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('recipe.ingredients')}</Text>
+            <View style={styles.ingredientsList}>
+              {recipe.ingredients.map(renderIngredient)}
+            </View>
           </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('recipe.instructions')}</Text>
-          <View style={styles.instructionsList}>
-            {recipe.instructions.map(renderInstruction)}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('recipe.instructions')}</Text>
+            <View style={styles.instructionsList}>
+              {recipe.instructions.map(renderInstruction)}
+            </View>
           </View>
-        </View>
 
-        <View style={styles.deleteSection}>
-          <TouchableOpacity style={styles.deleteButton} onPress={deleteRecipe}>
-            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
-              <Path
-                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
-                stroke="#DC3545"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-            <Text style={styles.deleteButtonText}>{t('recipe.deleteRecipe')}</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.deleteSection}>
+            <TouchableOpacity style={styles.deleteButton} onPress={() => setShowDeleteModal(true)}>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
+                <Path
+                  d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"
+                  stroke="white"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <Path
+                  d="M10 11v6M14 11v6"
+                  stroke="white"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+              <Text style={styles.deleteButtonText}>{t('recipe.deleteRecipe')}</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -442,6 +479,11 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         visible={showShareModal}
         recipe={recipe}
         onClose={() => setShowShareModal(false)}
+      />
+      <DeleteConfirmationModal
+        visible={showDeleteModal}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteRecipe}
       />
     </View>
   );
@@ -676,21 +718,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   deleteButton: {
-    backgroundColor: '#FFF5F5',
+    backgroundColor: '#DC3545', // rosso pieno
     borderRadius: 8,
     paddingVertical: 15,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FEB2B2',
+    borderWidth: 0, // nessun bordo
     width: '100%',
   },
   deleteIcon: {
     marginRight: 8,
   },
   deleteButtonText: {
-    color: '#DC3545',
+    color: 'white', // testo bianco
     fontSize: 16,
     fontWeight: 'bold',
   },

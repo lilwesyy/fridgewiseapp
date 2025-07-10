@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Alert,
   ScrollView,
   PanResponder,
-  Animated,
+  Animated, // Torna Animated da react-native
   Dimensions,
   RefreshControl,
 } from 'react-native';
@@ -154,6 +154,9 @@ interface RecipesScreenProps {
   onGoToCamera: () => void;
 }
 
+// Sostituisci FlatList con Animated.FlatList
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
+
 export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, onGoToCamera }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
@@ -169,6 +172,29 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   ];
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+
+  // Animazioni di ingresso per le card
+  const animatedValues = useRef<Animated.Value[]>([]);
+  const animatedSet = useRef<Set<number>>(new Set());
+
+  // Reset animated values ogni volta che cambia la lista filtrata (quindi ogni volta che entri nella schermata o cambi filtri)
+  useEffect(() => {
+    animatedValues.current = filteredRecipes.map(() => new Animated.Value(0));
+    animatedSet.current.clear();
+  }, [filteredRecipes]);
+
+  // Funzione per animare la card all'ingresso (chiamata direttamente in renderRecipe)
+  const animateCard = (index: number) => {
+    if (!animatedSet.current.has(index) && animatedValues.current[index]) {
+      animatedSet.current.add(index);
+      Animated.timing(animatedValues.current[index], {
+        toValue: 1,
+        duration: 420,
+        delay: index * 60, // effetto cascade
+        useNativeDriver: true,
+      }).start();
+    }
+  };
 
   useEffect(() => {
     fetchRecipes();
@@ -311,70 +337,86 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
     );
   };
 
-  const renderRecipe = ({ item }: { item: Recipe }) => (
-    <SwipeableRow
-      onDelete={() => deleteRecipe(item)}
-      deleteText={t('common.delete')}
-      resetTrigger={resetTrigger}
-    >
-      <TouchableOpacity
-        style={styles.recipeCard}
-        onPress={() => {
-          const index = filteredRecipes.findIndex(r => {
-            const currentRecipeId = (r as any)._id || r.id;
-            const itemId = (item as any)._id || item.id;
-            return currentRecipeId === itemId;
-          });
-          onSelectRecipe(item, filteredRecipes, index);
-        }}
-        activeOpacity={0.7}
-      >
-        <View style={styles.recipeHeader}>
-          <Text style={styles.recipeTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-          <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(item.difficulty) }]}>
-            <Text style={styles.difficultyText}>
-              {t(`recipes.difficulty.${item.difficulty}`)}
-            </Text>
-          </View>
-        </View>
+  // Tipizzazione corretta per Animated.FlatList
+  const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<Recipe>);
 
-        <Text style={styles.recipeDescription} numberOfLines={3}>
-          {item.description}
-        </Text>
-
-        <View style={styles.recipeMetadata}>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>⏱️ {item.cookingTime} min</Text>
-          </View>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>👥 {item.servings}</Text>
-          </View>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
-          </View>
-        </View>
-
-        {item.dietaryTags.length > 0 && (
-          <View style={styles.dietaryTags}>
-            {item.dietaryTags.slice(0, 3).map((tag) => (
-              <View key={tag} style={styles.dietaryTag}>
-                <Text style={styles.dietaryTagText}>
-                  {t(`recipes.dietary.${tag.replace('-', '')}`)}
+  const renderRecipe = ({ item, index }: { item: Recipe; index: number }) => {
+    animateCard(index); // Avvia animazione direttamente qui
+    const anim = animatedValues.current[index] || new Animated.Value(1);
+    const animatedStyle = {
+      opacity: anim,
+      transform: [
+        {
+          translateY: anim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [40, 0],
+          }),
+        },
+      ],
+    };
+    return (
+      <Animated.View style={animatedStyle}>
+        <SwipeableRow
+          onDelete={() => deleteRecipe(item)}
+          deleteText={t('common.delete')}
+          resetTrigger={resetTrigger}
+        >
+          <TouchableOpacity
+            style={styles.recipeCard}
+            onPress={() => {
+              const idx = filteredRecipes.findIndex(r => {
+                const currentRecipeId = (r as any)._id || r.id;
+                const itemId = (item as any)._id || item.id;
+                return currentRecipeId === itemId;
+              });
+              onSelectRecipe(item, filteredRecipes, idx);
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.recipeHeader}>
+              <Text style={styles.recipeTitle} numberOfLines={2}>
+                {item.title}
+              </Text>
+              <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(item.difficulty) }]}> 
+                <Text style={styles.difficultyText}>
+                  {t(`recipes.difficulty.${item.difficulty}`)}
                 </Text>
               </View>
-            ))}
-            {item.dietaryTags.length > 3 && (
-              <Text style={styles.moreTagsText}>+{item.dietaryTags.length - 3}</Text>
+            </View>
+            <Text style={styles.recipeDescription} numberOfLines={3}>
+              {item.description}
+            </Text>
+            <View style={styles.recipeMetadata}>
+              <View style={styles.metadataItem}>
+                <Text style={styles.metadataLabel}>⏱️ {item.cookingTime} min</Text>
+              </View>
+              <View style={styles.metadataItem}>
+                <Text style={styles.metadataLabel}>👥 {item.servings}</Text>
+              </View>
+              <View style={styles.metadataItem}>
+                <Text style={styles.metadataLabel}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
+              </View>
+            </View>
+            {item.dietaryTags.length > 0 && (
+              <View style={styles.dietaryTags}>
+                {item.dietaryTags.slice(0, 3).map((tag) => (
+                  <View key={tag} style={styles.dietaryTag}>
+                    <Text style={styles.dietaryTagText}>
+                      {t(`recipes.dietary.${tag.replace('-', '')}`)}
+                    </Text>
+                  </View>
+                ))}
+                {item.dietaryTags.length > 3 && (
+                  <Text style={styles.moreTagsText}>+{item.dietaryTags.length - 3}</Text>
+                )}
+              </View>
             )}
-          </View>
-        )}
-
-        <Text style={styles.recipeDate}>{formatDate(item.createdAt)}</Text>
-      </TouchableOpacity>
-    </SwipeableRow>
-  );
+            <Text style={styles.recipeDate}>{formatDate(item.createdAt)}</Text>
+          </TouchableOpacity>
+        </SwipeableRow>
+      </Animated.View>
+    );
+  };
 
 
   return (
@@ -453,7 +495,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
           )}
         </View>
       ) : (
-        <FlatList
+        <AnimatedFlatList
           data={filteredRecipes}
           renderItem={renderRecipe}
           keyExtractor={(item) => (item as any)._id || item.id}
