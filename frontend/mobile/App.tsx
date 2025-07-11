@@ -70,7 +70,7 @@ const LogoComponent: React.FC<{ width?: number; height?: number }> = ({ width = 
 
 const AppContent: React.FC = () => {
   const { t } = useTranslation();
-  const { user, isLoading, login, register } = useAuth();
+  const { user, token, isLoading, login, register } = useAuth();
   const [appState, setAppState] = useState<AppState>({
     currentScreen: 'home',
     activeTab: 'home',
@@ -475,6 +475,61 @@ const AppContent: React.FC = () => {
         recipes={appState.allRecipes}
         currentIndex={appState.currentRecipeIndex}
         onNavigateToRecipe={handleNavigateToRecipe}
+        onRecipeUpdate={async (updatedRecipe) => {
+          console.log('🍕 App.tsx - Updating recipe...');
+          console.log('🍕 App.tsx - Current recipe ingredients:', appState.recipe?.ingredients?.length || 0);
+          console.log('🍕 App.tsx - New recipe ingredients:', updatedRecipe.ingredients?.length || 0);
+          
+          // Update state immediately for UI responsiveness
+          setAppState({ ...appState, recipe: updatedRecipe });
+          
+          // Save to database
+          if (updatedRecipe._id) {
+            try {
+              console.log('💾 Saving recipe to database...');
+              
+              // Fix ingredients with empty units (database requires non-empty unit field)
+              const fixedIngredients = updatedRecipe.ingredients.map((ing: any) => ({
+                ...ing,
+                unit: ing.unit || 'q.b.' // Use 'q.b.' if unit is empty
+              }));
+              
+              const requestBody = {
+                title: updatedRecipe.title,
+                description: updatedRecipe.description,
+                ingredients: fixedIngredients,
+                instructions: updatedRecipe.instructions,
+                cookingTime: updatedRecipe.cookingTime,
+                servings: updatedRecipe.servings,
+                difficulty: updatedRecipe.difficulty,
+                dietaryTags: updatedRecipe.dietaryTags
+              };
+              
+              console.log('💾 Request body:', JSON.stringify(requestBody, null, 2));
+              
+              const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/recipe/${updatedRecipe._id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(requestBody),
+              });
+              
+              if (response.ok) {
+                console.log('🎉 Recipe saved successfully to database');
+              } else {
+                const errorText = await response.text();
+                console.error('⚠️ Failed to save recipe to database:', response.status);
+                console.error('⚠️ Error response:', errorText);
+              }
+            } catch (error) {
+              console.error('⚠️ Error saving recipe:', error);
+            }
+          } else {
+            console.log('📝 Recipe has no ID, skipping database save');
+          }
+        }}
       />
     );
   }

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,14 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 
 interface ProfileScreenProps {
   onLogout: () => void;
@@ -29,6 +37,50 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onLogout }) => {
     dietaryRestrictions: user?.dietaryRestrictions || [],
   });
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const headerScale = useSharedValue(0.8);
+  const headerTranslateY = useSharedValue(30);
+  
+  const sectionsOpacity = useSharedValue(0);
+  const sectionsTranslateY = useSharedValue(40);
+  
+  const restrictionsOpacity = useSharedValue(0);
+  const restrictionsScale = useSharedValue(0.9);
+
+  useEffect(() => {
+    // Header animation
+    headerOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+    headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
+    headerTranslateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+    
+    // Sections animation with delay
+    sectionsOpacity.value = withDelay(200, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    sectionsTranslateY.value = withDelay(200, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // Restrictions animation with more delay
+    restrictionsOpacity.value = withDelay(400, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    restrictionsScale.value = withDelay(400, withSpring(1, { damping: 15, stiffness: 100 }));
+  }, []);
+
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [
+      { scale: headerScale.value },
+      { translateY: headerTranslateY.value }
+    ],
+  }));
+
+  const sectionsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: sectionsOpacity.value,
+    transform: [{ translateY: sectionsTranslateY.value }],
+  }));
+
+  const restrictionsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: restrictionsOpacity.value,
+    transform: [{ scale: restrictionsScale.value }],
+  }));
 
   const availableDietaryRestrictions = [
     'vegetarian',
@@ -109,7 +161,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onLogout }) => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
+      <Animated.View style={[styles.header, headerAnimatedStyle]}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
@@ -122,9 +174,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onLogout }) => {
         <Text style={styles.joinDate}>
           {t('profile.memberSince')} {formatJoinDate(user?.createdAt)}
         </Text>
-      </View>
+      </Animated.View>
 
-      <View style={styles.section}>
+      <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('profile.personalInfo')}</Text>
         </View>
@@ -215,7 +267,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onLogout }) => {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{t('profile.dietaryRestrictions')}</Text>
-          <View style={styles.restrictionsContainer}>
+          <Animated.View style={[styles.restrictionsContainer, restrictionsAnimatedStyle]}>
             {availableDietaryRestrictions.map((restriction) => (
               <View key={restriction} style={styles.restrictionItem}>
                 <Text style={styles.restrictionText}>
@@ -244,7 +296,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onLogout }) => {
                 />
               </View>
             ))}
-          </View>
+          </Animated.View>
         </View>
 
         {isUpdating && (
@@ -253,9 +305,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onLogout }) => {
             <Text style={styles.savingText}>{t('profile.saving')}</Text>
           </View>
         )}
-      </View>
+      </Animated.View>
 
-      <View style={styles.section}>
+      <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
         <Text style={styles.sectionTitle}>{t('profile.appSettings')}</Text>
         
         <TouchableOpacity style={styles.settingItem}>
@@ -272,17 +324,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onLogout }) => {
           <Text style={styles.settingText}>{t('profile.help')}</Text>
           <Text style={styles.settingValue}>→</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
-      <View style={styles.section}>
+      <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
-      <View style={styles.footer}>
+      <Animated.View style={[styles.footer, sectionsAnimatedStyle]}>
         <Text style={styles.footerText}>FridgeWise AI v1.0.0</Text>
-      </View>
+      </Animated.View>
     </ScrollView>
   );
 };

@@ -14,6 +14,7 @@ import { authRoutes } from './routes/auth';
 import { analysisRoutes } from './routes/analysis';
 import { recipeRoutes } from './routes/recipe';
 import { userRoutes } from './routes/user';
+import aiRoutes from './routes/ai';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/recipe', recipeRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

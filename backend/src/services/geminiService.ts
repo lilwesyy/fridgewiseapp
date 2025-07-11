@@ -9,6 +9,13 @@ interface RecipeGenerationOptions {
   difficulty?: 'easy' | 'medium' | 'hard';
 }
 
+interface ChatOptions {
+  message: string;
+  recipe?: any;
+  language?: 'en' | 'it';
+  context?: string;
+}
+
 interface GeneratedRecipe {
   title: string;
   description: string;
@@ -35,7 +42,7 @@ export class GeminiService {
       this.model = null;
     } else {
       this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     }
   }
 
@@ -58,7 +65,7 @@ export class GeminiService {
     const prompt = this.buildPrompt(ingredients, language, dietaryRestrictions, servings, cookingTime, difficulty);
 
     try {
-      const result = await this.model.generateContent(prompt);
+      const result = await this.retryApiCall(() => this.model.generateContent(prompt)) as any;
       const response = await result.response;
       const text = response.text();
 
@@ -276,6 +283,331 @@ Importante:
       difficulty: difficulty as 'easy' | 'medium' | 'hard',
       dietaryTags: []
     };
+  }
+
+  async chatWithAI(options: ChatOptions): Promise<string> {
+    const { message, recipe, language = 'it', context = 'general' } = options;
+
+    // If no API key is configured, throw error
+    if (!this.model) {
+      throw new Error('Gemini API key not configured. Please configure GEMINI_API_KEY environment variable.');
+    }
+
+    const prompt = this.buildChatPrompt(message, recipe, language, context);
+
+    try {
+      const result = await this.retryApiCall(() => this.model.generateContent(prompt)) as any;
+      const response = await result.response;
+      const text = response.text();
+
+      return text.trim();
+    } catch (error) {
+      console.error('Error generating AI chat response:', error);
+      
+      // Handle specific error types
+      if (error instanceof Error && error.message.includes('503')) {
+        throw new Error('Il servizio AI è temporaneamente sovraccarico. Riprova tra qualche minuto.');
+      }
+      if (error instanceof Error && error.message.includes('429')) {
+        throw new Error('Troppi richieste. Riprova tra qualche secondo.');
+      }
+      
+      throw new Error('Errore nel servizio AI. Riprova più tardi.');
+    }
+  }
+
+  private buildChatPrompt(message: string, recipe: any, language: 'en' | 'it', context: string): string {
+    const prompts = {
+      en: {
+        roleContext: `You are an experienced Italian chef and cooking assistant. You help users with recipes, cooking tips, and food-related questions.`,
+        recipeContext: recipe ? `Current recipe context:
+Title: ${recipe.title}
+Description: ${recipe.description}
+Ingredients: ${recipe.ingredients?.map((ing: any) => `${ing.amount} ${ing.unit} ${ing.name}`).join(', ')}
+Instructions: ${recipe.instructions?.join('; ')}
+Cooking time: ${recipe.cookingTime} minutes
+Servings: ${recipe.servings}
+Difficulty: ${recipe.difficulty}` : '',
+        userMessage: `User question: ${message}`,
+        instructions: `IMPORTANT: Always respond BRIEFLY and CONCISELY (maximum 2-3 sentences). Avoid long explanations.
+
+If the user asks to modify the recipe (keywords: "add", "remove", "change", "modify", "reduce", "increase", "substitute", "put", "insert"), use EXACTLY this format:
+
+RECIPE_MODIFICATION_START
+{
+  "type": "recipe_update",
+  "changes": {
+    "title": "new title if changed",
+    "description": "new description if changed",
+    "ingredients": [{"name": "ingredient", "amount": "quantity", "unit": "unit"}],
+    "instructions": ["step 1", "step 2"],
+    "cookingTime": 30,
+    "servings": 4,
+    "difficulty": "easy"
+  },
+  "explanation": "Brief explanation (1 sentence)"
+}
+RECIPE_MODIFICATION_END
+
+INGREDIENT RULES:
+- ONLY add real, edible food ingredients (vegetables, meat, fish, cheese, spices, herbs, condiments)
+- Keep ingredients consistent with the dish type (don't completely change the recipe nature)
+- Use realistic, commonly available ingredients
+- Use reasonable quantities for the number of servings
+- DO NOT add non-food items, tools, or equipment
+
+For general questions, respond only with 1-2 brief sentences.`
+      },
+      it: {
+        roleContext: `Sei un chef italiano esperto e assistente di cucina. Aiuti gli utenti con ricette, consigli di cucina e domande relative al cibo.`,
+        recipeContext: recipe ? `Contesto della ricetta attuale:
+Titolo: ${recipe.title}
+Descrizione: ${recipe.description}
+Ingredienti: ${recipe.ingredients?.map((ing: any) => `${ing.amount} ${ing.unit} ${ing.name}`).join(', ')}
+Istruzioni: ${recipe.instructions?.join('; ')}
+Tempo di cottura: ${recipe.cookingTime} minuti
+Porzioni: ${recipe.servings}
+Difficoltà: ${recipe.difficulty}` : '',
+        userMessage: `Domanda dell'utente: ${message}`,
+        instructions: `IMPORTANTE: Rispondi sempre in modo BREVE e CONCISO (massimo 2-3 frasi).
+
+Se l'utente chiede di modificare la ricetta (parole chiave: "aggiungi", "togli", "rimuovi", "cambia", "modifica", "riduci", "aumenta", "sostituisci", "metti", "inserisci", "invece", "al posto", "senza", "non ho", "sostituire", "cambiare", "eliminare"), restituisci la ricetta COMPLETA MODIFICATA:
+
+RECIPE_MODIFICATION_START
+{
+  "type": "recipe_update",
+  "changes": {
+    "title": "titolo ricetta",
+    "description": "descrizione",
+    "ingredients": [
+      // TUTTI gli ingredienti esistenti + nuovi
+    ],
+    "instructions": [
+      // TUTTE le istruzioni MODIFICATE per includere i nuovi ingredienti
+      // Specifica QUANDO aggiungere i nuovi ingredienti
+    ],
+    "cookingTime": 30,
+    "servings": 4,
+    "difficulty": "easy"
+  },
+  "explanation": "Ho modificato la ricetta secondo la tua richiesta."
+}
+RECIPE_MODIFICATION_END
+
+ATTENZIONE: 
+1. AGGIORNA SEMPRE le istruzioni quando modifichi ingredienti!
+2. Gli ingredienti DEVONO essere oggetti con "name", "amount", "unit" - NON stringhe!
+3. Esempi di modifiche:
+   - "aggiungi prosciutto" → Aggiungi prosciutto agli ingredienti e alle istruzioni
+   - "togli il sale" → Rimuovi il sale dalla lista ingredienti
+   - "sostituisci la mozzarella con gorgonzola" → Cambia mozzarella con gorgonzola
+   - "non ho la mozzarella" → Suggerisci sostituto e aggiorna ricetta
+   - "riduci il sale" → Diminuisci quantità del sale
+   - "aumenta le porzioni" → Aumenta servings e quantità ingredienti
+
+Corretto: {"name": "Prosciutto", "amount": "100", "unit": "g"}
+Sbagliato: "100 g Prosciutto"
+
+Per domande generali, rispondi normalmente.`
+      }
+    };
+
+    const selectedPrompt = prompts[language];
+    return [
+      selectedPrompt.roleContext,
+      selectedPrompt.recipeContext,
+      selectedPrompt.userMessage,
+      selectedPrompt.instructions
+    ].filter(Boolean).join('\n\n');
+  }
+
+  private async retryApiCall<T>(apiCall: () => Promise<T>, maxRetries = 3): Promise<T> {
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await apiCall();
+      } catch (error) {
+        lastError = error as Error;
+        
+        // Don't retry on authentication errors
+        if (error instanceof Error && error.message.includes('401')) {
+          throw error;
+        }
+        
+        // Retry on 503 (service unavailable) and 429 (rate limit)
+        if (error instanceof Error && (error.message.includes('503') || error.message.includes('429'))) {
+          if (attempt < maxRetries) {
+            const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+            console.log(`🔄 API call failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+        }
+        
+        // For other errors, don't retry
+        throw error;
+      }
+    }
+    
+    throw lastError!;
+  }
+
+  private buildChatPrompt_old(message: string, recipe: any, language: 'en' | 'it', context: string): string {
+    const prompts = {
+      en: {
+        roleContext: `You are an experienced Italian chef and cooking assistant. You help users with recipes, cooking tips, and food-related questions.`,
+        recipeContext: recipe ? `Current recipe context:
+Title: ${recipe.title}
+Description: ${recipe.description}
+Ingredients: ${recipe.ingredients?.map((ing: any) => `${ing.amount} ${ing.unit} ${ing.name}`).join(', ')}
+Instructions: ${recipe.instructions?.join('; ')}
+Cooking time: ${recipe.cookingTime} minutes
+Servings: ${recipe.servings}
+Difficulty: ${recipe.difficulty}` : '',
+        userMessage: `User question: ${message}`,
+        instructions: `IMPORTANT: Always respond BRIEFLY and CONCISELY (maximum 2-3 sentences). Avoid long explanations.
+
+If the user asks to modify the recipe (keywords: "add", "remove", "change", "modify", "reduce", "increase", "substitute", "put", "insert"), use EXACTLY this format:
+
+RECIPE_MODIFICATION_START
+{
+  "type": "recipe_update",
+  "changes": {
+    "ingredients": [{"name": "ingredient", "amount": "quantity", "unit": "unit"}],
+    "instructions": ["step 1", "step 2"],
+    "cookingTime": 30,
+    "servings": 4,
+    "difficulty": "easy"
+  },
+  "explanation": "Brief explanation (1 sentence)"
+}
+RECIPE_MODIFICATION_END
+
+For general questions, respond only with 1-2 brief sentences.`
+      },
+      it: {
+        roleContext: `Sei un chef italiano esperto e assistente di cucina. Aiuti gli utenti con ricette, consigli di cucina e domande relative al cibo.`,
+        recipeContext: recipe ? `Contesto della ricetta attuale:
+Titolo: ${recipe.title}
+Descrizione: ${recipe.description}
+Ingredienti: ${recipe.ingredients?.map((ing: any) => `${ing.amount} ${ing.unit} ${ing.name}`).join(', ')}
+Istruzioni: ${recipe.instructions?.join('; ')}
+Tempo di cottura: ${recipe.cookingTime} minuti
+Porzioni: ${recipe.servings}
+Difficoltà: ${recipe.difficulty}` : '',
+        userMessage: `Domanda dell'utente: ${message}`,
+        instructions: `IMPORTANTE: Rispondi sempre in modo BREVE e CONCISO (massimo 2-3 frasi).
+
+Se l'utente chiede di modificare la ricetta (parole chiave: "aggiungi", "togli", "rimuovi", "cambia", "modifica", "riduci", "aumenta", "sostituisci", "metti", "inserisci", "invece", "al posto", "senza", "non ho", "sostituire", "cambiare", "eliminare"), restituisci la ricetta COMPLETA MODIFICATA:
+
+RECIPE_MODIFICATION_START
+{
+  "type": "recipe_update",
+  "changes": {
+    "title": "titolo ricetta",
+    "description": "descrizione",
+    "ingredients": [
+      // TUTTI gli ingredienti esistenti + nuovi
+    ],
+    "instructions": [
+      // TUTTE le istruzioni MODIFICATE per includere i nuovi ingredienti
+      // Specifica QUANDO aggiungere i nuovi ingredienti
+    ],
+    "cookingTime": 30,
+    "servings": 4,
+    "difficulty": "easy"
+  },
+  "explanation": "Ho modificato la ricetta secondo la tua richiesta."
+}
+RECIPE_MODIFICATION_END
+
+ATTENZIONE: 
+1. AGGIORNA SEMPRE le istruzioni quando modifichi ingredienti!
+2. Gli ingredienti DEVONO essere oggetti con "name", "amount", "unit" - NON stringhe!
+3. Esempi di modifiche:
+   - "aggiungi prosciutto" → Aggiungi prosciutto agli ingredienti e alle istruzioni
+   - "togli il sale" → Rimuovi il sale dalla lista ingredienti
+   - "sostituisci la mozzarella con gorgonzola" → Cambia mozzarella con gorgonzola
+   - "non ho la mozzarella" → Suggerisci sostituto e aggiorna ricetta
+   - "riduci il sale" → Diminuisci quantità del sale
+   - "aumenta le porzioni" → Aumenta servings e quantità ingredienti
+
+Corretto: {"name": "Prosciutto", "amount": "100", "unit": "g"}
+Sbagliato: "100 g Prosciutto"
+
+Per domande generali, rispondi normalmente.`
+      }
+    };
+
+    const selectedPrompt = prompts[language];
+    return [
+      selectedPrompt.roleContext,
+      selectedPrompt.recipeContext,
+      selectedPrompt.userMessage,
+      selectedPrompt.instructions
+    ].filter(Boolean).join('\n\n');
+  }
+
+  private createMockChatResponse(message: string, language: 'en' | 'it'): string {
+    const lowerMessage = message.toLowerCase();
+    const modificationKeywords = {
+      it: ['aggiungi', 'togli', 'rimuovi', 'cambia', 'modifica', 'riduci', 'aumenta', 'sostituisci', 'metti', 'inserisci'],
+      en: ['add', 'remove', 'change', 'modify', 'reduce', 'increase', 'substitute', 'put', 'insert']
+    };
+    
+    const isModification = modificationKeywords[language].some(keyword => lowerMessage.includes(keyword));
+    
+    if (isModification) {
+      // Return modification format for mock responses
+      const mockModifications = {
+        it: `RECIPE_MODIFICATION_START
+{
+  "type": "recipe_update",
+  "changes": {
+    "ingredients": [{
+      "name": "${lowerMessage.includes('prosciutto') ? 'prosciutto cotto' : 'nuovo ingrediente'}",
+      "amount": "100",
+      "unit": "g"
+    }]
+  },
+  "explanation": "Ho aggiunto l'ingrediente richiesto alla ricetta."
+}
+RECIPE_MODIFICATION_END`,
+        en: `RECIPE_MODIFICATION_START
+{
+  "type": "recipe_update",
+  "changes": {
+    "ingredients": [{
+      "name": "${lowerMessage.includes('ham') ? 'cooked ham' : 'new ingredient'}",
+      "amount": "100",
+      "unit": "g"
+    }]
+  },
+  "explanation": "Added the requested ingredient to the recipe."
+}
+RECIPE_MODIFICATION_END`
+      };
+      
+      return mockModifications[language];
+    }
+    
+    // Regular responses for non-modification questions
+    const mockResponses = {
+      en: [
+        "That's an interesting question! I'd suggest trying that modification.",
+        "Great idea! You could definitely try that approach.",
+        "That would work well with this recipe."
+      ],
+      it: [
+        "Ottima idea! Potresti provare quella modifica.",
+        "Bella proposta! Funzionerebbe bene con questa ricetta.",
+        "È un approccio interessante da provare."
+      ]
+    };
+
+    const responses = mockResponses[language];
+    return responses[Math.floor(Math.random() * responses.length)];
   }
 
   private createFallbackRecipe(language: 'en' | 'it'): GeneratedRecipe {

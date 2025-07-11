@@ -18,12 +18,20 @@ interface DeleteConfirmationModalProps {
   visible: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  title?: string;
+  message?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
 }
 
 export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   visible,
   onConfirm,
   onCancel,
+  title,
+  message,
+  confirmLabel,
+  cancelLabel,
 }) => {
   const { t } = useTranslation();
   const slideY = useSharedValue(screenHeight);
@@ -107,15 +115,15 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
                     </Svg>
                   </Animated.View>
                 </View>
-                <Text style={styles.title}>{t('recipe.deleteTitle')}</Text>
-                <Text style={styles.message}>{t('recipe.deleteMessage')}</Text>
+                <Text style={styles.title}>{title || t('recipe.deleteTitle')}</Text>
+                <Text style={styles.message}>{message || t('recipe.deleteMessage')}</Text>
               </View>
               <View style={styles.actionsRow}>
                 <TouchableOpacity style={[styles.cancelButton, { marginRight: 6 }]} onPress={onCancel}>
-                  <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
+                  <Text style={styles.cancelButtonText}>{cancelLabel || t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.deleteButton, { marginLeft: 6 }]} onPress={onConfirm}>
-                  <Text style={styles.deleteButtonText}>{t('common.delete')}</Text>
+                  <Text style={styles.deleteButtonText}>{confirmLabel || t('common.delete')}</Text>
                 </TouchableOpacity>
               </View>
             </Animated.View>

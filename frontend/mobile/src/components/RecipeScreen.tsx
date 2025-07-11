@@ -1,15 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
   PanResponder,
   Dimensions,
-  Animated, // aggiunto Animated
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +15,16 @@ import Svg, { Path } from 'react-native-svg';
 import { LoadingAnimation } from './LoadingAnimation';
 import { ShareModal } from './ShareModal';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
+import { ChatAIModal } from './ChatAIModal';
+import { NotificationModal, NotificationType } from './NotificationModal';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -49,6 +57,7 @@ interface RecipeScreenProps {
   recipes?: Recipe[]; // Array of all recipes for navigation
   currentIndex?: number; // Current recipe index
   onNavigateToRecipe?: (index: number) => void; // Navigate to specific recipe
+  onRecipeUpdate?: (updatedRecipe: Recipe) => void; // Handle recipe updates
 }
 
 export const RecipeScreen: React.FC<RecipeScreenProps> = ({
@@ -61,12 +70,77 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   recipes = [],
   currentIndex = 0,
   onNavigateToRecipe,
+  onRecipeUpdate,
 }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showChatAIModal, setShowChatAIModal] = useState(false);
+  const [notification, setNotification] = useState<{
+    visible: boolean;
+    type: NotificationType;
+    title: string;
+    message: string;
+  }>({ visible: false, type: 'success', title: '', message: '' });
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const headerScale = useSharedValue(0.8);
+  const headerTranslateY = useSharedValue(-30);
+  
+  const titleOpacity = useSharedValue(0);
+  const titleTranslateY = useSharedValue(20);
+  
+  const contentOpacity = useSharedValue(0);
+  const contentTranslateY = useSharedValue(40);
+  
+  const buttonsOpacity = useSharedValue(0);
+  const buttonsTranslateY = useSharedValue(50);
+
+  // Entrance animations
+  useEffect(() => {
+    // Header animation
+    headerOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+    headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
+    headerTranslateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+    
+    // Title animation
+    titleOpacity.value = withDelay(150, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    titleTranslateY.value = withDelay(150, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // Content animation
+    contentOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    contentTranslateY.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // Buttons animation
+    buttonsOpacity.value = withDelay(450, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    buttonsTranslateY.value = withDelay(450, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+  }, [recipe.id]); // Re-animate when recipe changes
+
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [
+      { scale: headerScale.value },
+      { translateY: headerTranslateY.value }
+    ],
+  }));
+
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{ translateY: titleTranslateY.value }],
+  }));
+
+  const contentAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+    transform: [{ translateY: contentTranslateY.value }],
+  }));
+
+  const buttonsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: buttonsOpacity.value,
+    transform: [{ translateY: buttonsTranslateY.value }],
+  }));
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
@@ -126,17 +200,14 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
   const saveRecipe = async () => {
     setIsSaving(true);
-    
     try {
-      // Check if recipe already has isSaved = true
       if (recipe.isSaved) {
-        Alert.alert(
-          t('recipe.alreadySavedTitle'),
-          t('recipe.alreadySavedMessage'),
-          [
-            { text: t('common.ok') }
-          ]
-        );
+        setNotification({
+          visible: true,
+          type: 'warning',
+          title: t('common.warning'),
+          message: t('recipe.alreadySavedMessage'),
+        });
         return;
       }
 
@@ -164,19 +235,26 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
       }
 
       if (saveResponse.ok) {
-        Alert.alert(
-          t('common.success'),
-          t('recipe.recipeSaved'),
-          [
-            { text: t('common.done'), onPress: onGoToSaved }
-          ]
-        );
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: t('common.success'),
+          message: t('recipe.recipeSaved'),
+        });
+        // Aggiorna lo stato della ricetta per riflettere che è salvata
+        if (typeof recipe.isSaved === 'undefined' || recipe.isSaved === false) {
+          recipe.isSaved = true;
+        }
       } else {
         throw new Error('Failed to save recipe');
       }
     } catch (error) {
-      console.error('Error saving recipe:', error);
-      Alert.alert(t('common.error'), t('recipe.saveError'));
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('recipe.saveError'),
+      });
     } finally {
       setIsSaving(false);
     }
@@ -185,10 +263,9 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   const handleStartCooking = async () => {
     try {
       const recipeId = recipe.id || recipe._id;
-      
       if (!recipeId) {
-        // Temporary recipe, save it to database first
-        const saveResponse = await fetch(`${API_URL}/api/recipe/save`, {
+        // Temporary recipe, save it to database (but not to user's saved recipes)
+        const saveResponse = await fetch(`${API_URL}/api/recipe`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -196,20 +273,24 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           },
           body: JSON.stringify(recipe),
         });
-
         if (saveResponse.ok) {
-          // Recipe saved successfully, go to recipes screen
-          onGoToRecipes();
+          // Recipe saved to general database, now go back
+          onGoBack();
         } else {
-          throw new Error('Failed to save recipe');
+          throw new Error('Failed to save recipe to database');
         }
       } else {
-        // Recipe already exists, just go back
+        // Recipe already exists in database, just go back
         onGoBack();
       }
     } catch (error) {
-      console.error('Error saving recipe:', error);
-      Alert.alert(t('common.error'), t('recipe.saveError'));
+      console.error('Error saving recipe to database:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('recipe.saveError'),
+      });
     }
   };
 
@@ -224,11 +305,13 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     try {
       const recipeId = (recipe as any).id || (recipe as any)._id;
       if (!recipeId) {
-        Alert.alert(
-          t('common.success'),
-          t('recipe.deleteSuccess'),
-          [ { text: t('common.ok'), onPress: onGoBack } ]
-        );
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: t('common.success'),
+          message: t('recipe.deleteSuccess'),
+        });
+        setTimeout(() => onGoBack(), 1300);
         return;
       }
       if ((recipe as any).isSaved) {
@@ -237,11 +320,13 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (unsaveResponse.ok) {
-          Alert.alert(
-            t('common.success'),
-            t('recipe.deleteSuccess'),
-            [ { text: t('common.ok'), onPress: onGoBack } ]
-          );
+          setNotification({
+            visible: true,
+            type: 'success',
+            title: t('common.success'),
+            message: t('recipe.deleteSuccess'),
+          });
+          setTimeout(() => onGoBack(), 1300);
         } else {
           throw new Error('Failed to unsave recipe');
         }
@@ -251,18 +336,25 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (deleteResponse.ok) {
-          Alert.alert(
-            t('common.success'),
-            t('recipe.deleteSuccess'),
-            [ { text: t('common.ok'), onPress: onGoBack } ]
-          );
+          setNotification({
+            visible: true,
+            type: 'success',
+            title: t('common.success'),
+            message: t('recipe.deleteSuccess'),
+          });
+          setTimeout(() => onGoBack(), 1300);
         } else {
           throw new Error('Failed to delete recipe');
         }
       }
     } catch (error) {
       console.error('Error deleting recipe:', error);
-      Alert.alert(t('common.error'), t('recipe.deleteError'));
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('recipe.deleteError'),
+      });
     }
   };
 
@@ -280,32 +372,26 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
       <View style={styles.instructionNumber}>
         <Text style={styles.instructionNumberText}>{index + 1}</Text>
       </View>
-      <Text style={styles.instructionText}>{instruction}</Text>
+      <View style={styles.instructionTextContainer}>
+        <Text style={styles.instructionText}>{instruction}</Text>
+      </View>
     </View>
   );
 
-  // Animazioni di ingresso a cascata per le sezioni principali
-  const animatedBlocks = [useRef(new Animated.Value(0)), useRef(new Animated.Value(0)), useRef(new Animated.Value(0)), useRef(new Animated.Value(0)), useRef(new Animated.Value(0))];
+
+  // Auto-close notification after 1.3s
   useEffect(() => {
-    Animated.stagger(90, animatedBlocks.map((ref, i) =>
-      Animated.timing(ref.current, {
-        toValue: 1,
-        duration: 420,
-        delay: i * 40,
-        useNativeDriver: true,
-      })
-    )).start();
-  }, [recipe]);
+    if (notification.visible) {
+      const timeout = setTimeout(() => {
+        setNotification(n => ({ ...n, visible: false }));
+      }, 1300);
+      return () => clearTimeout(timeout);
+    }
+  }, [notification.visible]);
 
   return (
     <View style={styles.container} {...panResponder.panHandlers}>
-      <Animated.View
-        style={{
-          opacity: animatedBlocks[0].current,
-          transform: [{ translateY: animatedBlocks[0].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
-        }}
-      >
-        <View style={styles.header}>
+      <Animated.View style={[styles.header, headerAnimatedStyle]}>
           <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
@@ -352,29 +438,15 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             )}
             </TouchableOpacity>
           </View>
-        </View>
       </Animated.View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View
-          style={{
-            opacity: animatedBlocks[1].current,
-            transform: [{ translateY: animatedBlocks[1].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
-          }}
-        >
-          <View style={styles.recipeHeader}>
+        <Animated.View style={[styles.recipeHeader, titleAnimatedStyle]}>
             <Text style={styles.recipeTitle}>{recipe.title}</Text>
             <Text style={styles.recipeDescription}>{recipe.description}</Text>
-          </View>
         </Animated.View>
 
-        <Animated.View
-          style={{
-            opacity: animatedBlocks[2].current,
-            transform: [{ translateY: animatedBlocks[2].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
-          }}
-        >
-          <View style={styles.recipeMetadata}>
+        <Animated.View style={[styles.recipeMetadata, contentAnimatedStyle]}>
             <View style={styles.metadataItem}>
               <Text style={styles.metadataLabel}>{t('recipe.cookingTime')}</Text>
               <Text style={styles.metadataValue}>{recipe.cookingTime} min</Text>
@@ -389,17 +461,10 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                 {t(`recipe.difficulty.${recipe.difficulty}`)}
               </Text>
             </View>
-          </View>
         </Animated.View>
 
         {recipe.dietaryTags.length > 0 && (
-          <Animated.View
-            style={{
-              opacity: animatedBlocks[3].current,
-              transform: [{ translateY: animatedBlocks[3].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
-            }}
-          >
-            <View style={styles.dietaryTagsContainer}>
+          <Animated.View style={[styles.dietaryTagsContainer, contentAnimatedStyle]}>
               <Text style={styles.sectionTitle}>{t('recipe.dietary')}</Text>
               <View style={styles.dietaryTags}>
                 {recipe.dietaryTags.map((tag) => (
@@ -410,16 +475,10 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                   </View>
                 ))}
               </View>
-            </View>
           </Animated.View>
         )}
 
-        <Animated.View
-          style={{
-            opacity: animatedBlocks[4].current,
-            transform: [{ translateY: animatedBlocks[4].current.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
-          }}
-        >
+        <Animated.View style={buttonsAnimatedStyle}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('recipe.ingredients')}</Text>
             <View style={styles.ingredientsList}>
@@ -458,7 +517,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         </Animated.View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <Animated.View style={[styles.footer, buttonsAnimatedStyle]}>
         {isJustGenerated ? (
           <View style={styles.dualButtonContainer}>
             <TouchableOpacity style={styles.startOverButton} onPress={onStartOver}>
@@ -468,12 +527,24 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
               <Text style={styles.startCookingButtonText}>{t('recipe.startCooking')}</Text>
             </TouchableOpacity>
           </View>
+        ) : recipe.isSaved === true ? (
+          <View style={styles.dualButtonContainer}>
+            <TouchableOpacity style={styles.startCookingButton} onPress={handleStartCooking}>
+              <Text style={styles.startCookingButtonText}>{t('recipe.startCooking')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.aiEditButton} onPress={() => setShowChatAIModal(true)}>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
+                <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </Svg>
+              <Text style={styles.aiEditButtonText}>{t('common.edit') || 'Modifica'}</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
-          <TouchableOpacity style={styles.startCookingButtonSingle} onPress={onGoBack}>
+          <TouchableOpacity style={styles.startCookingButtonSingle} onPress={handleStartCooking}>
             <Text style={styles.startCookingButtonText}>{t('recipe.startCooking')}</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </Animated.View>
       
       <ShareModal
         visible={showShareModal}
@@ -484,6 +555,19 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         visible={showDeleteModal}
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={confirmDeleteRecipe}
+      />
+      <ChatAIModal
+        visible={showChatAIModal}
+        recipe={recipe}
+        onClose={() => setShowChatAIModal(false)}
+        onRecipeUpdate={onRecipeUpdate}
+      />
+      <NotificationModal
+        visible={notification.visible}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={() => setNotification(n => ({ ...n, visible: false }))}
       />
     </View>
   );
@@ -650,6 +734,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 16,
+    flexWrap: 'wrap',
   },
   instructionNumber: {
     backgroundColor: '#007AFF',
@@ -665,11 +750,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  instructionTextContainer: {
+    flex: 1,
+    flexShrink: 1,
+  },
   instructionText: {
     fontSize: 16,
     color: '#212529',
     lineHeight: 24,
-    flex: 1,
   },
   deleteSection: {
     padding: 20,
@@ -732,6 +820,20 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: 'white', // testo bianco
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  aiEditButton: {
+    backgroundColor: '#F1F5FF',
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  aiEditButtonText: {
+    color: '#007AFF',
     fontSize: 16,
     fontWeight: 'bold',
   },

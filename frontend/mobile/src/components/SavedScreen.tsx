@@ -9,7 +9,6 @@ import {
   Alert,
   ScrollView,
   PanResponder,
-  Animated,
   Dimensions,
   RefreshControl,
 } from 'react-native';
@@ -17,6 +16,17 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect } from 'react-native-svg';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
+import { NotificationModal } from './NotificationModal';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -28,19 +38,14 @@ interface SwipeableRowProps {
 }
 
 const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteText, resetTrigger }) => {
-  const translateX = new Animated.Value(0);
+  const translateX = useSharedValue(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const deleteButtonWidth = 100;
 
   // Reset when resetTrigger changes
   useEffect(() => {
     if (resetTrigger !== undefined) {
-      Animated.spring(translateX, {
-        toValue: 0,
-        tension: 100,
-        friction: 8,
-        useNativeDriver: false,
-      }).start();
+      translateX.value = withSpring(0, { damping: 15, stiffness: 100 });
       setIsRevealed(false);
     }
   }, [resetTrigger]);
@@ -53,68 +58,50 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteT
       if (gestureState.dx < 0) {
         // Swipe left - reveal delete button
         const newTranslateX = Math.max(gestureState.dx, -deleteButtonWidth);
-        translateX.setValue(newTranslateX);
+        translateX.value = newTranslateX;
       } else if (gestureState.dx > 0 && isRevealed) {
         // Swipe right when already revealed - hide delete button
         const newTranslateX = Math.min(gestureState.dx - deleteButtonWidth, 0);
-        translateX.setValue(newTranslateX);
+        translateX.value = newTranslateX;
       } else if (gestureState.dx > 0 && !isRevealed) {
         // Swipe right when not revealed - keep at 0
-        translateX.setValue(0);
+        translateX.value = 0;
       }
     },
     onPanResponderRelease: (_, gestureState) => {
       if (gestureState.dx < -50) {
         // Swipe left enough to reveal delete button
-        Animated.spring(translateX, {
-          toValue: -deleteButtonWidth,
-          tension: 100,
-          friction: 8,
-          useNativeDriver: false,
-        }).start();
-        setIsRevealed(true);
+        translateX.value = withSpring(-deleteButtonWidth, { damping: 15, stiffness: 100 });
+        runOnJS(setIsRevealed)(true);
       } else if (gestureState.dx > 50 && isRevealed) {
         // Swipe right enough to hide delete button when revealed
-        Animated.spring(translateX, {
-          toValue: 0,
-          tension: 100,
-          friction: 8,
-          useNativeDriver: false,
-        }).start();
-        setIsRevealed(false);
+        translateX.value = withSpring(0, { damping: 15, stiffness: 100 });
+        runOnJS(setIsRevealed)(false);
       } else {
         // Snap to appropriate position based on current state
         const targetValue = isRevealed ? -deleteButtonWidth : 0;
-        Animated.spring(translateX, {
-          toValue: targetValue,
-          tension: 100,
-          friction: 8,
-          useNativeDriver: false,
-        }).start();
+        translateX.value = withSpring(targetValue, { damping: 15, stiffness: 100 });
       }
     },
   });
 
   const handleDelete = () => {
     // Animate the deletion
-    Animated.timing(translateX, {
-      toValue: -screenWidth,
-      duration: 300,
-      useNativeDriver: false,
-    }).start(() => {
-      onDelete();
+    translateX.value = withTiming(-screenWidth, { duration: 300 }, (finished) => {
+      if (finished) {
+        runOnJS(onDelete)();
+      }
     });
   };
 
   const hideDeleteButton = () => {
-    Animated.spring(translateX, {
-      toValue: 0,
-      tension: 100,
-      friction: 8,
-      useNativeDriver: false,
-    }).start();
+    translateX.value = withSpring(0, { damping: 15, stiffness: 100 });
     setIsRevealed(false);
   };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   return (
     <View style={styles.swipeContainer}>
@@ -127,12 +114,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteT
         <Text style={styles.deleteText}>{deleteText}</Text>
       </TouchableOpacity>
       <Animated.View
-        style={[
-          styles.swipeRow,
-          {
-            transform: [{ translateX }],
-          },
-        ]}
+        style={[styles.swipeRow, animatedStyle]}
         {...panResponder.panHandlers}
       >
         {children}
@@ -163,6 +145,116 @@ interface SavedScreenProps {
   onSelectRecipe: (recipe: SavedRecipe, allRecipes: SavedRecipe[], index: number) => void;
 }
 
+interface SavedRecipeItemProps {
+  item: SavedRecipe;
+  index: number;
+  onPress: () => void;
+  onDelete: () => void;
+  resetTrigger: number;
+  t: (key: string) => string;
+  formatDate: (date: string) => string;
+  getDifficultyColor: (difficulty: string) => string;
+}
+
+const SavedRecipeItem: React.FC<SavedRecipeItemProps> = ({ 
+  item, 
+  index, 
+  onPress, 
+  onDelete, 
+  resetTrigger, 
+  t, 
+  formatDate, 
+  getDifficultyColor 
+}) => {
+  const cardOpacity = useSharedValue(0);
+  const cardScale = useSharedValue(0.8);
+  const cardTranslateY = useSharedValue(30);
+
+  React.useEffect(() => {
+    const delay = 600 + (index * 100); // Start after list container animation
+    cardOpacity.value = withDelay(delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }));
+    cardScale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 100 }));
+    cardTranslateY.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) }));
+  }, [index]);
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [
+      { scale: cardScale.value },
+      { translateY: cardTranslateY.value }
+    ],
+  }));
+
+  return (
+    <Animated.View style={cardAnimatedStyle}>
+      <SwipeableRow
+        onDelete={onDelete}
+        deleteText={t('common.remove')}
+        resetTrigger={resetTrigger}
+      >
+        <TouchableOpacity
+          style={styles.recipeCard}
+          onPress={onPress}
+          activeOpacity={0.7}
+        >
+          <View style={styles.recipeHeader}>
+            <Text style={styles.recipeTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <View style={styles.headerActions}>
+              <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(item.difficulty) }]}>
+                <Text style={styles.difficultyText}>
+                  {t(`recipes.difficulty.${item.difficulty}`)}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={onDelete}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Text style={styles.removeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={styles.recipeDescription} numberOfLines={3}>
+            {item.description}
+          </Text>
+
+          <View style={styles.recipeMetadata}>
+            <View style={styles.metadataItem}>
+              <Text style={styles.metadataLabel}>⏱️ {item.cookingTime} min</Text>
+            </View>
+            <View style={styles.metadataItem}>
+              <Text style={styles.metadataLabel}>👥 {item.servings}</Text>
+            </View>
+            <View style={styles.metadataItem}>
+              <Text style={styles.metadataLabel}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
+            </View>
+          </View>
+
+          {item.dietaryTags.length > 0 && (
+            <View style={styles.dietaryTags}>
+              {item.dietaryTags.slice(0, 3).map((tag, index) => (
+                <View key={index} style={styles.dietaryTag}>
+                  <Text style={styles.dietaryTagText}>
+                    {t(`recipes.dietary.${tag.replace('-', '')}`)}
+                  </Text>
+                </View>
+              ))}
+              {item.dietaryTags.length > 3 && (
+                <Text style={styles.moreTagsText}>+{item.dietaryTags.length - 3}</Text>
+              )}
+            </View>
+          )}
+
+          <Text style={styles.recipeDate}>{t('saved.savedOn')} {formatDate(item.savedAt)}</Text>
+        </TouchableOpacity>
+      </SwipeableRow>
+    </Animated.View>
+  );
+};
+
 export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
@@ -173,9 +265,72 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   const [difficultyFilter, setDifficultyFilter] = useState<string>('');
   const [tagFilter, setTagFilter] = useState<string>('');
   const [resetTrigger, setResetTrigger] = useState(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [recipeToDelete, setRecipeToDelete] = useState<SavedRecipe | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+  // Stato per notifiche di errore
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
+  const [errorNotificationMessage, setErrorNotificationMessage] = useState('');
   const dietaryTags = [
     'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'
   ];
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const headerScale = useSharedValue(0.8);
+  const headerTranslateY = useSharedValue(-30);
+  
+  const searchOpacity = useSharedValue(0);
+  const searchTranslateY = useSharedValue(20);
+  
+  const filtersOpacity = useSharedValue(0);
+  const filtersTranslateX = useSharedValue(-50);
+  
+  const listOpacity = useSharedValue(0);
+  const listTranslateY = useSharedValue(40);
+
+  // Entrance animations
+  useEffect(() => {
+    // Header animation
+    headerOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+    headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
+    headerTranslateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+    
+    // Search bar animation
+    searchOpacity.value = withDelay(150, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    searchTranslateY.value = withDelay(150, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // Filters animation
+    filtersOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    filtersTranslateX.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // List animation
+    listOpacity.value = withDelay(450, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    listTranslateY.value = withDelay(450, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+  }, []);
+
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [
+      { scale: headerScale.value },
+      { translateY: headerTranslateY.value }
+    ],
+  }));
+
+  const searchAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: searchOpacity.value,
+    transform: [{ translateY: searchTranslateY.value }],
+  }));
+
+  const filtersAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: filtersOpacity.value,
+    transform: [{ translateX: filtersTranslateX.value }],
+  }));
+
+  const listAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: listOpacity.value,
+    transform: [{ translateY: listTranslateY.value }],
+  }));
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
@@ -195,19 +350,14 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   const fetchSavedRecipes = async () => {
     try {
       setIsLoading(true);
-      // Reset all swipe states when refreshing
       setResetTrigger(prev => prev + 1);
-      
       const response = await fetch(`${API_URL}/api/recipe/saved`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
       const data = await response.json();
-
       if (response.ok) {
-        // Handle the new response structure from getSavedRecipes
         if (data.data && Array.isArray(data.data.recipes)) {
           setSavedRecipes(data.data.recipes);
         } else {
@@ -218,7 +368,9 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
       }
     } catch (error) {
       console.error('Error fetching saved recipes:', error);
-      Alert.alert(t('common.error'), t('saved.fetchError'));
+      setErrorNotificationMessage(t('saved.fetchError'));
+      setShowErrorNotification(true);
+      setTimeout(() => setShowErrorNotification(false), 2000);
     } finally {
       setIsLoading(false);
     }
@@ -252,35 +404,39 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
           'Authorization': `Bearer ${token}`,
         },
       });
-
       if (response.ok) {
         setSavedRecipes(prev => prev.filter(recipe => {
           const currentRecipeId = (recipe as any)._id || recipe.id;
           return currentRecipeId !== recipeId;
         }));
-        Alert.alert(t('common.success'), t('saved.removedSuccess'));
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 1300);
       } else {
         const data = await response.json();
         throw new Error(data.error || 'Failed to remove recipe');
       }
     } catch (error) {
       console.error('Error removing saved recipe:', error);
-      Alert.alert(t('common.error'), t('saved.removeError'));
+      setErrorNotificationMessage(t('saved.removeError'));
+      setShowErrorNotification(true);
+      setTimeout(() => setShowErrorNotification(false), 2000);
     }
   };
 
-  const confirmRemove = (recipe: SavedRecipe) => {
-    Alert.alert(
-      t('saved.removeTitle'),
-      t('saved.removeMessage', { title: recipe.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.remove'), style: 'destructive', onPress: () => {
-          const recipeId = (recipe as any)._id || recipe.id;
-          removeFromSaved(recipeId);
-        }}
-      ]
-    );
+  const handleDeleteRequest = (recipe: SavedRecipe) => {
+    setRecipeToDelete(recipe);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteRecipe = async () => {
+    if (!recipeToDelete) return;
+    setShowDeleteModal(false);
+    try {
+      const recipeId = (recipeToDelete as any)._id || recipeToDelete.id;
+      await removeFromSaved(recipeId);
+    } finally {
+      setRecipeToDelete(null);
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -300,80 +456,42 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const renderSavedRecipe = ({ item }: { item: SavedRecipe }) => (
-    <SwipeableRow
-      onDelete={() => confirmRemove(item)}
-      deleteText={t('common.remove')}
-      resetTrigger={resetTrigger}
-    >
-      <TouchableOpacity
-        style={styles.recipeCard}
-        onPress={() => onSelectRecipe(item)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.recipeHeader}>
-          <Text style={styles.recipeTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-          <View style={styles.headerActions}>
-            <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(item.difficulty) }]}>
-              <Text style={styles.difficultyText}>
-                {t(`recipes.difficulty.${item.difficulty}`)}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => confirmRemove(item)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Text style={styles.removeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+  const renderSavedRecipe = ({ item, index }: { item: SavedRecipe; index: number }) => {
+    return (
+      <SavedRecipeItem
+        item={item}
+        index={index}
+        onPress={() => {
+          const idx = filteredRecipes.findIndex(r => {
+            const currentRecipeId = (r as any)._id || r.id;
+            const itemId = (item as any)._id || item.id;
+            return currentRecipeId === itemId;
+          });
+          onSelectRecipe(item, filteredRecipes, idx);
+        }}
+        onDelete={() => handleDeleteRequest(item)}
+        resetTrigger={resetTrigger}
+        t={t}
+        formatDate={formatDate}
+        getDifficultyColor={getDifficultyColor}
+      />
+    );
+  };
 
-        <Text style={styles.recipeDescription} numberOfLines={3}>
-          {item.description}
-        </Text>
 
-        <View style={styles.recipeMetadata}>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>⏱️ {item.cookingTime} min</Text>
-          </View>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>👥 {item.servings}</Text>
-          </View>
-          <View style={styles.metadataItem}>
-            <Text style={styles.metadataLabel}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
-          </View>
-        </View>
-
-        {item.dietaryTags.length > 0 && (
-          <View style={styles.dietaryTags}>
-            {item.dietaryTags.slice(0, 3).map((tag, index) => (
-              <View key={index} style={styles.dietaryTag}>
-                <Text style={styles.dietaryTagText}>
-                  {t(`recipes.dietary.${tag.replace('-', '')}`)}
-                </Text>
-              </View>
-            ))}
-            {item.dietaryTags.length > 3 && (
-              <Text style={styles.moreTagsText}>+{item.dietaryTags.length - 3}</Text>
-            )}
-          </View>
-        )}
-
-        <Text style={styles.recipeDate}>{t('saved.savedOn')} {formatDate(item.savedAt)}</Text>
-      </TouchableOpacity>
-    </SwipeableRow>
-  );
-
+  // Custom texts for removing from saved
+  const removeTitle = t('saved.removeTitle');
+  const removeMessage = recipeToDelete ? t('saved.removeMessage', { title: recipeToDelete.title }) : '';
+  const removeConfirmLabel = t('common.remove');
+  const removeCancelLabel = t('common.cancel');
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <Animated.View style={[styles.header, headerAnimatedStyle]}>
         <Text style={styles.title}>{t('saved.title')}</Text>
         <Text style={styles.subtitle}>{t('saved.subtitle')}</Text>
-        <View style={styles.searchBarContainer}>
+        
+        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle]}>
           <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
@@ -382,37 +500,40 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
             onChangeText={setSearchQuery}
             placeholderTextColor="#9CA3AF"
           />
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
-          <TouchableOpacity
-            style={[styles.filterBadge, !difficultyFilter && styles.filterBadgeActive]}
-            onPress={() => setDifficultyFilter('')}
-          >
-            <Text style={[styles.filterBadgeText, !difficultyFilter && styles.filterBadgeTextActive]}>{t('common.all')}</Text>
-          </TouchableOpacity>
-          {['easy','medium','hard'].map(diff => (
+        </Animated.View>
+        
+        <Animated.View style={filtersAnimatedStyle}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
             <TouchableOpacity
-              key={diff}
-              style={[styles.filterBadge, difficultyFilter === diff && styles.filterBadgeActive]}
-              onPress={() => setDifficultyFilter(diff)}
+              style={[styles.filterBadge, !difficultyFilter && styles.filterBadgeActive]}
+              onPress={() => setDifficultyFilter('')}
             >
-              <Text style={[styles.filterBadgeText, difficultyFilter === diff && styles.filterBadgeTextActive]}>{t(`recipes.difficulty.${diff}`)}</Text>
+              <Text style={[styles.filterBadgeText, !difficultyFilter && styles.filterBadgeTextActive]}>{t('common.all')}</Text>
             </TouchableOpacity>
-          ))}
-          {dietaryTags.map(tag => (
-            <TouchableOpacity
-              key={tag}
-              style={[styles.filterBadge, tagFilter === tag && styles.filterBadgeActive]}
-              onPress={() => setTagFilter(tag)}
-            >
-              <Text style={[styles.filterBadgeText, tagFilter === tag && styles.filterBadgeTextActive]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+            {['easy','medium','hard'].map(diff => (
+              <TouchableOpacity
+                key={diff}
+                style={[styles.filterBadge, difficultyFilter === diff && styles.filterBadgeActive]}
+                onPress={() => setDifficultyFilter(diff)}
+              >
+                <Text style={[styles.filterBadgeText, difficultyFilter === diff && styles.filterBadgeTextActive]}>{t(`recipes.difficulty.${diff}`)}</Text>
+              </TouchableOpacity>
+            ))}
+            {dietaryTags.map(tag => (
+              <TouchableOpacity
+                key={tag}
+                style={[styles.filterBadge, tagFilter === tag && styles.filterBadgeActive]}
+                onPress={() => setTagFilter(tag)}
+              >
+                <Text style={[styles.filterBadgeText, tagFilter === tag && styles.filterBadgeTextActive]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </Animated.View>
+      </Animated.View>
 
       {filteredRecipes.length === 0 ? (
-        <View style={styles.emptyContainer}>
+        <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
           <View style={{ marginBottom: 16 }}>
             <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
               <Rect x={6} y={8} width={36} height={32} rx={4} stroke="#16A34A" strokeWidth={2.5} fill="#F1F5F9"/>
@@ -437,26 +558,52 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
               </Text>
             </>
           )}
-        </View>
+        </Animated.View>
       ) : (
-        <FlatList
-          data={filteredRecipes}
-          renderItem={renderSavedRecipe}
-          keyExtractor={(item) => (item as any)._id || item.id}
-          style={styles.recipesList}
-          showsVerticalScrollIndicator={false}
-          refreshing={isLoading}
-          onRefresh={fetchSavedRecipes}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={fetchSavedRecipes}
-              colors={['rgb(22, 163, 74)']}
-              tintColor={'rgb(22, 163, 74)'}
-            />
-          }
-        />
+        <Animated.View style={[{ flex: 1 }, listAnimatedStyle]}>
+          <FlatList
+            data={filteredRecipes}
+            renderItem={renderSavedRecipe}
+            keyExtractor={(item) => (item as any)._id || item.id}
+            style={styles.recipesList}
+            showsVerticalScrollIndicator={false}
+            refreshing={isLoading}
+            onRefresh={fetchSavedRecipes}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={fetchSavedRecipes}
+                colors={['rgb(22, 163, 74)']}
+                tintColor={'rgb(22, 163, 74)'}
+              />
+            }
+          />
+        </Animated.View>
       )}
+      <DeleteConfirmationModal
+        visible={showDeleteModal}
+        onCancel={() => { setShowDeleteModal(false); setRecipeToDelete(null); }}
+        onConfirm={confirmDeleteRecipe}
+        title={removeTitle}
+        message={removeMessage}
+        confirmLabel={removeConfirmLabel}
+        cancelLabel={removeCancelLabel}
+      />
+      <NotificationModal
+        visible={showNotification}
+        type="success"
+        title={t('common.success')}
+        message={t('saved.removedSuccess')}
+        onClose={() => setShowNotification(false)}
+      />
+      <NotificationModal
+        visible={showErrorNotification}
+        type="error"
+        title={t('common.error')}
+        message={errorNotificationMessage}
+        onClose={() => setShowErrorNotification(false)}
+      />
+      {/* Nota: questa azione rimuove solo la ricetta dalle salvate, non la elimina dal database globale. */}
     </View>
   );
 };

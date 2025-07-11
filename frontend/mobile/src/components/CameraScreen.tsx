@@ -16,6 +16,15 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { NoIngredientsModal } from './NoIngredientsModal';
 import Svg, { Path, Rect } from 'react-native-svg';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  withRepeat,
+  Easing,
+} from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
@@ -36,7 +45,18 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   const [showNoIngredientsModal, setShowNoIngredientsModal] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   
+  // Animation values
+  const topBarOpacity = useSharedValue(0);
+  const topBarTranslateY = useSharedValue(-50);
   
+  const bottomBarOpacity = useSharedValue(0);
+  const bottomBarTranslateY = useSharedValue(50);
+  
+  const captureButtonScale = useSharedValue(0.8);
+  const captureButtonPulse = useSharedValue(1);
+  
+  const sideButtonsOpacity = useSharedValue(0);
+  const sideButtonsScale = useSharedValue(0.8);
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
@@ -45,6 +65,52 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       requestPermission();
     }
   }, [permission]);
+
+  // Entrance animations
+  useEffect(() => {
+    // Top bar animation
+    topBarOpacity.value = withDelay(200, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    topBarTranslateY.value = withDelay(200, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // Bottom bar animation
+    bottomBarOpacity.value = withDelay(400, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    bottomBarTranslateY.value = withDelay(400, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // Capture button animation
+    captureButtonScale.value = withDelay(600, withSpring(1, { damping: 15, stiffness: 100 }));
+    captureButtonPulse.value = withDelay(800, 
+      withRepeat(
+        withTiming(1.05, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      )
+    );
+    
+    // Side buttons animation
+    sideButtonsOpacity.value = withDelay(700, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    sideButtonsScale.value = withDelay(700, withSpring(1, { damping: 15, stiffness: 100 }));
+  }, []);
+
+  const topBarAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: topBarOpacity.value,
+    transform: [{ translateY: topBarTranslateY.value }],
+  }));
+
+  const bottomBarAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: bottomBarOpacity.value,
+    transform: [{ translateY: bottomBarTranslateY.value }],
+  }));
+
+  const captureButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: captureButtonScale.value * captureButtonPulse.value }
+    ],
+  }));
+
+  const sideButtonsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: sideButtonsOpacity.value,
+    transform: [{ scale: sideButtonsScale.value }],
+  }));
 
   if (!permission) {
     return (
@@ -267,7 +333,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         />
         
         <View style={styles.overlay}>
-          <View style={styles.topBar}>
+          <Animated.View style={[styles.topBar, topBarAnimatedStyle]}>
             <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
               <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
@@ -280,73 +346,79 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
                 />
               </Svg>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
           
           {!isCapturing && (
-            <View style={styles.bottomBar}>
-              <TouchableOpacity style={styles.galleryButton} onPress={pickImageFromGallery}>
-                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
-                    stroke="white"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                  <Path
-                    d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z"
-                    fill="white"
-                  />
-                  <Path
-                    d="M21 15L16 10L5 21"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-              </TouchableOpacity>
+            <Animated.View style={[styles.bottomBar, bottomBarAnimatedStyle]}>
+              <Animated.View style={sideButtonsAnimatedStyle}>
+                <TouchableOpacity style={styles.galleryButton} onPress={pickImageFromGallery}>
+                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
+                      stroke="white"
+                      strokeWidth="2"
+                      fill="none"
+                    />
+                    <Path
+                      d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z"
+                      fill="white"
+                    />
+                    <Path
+                      d="M21 15L16 10L5 21"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                </TouchableOpacity>
+              </Animated.View>
               
-              <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-                <View style={styles.captureButtonInner} />
-              </TouchableOpacity>
+              <Animated.View style={captureButtonAnimatedStyle}>
+                <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+                  <View style={styles.captureButtonInner} />
+                </TouchableOpacity>
+              </Animated.View>
               
-              <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M17 2L20 5L17 8"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <Path
-                    d="M20 5H9A5 5 0 004 10V14"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <Path
-                    d="M7 22L4 19L7 16"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <Path
-                    d="M4 19H15A5 5 0 0020 14V10"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                </Svg>
-              </TouchableOpacity>
-            </View>
+              <Animated.View style={sideButtonsAnimatedStyle}>
+                <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
+                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M17 2L20 5L17 8"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                    <Path
+                      d="M20 5H9A5 5 0 004 10V14"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                    <Path
+                      d="M7 22L4 19L7 16"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                    <Path
+                      d="M4 19H15A5 5 0 0020 14V10"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </Svg>
+                </TouchableOpacity>
+              </Animated.View>
+            </Animated.View>
           )}
         </View>
       </View>

@@ -18,7 +18,8 @@
     "startOver": "Ricomincia",
     "remove": "Rimuovi",
     "allTags": "Tutti i tag",
-    "all": "Tutti"
+    "all": "Tutti",
+    "warning": "Attenzione"
   },
   "auth": {
     "login": "Accedi",
@@ -180,7 +181,8 @@
       "portions": "Porzioni",
       "difficulty": "Difficoltà",
       "maxTime": "Tempo Massimo di Cottura"
-    }
+    },
+    "editWithAI": "Modifica con AI"
   },
   "navigation": {
     "home": "Home",
@@ -250,5 +252,10 @@
     "privacy": "Privacy",
     "terms": "Termini di Servizio",
     "support": "Supporto"
+  },
+  "chatAI": {
+    "placeholder": "Scrivi una richiesta o modifica...",
+    "intro": "Modifica la ricetta tramite chat AI. Puoi chiedere di cambiare ingredienti, porzioni, stile di cucina, ecc.",
+    "modificationsApplied": "Le modifiche sono state applicate con successo alla tua ricetta!"
   }
 }

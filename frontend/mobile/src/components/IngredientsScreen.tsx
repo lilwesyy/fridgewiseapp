@@ -10,11 +10,20 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { RecipeGenerationLoader } from './RecipeGenerationLoader';
 import Svg, { Path } from 'react-native-svg';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 
 interface Ingredient {
   name: string;
@@ -29,6 +38,53 @@ interface IngredientsScreenProps {
   onGoBack: () => void;
   onGoToCamera: (currentIngredients: Ingredient[]) => void;
 }
+
+interface IngredientItemProps {
+  item: Ingredient;
+  index: number;
+  onRemove: () => void;
+  language: string;
+}
+
+const IngredientItem: React.FC<IngredientItemProps> = ({ item, index, onRemove, language }) => {
+  const itemOpacity = useSharedValue(0);
+  const itemScale = useSharedValue(0.8);
+  const itemTranslateY = useSharedValue(20);
+
+  React.useEffect(() => {
+    const delay = 600 + (index * 100); // Start after list container animation
+    itemOpacity.value = withDelay(delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }));
+    itemScale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 100 }));
+    itemTranslateY.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) }));
+  }, [index]);
+
+  const itemAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: itemOpacity.value,
+    transform: [
+      { scale: itemScale.value },
+      { translateY: itemTranslateY.value }
+    ],
+  }));
+
+  return (
+    <Animated.View style={[styles.ingredientItem, itemAnimatedStyle]}>
+      <View style={styles.ingredientInfo}>
+        <Text style={styles.ingredientName}>
+          {language === 'it' && item.nameIt ? item.nameIt : item.name}
+        </Text>
+        <Text style={styles.ingredientCategory}>
+          {item.category} • {Math.round(item.confidence * 100)}%
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={styles.removeButton}
+        onPress={onRemove}
+      >
+        <Text style={styles.removeButtonText}>×</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
 
 export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   ingredients: initialIngredients,
@@ -50,6 +106,63 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   const [portions, setPortions] = useState('2');
   const [difficulty, setDifficulty] = useState('easy');
   const [maxTime, setMaxTime] = useState('30');
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const headerScale = useSharedValue(0.8);
+  const headerTranslateY = useSharedValue(-30);
+  
+  const addSectionOpacity = useSharedValue(0);
+  const addSectionTranslateY = useSharedValue(30);
+  
+  const listOpacity = useSharedValue(0);
+  const listTranslateY = useSharedValue(40);
+  
+  const footerOpacity = useSharedValue(0);
+  const footerTranslateY = useSharedValue(50);
+
+  // Entrance animations
+  useEffect(() => {
+    // Header animation
+    headerOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+    headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
+    headerTranslateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+    
+    // Add section animation
+    addSectionOpacity.value = withDelay(150, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    addSectionTranslateY.value = withDelay(150, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // List animation
+    listOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    listTranslateY.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    
+    // Footer animation
+    footerOpacity.value = withDelay(450, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    footerTranslateY.value = withDelay(450, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+  }, []);
+
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [
+      { scale: headerScale.value },
+      { translateY: headerTranslateY.value }
+    ],
+  }));
+
+  const addSectionAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: addSectionOpacity.value,
+    transform: [{ translateY: addSectionTranslateY.value }],
+  }));
+
+  const listAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: listOpacity.value,
+    transform: [{ translateY: listTranslateY.value }],
+  }));
+
+  const footerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: footerOpacity.value,
+    transform: [{ translateY: footerTranslateY.value }],
+  }));
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
@@ -116,28 +229,20 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
     }
   };
 
-  const renderIngredient = ({ item, index }: { item: Ingredient; index: number }) => (
-    <View style={styles.ingredientItem}>
-      <View style={styles.ingredientInfo}>
-        <Text style={styles.ingredientName}>
-          {i18n.language === 'it' && item.nameIt ? item.nameIt : item.name}
-        </Text>
-        <Text style={styles.ingredientCategory}>
-          {item.category} • {Math.round(item.confidence * 100)}%
-        </Text>
-      </View>
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() => removeIngredient(index)}
-      >
-        <Text style={styles.removeButtonText}>×</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderIngredient = ({ item, index }: { item: Ingredient; index: number }) => {
+    return (
+      <IngredientItem 
+        item={item} 
+        index={index} 
+        onRemove={() => removeIngredient(index)}
+        language={i18n.language}
+      />
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <Animated.View style={[styles.header, headerAnimatedStyle]}>
         <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
@@ -160,9 +265,9 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
             />
           </Svg>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
-      <View style={styles.addIngredientContainer}>
+      <Animated.View style={[styles.addIngredientContainer, addSectionAnimatedStyle]}>
         <TextInput
           style={styles.textInput}
           placeholder={t('camera.addIngredient')}
@@ -173,23 +278,25 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
         <TouchableOpacity style={styles.addButton} onPress={addIngredient}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       {ingredients.length === 0 ? (
-        <View style={styles.emptyContainer}>
+        <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
           <Text style={styles.emptyText}>{t('camera.noIngredientsFound')}</Text>
-        </View>
+        </Animated.View>
       ) : (
-        <FlatList
-          data={ingredients}
-          renderItem={renderIngredient}
-          keyExtractor={(item, index) => `${item.name}-${index}`}
-          style={styles.ingredientsList}
-          showsVerticalScrollIndicator={false}
-        />
+        <Animated.View style={[{ flex: 1 }, listAnimatedStyle]}>
+          <FlatList
+            data={ingredients}
+            renderItem={renderIngredient}
+            keyExtractor={(item, index) => `${item.name}-${index}`}
+            style={styles.ingredientsList}
+            showsVerticalScrollIndicator={false}
+          />
+        </Animated.View>
       )}
 
-      <View style={styles.footer}>
+      <Animated.View style={[styles.footer, footerAnimatedStyle]}>
         <TouchableOpacity
           style={[styles.generateButton, (isGenerating || ingredients.length === 0) && styles.generateButtonDisabled]}
           onPress={showRecipePreferences}
@@ -201,7 +308,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
             <Text style={styles.generateButtonText}>{t('recipe.generateRecipe')}</Text>
           )}
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       {isGenerating && (
         <View style={styles.loadingOverlay}>
@@ -216,7 +323,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowPreferencesModal(false)}
       >
-        <View style={styles.modalContainer}>
+        <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity 
               style={styles.modalCloseButton} 
@@ -228,7 +335,11 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
             <View style={styles.modalSpacer} />
           </View>
 
-          <ScrollView style={styles.modalContent}>
+          <View style={{ flex: 1, paddingBottom: 100 }}>
+            <ScrollView 
+              style={styles.modalContent}
+              contentContainerStyle={styles.modalContentContainer}
+            >
             {/* Portions */}
             <View style={styles.preferenceSection}>
               <Text style={styles.preferenceLabel}>{t('recipe.preferences.portions')}</Text>
@@ -294,7 +405,8 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
                 ))}
               </View>
             </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
 
           <View style={styles.modalFooter}>
             <TouchableOpacity
@@ -304,7 +416,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
               <Text style={styles.generateModalButtonText}>{t('recipe.generateRecipe')}</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </SafeAreaView>
       </Modal>
       
       <RecipeGenerationLoader visible={isGenerating} />
@@ -502,6 +614,8 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
+  },
+  modalContentContainer: {
     padding: 20,
   },
   preferenceSection: {
@@ -590,10 +704,20 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   modalFooter: {
+    position: 'absolute',
+    top: '85%', // Posizionato più in basso
+    left: 0,
+    right: 0,
     padding: 20,
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#E9ECEF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 999,
   },
   generateModalButton: {
     backgroundColor: '#28A745',
