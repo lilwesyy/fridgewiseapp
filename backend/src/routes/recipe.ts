@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe } from '../controllers/recipeController';
+import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe } from '../controllers/recipeController';
 import { protect } from '../middleware/auth';
 
 const router = Router();
@@ -8,6 +8,7 @@ const router = Router();
 router.use(protect);
 
 router.post('/generate', generateRecipe);
+router.post('/', createRecipe); // Create recipe without saving to collection
 router.get('/', getRecipes);
 router.get('/saved', getSavedRecipes);
 router.post('/save/:id', saveRecipe);

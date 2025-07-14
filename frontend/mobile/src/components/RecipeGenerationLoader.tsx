@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 import { LoadingAnimation } from './LoadingAnimation';
 
 interface RecipeGenerationLoaderProps {
@@ -9,6 +10,8 @@ interface RecipeGenerationLoaderProps {
 
 export const RecipeGenerationLoader: React.FC<RecipeGenerationLoaderProps> = ({ visible }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [currentStep, setCurrentStep] = useState(0);
   const fadeAnim = new Animated.Value(0);
 
@@ -66,7 +69,7 @@ export const RecipeGenerationLoader: React.FC<RecipeGenerationLoaderProps> = ({ 
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -75,12 +78,12 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   content: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 40,
     alignItems: 'center',
     maxWidth: 300,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -89,14 +92,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: colors.text,
     marginTop: 20,
     marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -109,10 +112,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: colors.border,
     marginHorizontal: 4,
   },
   activeDot: {
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
   },
 });

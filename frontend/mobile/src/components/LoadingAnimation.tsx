@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface LoadingAnimationProps {
   size?: number;
@@ -8,8 +9,10 @@ interface LoadingAnimationProps {
 
 export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ 
   size = 60, 
-  color = 'rgb(22, 163, 74)' 
+  color 
 }) => {
+  const { colors } = useTheme();
+  const defaultColor = color || colors.primary;
   const spinValue = useRef(new Animated.Value(0)).current;
   const scaleValue = useRef(new Animated.Value(1)).current;
 
@@ -59,7 +62,7 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
           {
             width: size,
             height: size,
-            borderColor: color,
+            borderColor: defaultColor,
             borderTopColor: 'transparent',
             transform: [{ rotate: spin }, { scale: scaleValue }],
           },

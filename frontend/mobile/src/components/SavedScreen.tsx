@@ -8,7 +8,6 @@ import {
   TextInput,
   Alert,
   ScrollView,
-  PanResponder,
   Dimensions,
   RefreshControl,
 } from 'react-native';
@@ -27,102 +26,11 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-interface SwipeableRowProps {
-  children: React.ReactNode;
-  onDelete: () => void;
-  deleteText: string;
-  resetTrigger?: number; // Add reset trigger prop
-}
-
-const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteText, resetTrigger }) => {
-  const translateX = useSharedValue(0);
-  const [isRevealed, setIsRevealed] = useState(false);
-  const deleteButtonWidth = 100;
-
-  // Reset when resetTrigger changes
-  useEffect(() => {
-    if (resetTrigger !== undefined) {
-      translateX.value = withSpring(0, { damping: 15, stiffness: 100 });
-      setIsRevealed(false);
-    }
-  }, [resetTrigger]);
-
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dy) < 100;
-    },
-    onPanResponderMove: (_, gestureState) => {
-      if (gestureState.dx < 0) {
-        // Swipe left - reveal delete button
-        const newTranslateX = Math.max(gestureState.dx, -deleteButtonWidth);
-        translateX.value = newTranslateX;
-      } else if (gestureState.dx > 0 && isRevealed) {
-        // Swipe right when already revealed - hide delete button
-        const newTranslateX = Math.min(gestureState.dx - deleteButtonWidth, 0);
-        translateX.value = newTranslateX;
-      } else if (gestureState.dx > 0 && !isRevealed) {
-        // Swipe right when not revealed - keep at 0
-        translateX.value = 0;
-      }
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      if (gestureState.dx < -50) {
-        // Swipe left enough to reveal delete button
-        translateX.value = withSpring(-deleteButtonWidth, { damping: 15, stiffness: 100 });
-        runOnJS(setIsRevealed)(true);
-      } else if (gestureState.dx > 50 && isRevealed) {
-        // Swipe right enough to hide delete button when revealed
-        translateX.value = withSpring(0, { damping: 15, stiffness: 100 });
-        runOnJS(setIsRevealed)(false);
-      } else {
-        // Snap to appropriate position based on current state
-        const targetValue = isRevealed ? -deleteButtonWidth : 0;
-        translateX.value = withSpring(targetValue, { damping: 15, stiffness: 100 });
-      }
-    },
-  });
-
-  const handleDelete = () => {
-    // Animate the deletion
-    translateX.value = withTiming(-screenWidth, { duration: 300 }, (finished) => {
-      if (finished) {
-        runOnJS(onDelete)();
-      }
-    });
-  };
-
-  const hideDeleteButton = () => {
-    translateX.value = withSpring(0, { damping: 15, stiffness: 100 });
-    setIsRevealed(false);
-  };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  return (
-    <View style={styles.swipeContainer}>
-      <TouchableOpacity
-        style={styles.deleteBackground}
-        onPress={handleDelete}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="trash" size={24} color="white" />
-        <Text style={styles.deleteText}>{deleteText}</Text>
-      </TouchableOpacity>
-      <Animated.View
-        style={[styles.swipeRow, animatedStyle]}
-        {...panResponder.panHandlers}
-      >
-        {children}
-      </Animated.View>
-    </View>
-  );
-};
-
+// Sposto le interfacce in alto
 interface SavedRecipe {
   id: string;
   title: string;
@@ -156,108 +64,10 @@ interface SavedRecipeItemProps {
   getDifficultyColor: (difficulty: string) => string;
 }
 
-const SavedRecipeItem: React.FC<SavedRecipeItemProps> = ({ 
-  item, 
-  index, 
-  onPress, 
-  onDelete, 
-  resetTrigger, 
-  t, 
-  formatDate, 
-  getDifficultyColor 
-}) => {
-  const cardOpacity = useSharedValue(0);
-  const cardScale = useSharedValue(0.8);
-  const cardTranslateY = useSharedValue(30);
-
-  React.useEffect(() => {
-    const delay = 600 + (index * 100); // Start after list container animation
-    cardOpacity.value = withDelay(delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }));
-    cardScale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 100 }));
-    cardTranslateY.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) }));
-  }, [index]);
-
-  const cardAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: cardOpacity.value,
-    transform: [
-      { scale: cardScale.value },
-      { translateY: cardTranslateY.value }
-    ],
-  }));
-
-  return (
-    <Animated.View style={cardAnimatedStyle}>
-      <SwipeableRow
-        onDelete={onDelete}
-        deleteText={t('common.remove')}
-        resetTrigger={resetTrigger}
-      >
-        <TouchableOpacity
-          style={styles.recipeCard}
-          onPress={onPress}
-          activeOpacity={0.7}
-        >
-          <View style={styles.recipeHeader}>
-            <Text style={styles.recipeTitle} numberOfLines={2}>
-              {item.title}
-            </Text>
-            <View style={styles.headerActions}>
-              <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(item.difficulty) }]}>
-                <Text style={styles.difficultyText}>
-                  {t(`recipes.difficulty.${item.difficulty}`)}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={onDelete}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={styles.removeButtonText}>×</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <Text style={styles.recipeDescription} numberOfLines={3}>
-            {item.description}
-          </Text>
-
-          <View style={styles.recipeMetadata}>
-            <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>⏱️ {item.cookingTime} min</Text>
-            </View>
-            <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>👥 {item.servings}</Text>
-            </View>
-            <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
-            </View>
-          </View>
-
-          {item.dietaryTags.length > 0 && (
-            <View style={styles.dietaryTags}>
-              {item.dietaryTags.slice(0, 3).map((tag, index) => (
-                <View key={index} style={styles.dietaryTag}>
-                  <Text style={styles.dietaryTagText}>
-                    {t(`recipes.dietary.${tag.replace('-', '')}`)}
-                  </Text>
-                </View>
-              ))}
-              {item.dietaryTags.length > 3 && (
-                <Text style={styles.moreTagsText}>+{item.dietaryTags.length - 3}</Text>
-              )}
-            </View>
-          )}
-
-          <Text style={styles.recipeDate}>{t('saved.savedOn')} {formatDate(item.savedAt)}</Text>
-        </TouchableOpacity>
-      </SwipeableRow>
-    </Animated.View>
-  );
-};
-
 export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
+  const { colors } = useTheme();
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<SavedRecipe[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -382,7 +192,7 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
       filtered = filtered.filter(recipe =>
         recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         recipe.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        recipe.ingredients.some(ingredient =>
+        recipe.ingredients.some((ingredient: { name: string }) =>
           ingredient.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
@@ -474,6 +284,7 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
         t={t}
         formatDate={formatDate}
         getDifficultyColor={getDifficultyColor}
+        colors={colors} // pass colors to item
       />
     );
   };
@@ -486,46 +297,80 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   const removeCancelLabel = t('common.cancel');
 
   return (
-    <View style={styles.container}>
-      <Animated.View style={[styles.header, headerAnimatedStyle]}>
-        <Text style={styles.title}>{t('saved.title')}</Text>
-        <Text style={styles.subtitle}>{t('saved.subtitle')}</Text>
-        
-        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle]}>
-          <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
+        <Text style={[styles.title, { color: colors.text }]}>{t('saved.title')}</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
+        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text, backgroundColor: 'transparent' }]}
             placeholder={t('recipes.searchPlaceholder')}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
           />
         </Animated.View>
-        
         <Animated.View style={filtersAnimatedStyle}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
             <TouchableOpacity
-              style={[styles.filterBadge, !difficultyFilter && styles.filterBadgeActive]}
+              style={{
+                backgroundColor: !difficultyFilter ? colors.primary : colors.card,
+                borderColor: !difficultyFilter ? colors.primary : colors.border,
+                borderWidth: 1,
+                borderRadius: 20,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                marginRight: 8,
+              }}
               onPress={() => setDifficultyFilter('')}
             >
-              <Text style={[styles.filterBadgeText, !difficultyFilter && styles.filterBadgeTextActive]}>{t('common.all')}</Text>
+              <Text style={{
+                color: !difficultyFilter ? colors.buttonText : colors.text,
+                fontSize: 14,
+                fontWeight: '500',
+              }}>{t('common.all')}</Text>
             </TouchableOpacity>
             {['easy','medium','hard'].map(diff => (
               <TouchableOpacity
                 key={diff}
-                style={[styles.filterBadge, difficultyFilter === diff && styles.filterBadgeActive]}
+                style={{
+                  backgroundColor: difficultyFilter === diff ? colors.primary : colors.card,
+                  borderColor: difficultyFilter === diff ? colors.primary : colors.border,
+                  borderWidth: 1,
+                  borderRadius: 20,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  marginRight: 8,
+                }}
                 onPress={() => setDifficultyFilter(diff)}
               >
-                <Text style={[styles.filterBadgeText, difficultyFilter === diff && styles.filterBadgeTextActive]}>{t(`recipes.difficulty.${diff}`)}</Text>
+                <Text style={{
+                  color: difficultyFilter === diff ? colors.buttonText : colors.text,
+                  fontSize: 14,
+                  fontWeight: '500',
+                }}>{t(`recipes.difficulty.${diff}`)}</Text>
               </TouchableOpacity>
             ))}
             {dietaryTags.map(tag => (
               <TouchableOpacity
                 key={tag}
-                style={[styles.filterBadge, tagFilter === tag && styles.filterBadgeActive]}
+                style={{
+                  backgroundColor: tagFilter === tag ? colors.primary : colors.card,
+                  borderColor: tagFilter === tag ? colors.primary : colors.border,
+                  borderWidth: 1,
+                  borderRadius: 20,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  marginRight: 8,
+                }}
                 onPress={() => setTagFilter(tag)}
               >
-                <Text style={[styles.filterBadgeText, tagFilter === tag && styles.filterBadgeTextActive]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
+                <Text style={{
+                  color: tagFilter === tag ? colors.buttonText : colors.text,
+                  fontSize: 14,
+                  fontWeight: '500',
+                }}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -563,9 +408,28 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
         <Animated.View style={[{ flex: 1 }, listAnimatedStyle]}>
           <FlatList
             data={filteredRecipes}
-            renderItem={renderSavedRecipe}
+            renderItem={({ item, index }) => (
+              <SavedRecipeItem
+                item={item}
+                index={index}
+                onPress={() => {
+                  const idx = filteredRecipes.findIndex(r => {
+                    const currentRecipeId = (r as any)._id || r.id;
+                    const itemId = (item as any)._id || item.id;
+                    return currentRecipeId === itemId;
+                  });
+                  onSelectRecipe(item, filteredRecipes, idx);
+                }}
+                onDelete={() => handleDeleteRequest(item)}
+                resetTrigger={resetTrigger}
+                t={t}
+                formatDate={formatDate}
+                getDifficultyColor={getDifficultyColor}
+                colors={colors} // pass colors to item
+              />
+            )}
             keyExtractor={(item) => (item as any)._id || item.id}
-            style={styles.recipesList}
+            style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}
             showsVerticalScrollIndicator={false}
             refreshing={isLoading}
             onRefresh={fetchSavedRecipes}
@@ -573,8 +437,8 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
               <RefreshControl
                 refreshing={isLoading}
                 onRefresh={fetchSavedRecipes}
-                colors={['rgb(22, 163, 74)']}
-                tintColor={'rgb(22, 163, 74)'}
+                colors={[colors.primary]}
+                tintColor={colors.primary}
               />
             }
           />
@@ -852,3 +716,107 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+
+// Rimuovo SwipeableRow e uso solo la card
+const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({ 
+  item, 
+  index, 
+  onPress, 
+  onDelete, 
+  resetTrigger, 
+  t, 
+  formatDate, 
+  getDifficultyColor,
+  colors
+}) => {
+  const cardOpacity = useSharedValue(0);
+  const cardScale = useSharedValue(0.8);
+  const cardTranslateY = useSharedValue(30);
+
+  React.useEffect(() => {
+    const delay = 600 + (index * 100);
+    cardOpacity.value = withDelay(delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }));
+    cardScale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 100 }));
+    cardTranslateY.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) }));
+  }, [index]);
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [
+      { scale: cardScale.value },
+      { translateY: cardTranslateY.value }
+    ],
+  }));
+
+  return (
+    <Animated.View style={cardAnimatedStyle}>
+      <TouchableOpacity
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 8,
+          borderWidth: 1,
+          borderColor: colors.border,
+          shadowColor: colors.shadow || '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 4,
+          elevation: 2,
+        }}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, flex: 1, marginRight: 12 }} numberOfLines={2}>
+            {item.title}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: getDifficultyColor(item.difficulty) }}>
+              <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>
+                {t(`recipes.difficulty.${item.difficulty}`)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={{ backgroundColor: colors.error, borderRadius: 12, width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}
+              onPress={onDelete}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold', lineHeight: 16 }}>×</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 12 }} numberOfLines={3}>
+          {item.description}
+        </Text>
+        <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+          <View style={{ marginRight: 16 }}>
+            <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>⏱️ {item.cookingTime} min</Text>
+          </View>
+          <View style={{ marginRight: 16 }}>
+            <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>👥 {item.servings}</Text>
+          </View>
+          <View style={{ marginRight: 16 }}>
+            <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
+          </View>
+        </View>
+        {item.dietaryTags.length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}>
+            {item.dietaryTags.slice(0, 3).map((tag: string, index: number) => (
+              <View key={index} style={{ backgroundColor: colors.badge, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 6, marginBottom: 4 }}>
+                <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '600' }}>
+                  {t(`recipes.dietary.${tag.replace('-', '')}`)}
+                </Text>
+              </View>
+            ))}
+            {item.dietaryTags.length > 3 && (
+              <Text style={{ fontSize: 10, color: colors.textSecondary, alignSelf: 'center' }}>+{item.dietaryTags.length - 3}</Text>
+            )}
+          </View>
+        )}
+        <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'right' }}>{t('saved.savedOn')} {formatDate(item.savedAt)}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};

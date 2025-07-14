@@ -13,6 +13,7 @@ import {
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useStatistics } from '../hooks/useStatistics';
 import { ShareModal } from './ShareModal';
 import Svg, { Path, G } from 'react-native-svg';
@@ -35,7 +36,7 @@ interface HomeScreenProps {
   onSelectRecipe?: (recipe: any, allRecipes: any[], index: number) => void;
 }
 
-const LogoComponent: React.FC<{ width?: number; height?: number; color?: string }> = ({ width = 60, height = 54, color = "rgb(22, 163, 74)" }) => (
+const LogoComponent: React.FC<{ width?: number; height?: number; color?: string }> = ({ width = 60, height = 54, color = "#fff" }) => (
   <Svg width={width} height={height} viewBox="0 0 267 241">
     <G>
       <G>
@@ -80,6 +81,8 @@ const LogoComponent: React.FC<{ width?: number; height?: number; color?: string 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSelectRecipe }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { statistics, isLoading: statsLoading, recentRecipes, isLoadingRecipes, refreshStatistics } = useStatistics();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -328,8 +331,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
-          colors={['rgb(22, 163, 74)']}
-          tintColor="rgb(22, 163, 74)"
+          colors={[colors.primary]}
+          tintColor={colors.primary}
           progressViewOffset={getStatusBarHeight()}
         />
       }
@@ -338,12 +341,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       <Animated.View style={[styles.welcomeBanner, bannerStyle]}>
         <View style={styles.bannerContent}>
           <View style={styles.bannerLeft}>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.userName}>{userName}!</Text>
-            <Text style={styles.bannerQuote}>{getRandomQuote()}</Text>
+            <Text style={{...styles.greeting, color: '#fff'}}>{getGreeting()}</Text>
+            <Text style={{...styles.userName, color: '#fff'}}>{userName}!</Text>
+            <Text style={{...styles.bannerQuote, color: '#fff'}}>{getRandomQuote()}</Text>
           </View>
           <Animated.View style={[styles.bannerRight, logoAnimatedStyle]}>
-            <LogoComponent width={80} height={72} color="white" />
+            <LogoComponent width={80} height={72} color="#fff" />
           </Animated.View>
         </View>
       </Animated.View>
@@ -375,7 +378,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       {/* Quick Actions */}
       <Animated.View style={[styles.section, actionStyle]}>
         <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
-        
         <Animated.View style={buttonAnimatedStyle}>
           <TouchableOpacity 
             style={styles.primaryAction} 
@@ -402,10 +404,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
             </Svg>
           </View>
           <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>{t('home.scanFridge')}</Text>
-            <Text style={styles.actionDescription}>{t('home.scanDescription')}</Text>
+            <Text style={{...styles.actionTitle, color: 'white'}}>{t('home.scanFridge')}</Text>
+            <Text style={{...styles.actionDescription, color: 'rgba(255,255,255,0.8)'}}>{t('home.scanDescription')}</Text>
           </View>
-          <Text style={styles.actionArrow}>→</Text>
+          <Text style={{...styles.actionArrow, color: 'white'}}>→</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>
@@ -434,14 +436,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                     <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
                       <Path
                         d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-                        stroke="#10B981"
+                        stroke={colors.success}
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                       <Path
                         d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-                        stroke="#10B981"
+                        stroke={colors.success}
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -458,7 +460,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                         <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                           <Path
                             d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
-                            stroke="#6B7280"
+                            stroke={colors.textSecondary}
                             strokeWidth={2}
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -489,25 +491,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
         
         <View style={styles.featuresGrid}>
           <Animated.View style={[styles.featureCard, createCardStyle(0)]}>
-            <View style={[styles.featureIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+            <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M12 2L2 7L12 12L22 7L12 2Z"
-                  stroke="#3B82F6"
+                  stroke={colors.primary}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
                 <Path
                   d="M2 17L12 22L22 17"
-                  stroke="#3B82F6"
+                  stroke={colors.primary}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
                 <Path
                   d="M2 12L12 17L22 12"
-                  stroke="#3B82F6"
+                  stroke={colors.primary}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -519,18 +521,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
           </Animated.View>
 
           <Animated.View style={[styles.featureCard, createCardStyle(1)]}>
-            <View style={[styles.featureIcon, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+            <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-                  stroke="#10B981"
+                  stroke={colors.success}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
                 <Path
                   d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-                  stroke="#10B981"
+                  stroke={colors.success}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -542,11 +544,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
           </Animated.View>
 
           <Animated.View style={[styles.featureCard, createCardStyle(2)]}>
-            <View style={[styles.featureIcon, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
+            <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M19 21L12 16L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z"
-                  stroke="#F59E0B"
+                  stroke={colors.warning}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -558,17 +560,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
           </Animated.View>
 
           <Animated.View style={[styles.featureCard, createCardStyle(3)]}>
-            <View style={[styles.featureIcon, { backgroundColor: 'rgba(168, 85, 247, 0.1)' }]}>
+            <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M17 8C17 10.7614 14.7614 13 12 13C9.23858 13 7 10.7614 7 8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8Z"
-                  stroke="#A855F7"
+                  stroke={colors.primary}
                   strokeWidth="2"
                   fill="none"
                 />
                 <Path
                   d="M20 21C20 16.0294 16.4183 12 12 12C7.58172 12 4 16.0294 4 21"
-                  stroke="#A855F7"
+                  stroke={colors.primary}
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
@@ -607,13 +609,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background,
   },
   welcomeBanner: {
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
     marginHorizontal: 20,
     marginTop: 60,
     borderRadius: 16,
@@ -637,7 +639,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 24,
-    color: 'white',
+    color: colors.buttonText,
     fontWeight: 'bold',
     marginTop: 4,
     marginBottom: 8,
@@ -655,7 +657,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   statsContainer: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     marginHorizontal: 20,
     marginTop: 16,
     borderRadius: 16,
@@ -663,7 +665,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -676,19 +678,19 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.border,
     marginHorizontal: 16,
   },
   section: {
@@ -698,16 +700,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: colors.text,
     marginBottom: 16,
   },
   primaryAction: {
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
     borderRadius: 16,
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: 'rgb(22, 163, 74)',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -725,7 +727,7 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: colors.buttonText,
     marginBottom: 4,
   },
   actionDescription: {
@@ -734,7 +736,7 @@ const styles = StyleSheet.create({
   },
   actionArrow: {
     fontSize: 24,
-    color: 'white',
+    color: colors.buttonText,
     fontWeight: 'bold',
   },
   featuresGrid: {
@@ -744,11 +746,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   featureCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     width: (width - 56) / 2,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -763,21 +765,21 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: colors.text,
     marginBottom: 8,
   },
   featureDescription: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   tipCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -785,7 +787,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   tipIcon: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 12,
     marginRight: 16,
@@ -799,39 +801,39 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: colors.text,
     marginBottom: 4,
   },
   tipDescription: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   recipesScrollContainer: {
     paddingRight: 20,
   },
   recipeCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginRight: 12,
     width: 200,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
   recipeCardSkeleton: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.card,
   },
   recipeSkeleton: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.border,
     borderRadius: 8,
     height: 120,
   },
   recipeImagePlaceholder: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: colors.card,
     borderRadius: 8,
     height: 80,
     justifyContent: 'center',
@@ -850,7 +852,7 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: colors.text,
     lineHeight: 20,
     flex: 1,
     marginRight: 8,
@@ -861,7 +863,7 @@ const styles = StyleSheet.create({
   },
   recipeDetails: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   recipeTags: {
@@ -870,8 +872,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   difficultyTag: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    color: '#3B82F6',
+    backgroundColor: colors.card,
+    color: colors.primary,
     fontSize: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -879,8 +881,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   dietaryTag: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    color: '#10B981',
+    backgroundColor: colors.card,
+    color: colors.success,
     fontSize: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,

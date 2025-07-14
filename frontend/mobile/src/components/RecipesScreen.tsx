@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  Alert,
   ScrollView,
   PanResponder,
   Dimensions,
@@ -17,7 +16,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect } from 'react-native-svg';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
-import Animated, {
+import { NotificationModal, NotificationType } from './NotificationModal';
+import Animated,
+{
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -26,6 +27,7 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -161,6 +163,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   formatDate, 
   getDifficultyColor 
 }) => {
+  const { colors } = useTheme();
   const cardOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.8);
   const cardTranslateY = useSharedValue(30);
@@ -188,49 +191,49 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
         resetTrigger={resetTrigger}
       >
         <TouchableOpacity
-          style={styles.recipeCard}
+          style={[styles.recipeCard, { backgroundColor: colors.surface }]}
           onPress={onPress}
           activeOpacity={0.7}
         >
           <View style={styles.recipeHeader}>
-            <Text style={styles.recipeTitle} numberOfLines={2}>
+            <Text style={[styles.recipeTitle, { color: colors.text }]} numberOfLines={2}>
               {item.title}
             </Text>
             <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(item.difficulty) }]}> 
-              <Text style={styles.difficultyText}>
+              <Text style={[styles.difficultyText, { color: colors.buttonText }]}>
                 {t(`recipes.difficulty.${item.difficulty}`)}
               </Text>
             </View>
           </View>
-          <Text style={styles.recipeDescription} numberOfLines={3}>
+          <Text style={[styles.recipeDescription, { color: colors.textSecondary }]} numberOfLines={3}>
             {item.description}
           </Text>
           <View style={styles.recipeMetadata}>
             <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>⏱️ {item.cookingTime} min</Text>
+              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>⏱️ {item.cookingTime} min</Text>
             </View>
             <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>👥 {item.servings}</Text>
+              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>👥 {item.servings}</Text>
             </View>
             <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
+              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
             </View>
           </View>
           {item.dietaryTags.length > 0 && (
             <View style={styles.dietaryTags}>
               {item.dietaryTags.slice(0, 3).map((tag) => (
-                <View key={tag} style={styles.dietaryTag}>
-                  <Text style={styles.dietaryTagText}>
+                <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }]}> 
+                  <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
                     {t(`recipes.dietary.${tag.replace('-', '')}`)}
                   </Text>
                 </View>
               ))}
               {item.dietaryTags.length > 3 && (
-                <Text style={styles.moreTagsText}>+{item.dietaryTags.length - 3}</Text>
+                <Text style={[styles.moreTagsText, { color: colors.textSecondary }]}>+{item.dietaryTags.length - 3}</Text>
               )}
             </View>
           )}
-          <Text style={styles.recipeDate}>{formatDate(item.createdAt)}</Text>
+          <Text style={[styles.recipeDate, { color: colors.textSecondary }]}>{formatDate(item.createdAt)}</Text>
         </TouchableOpacity>
       </SwipeableRow>
     </Animated.View>
@@ -240,6 +243,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
 export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, onGoToCamera }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
+  const { colors } = useTheme();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -249,6 +253,12 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   const [resetTrigger, setResetTrigger] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
+  const [notification, setNotification] = useState({
+    visible: false,
+    type: 'error' as NotificationType,
+    title: '',
+    message: '',
+  });
   const dietaryTags = [
     'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'
   ];
@@ -354,7 +364,12 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
       }
     } catch (error) {
       console.error('Error fetching recipes:', error);
-      Alert.alert(t('common.error'), t('recipes.fetchError'));
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('recipes.fetchError'),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -408,7 +423,12 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
     try {
       const recipeId = (recipeToDelete as any)._id || recipeToDelete.id;
       if (!recipeId) {
-        Alert.alert(t('common.error'), t('recipe.invalidIdError'));
+        setNotification({
+          visible: true,
+          type: 'error',
+          title: t('common.error'),
+          message: t('recipe.invalidIdError'),
+        });
         return;
       }
       if ((recipeToDelete as any).isSaved) {
@@ -416,7 +436,12 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
           const currentRecipeId = (r as any)._id || r.id;
           return currentRecipeId !== recipeId;
         }));
-        Alert.alert(t('common.success'), t('recipe.deleteSuccess'));
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: t('common.success'),
+          message: t('recipe.deleteSuccess'),
+        });
       } else {
         const deleteResponse = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
           method: 'DELETE',
@@ -427,14 +452,24 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             const currentRecipeId = (r as any)._id || r.id;
             return currentRecipeId !== recipeId;
           }));
-          Alert.alert(t('common.success'), t('recipe.deleteSuccess'));
+          setNotification({
+          visible: true,
+          type: 'success',
+          title: t('common.success'),
+          message: t('recipe.deleteSuccess'),
+        });
         } else {
           throw new Error('Failed to delete recipe');
         }
       }
     } catch (error) {
       console.error('Error deleting recipe:', error);
-      Alert.alert(t('common.error'), t('recipe.deleteError'));
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('recipe.deleteError'),
+      });
     } finally {
       setRecipeToDelete(null);
     }
@@ -463,48 +498,46 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   };
 
   return (
-    <View style={styles.container}>
-      <Animated.View style={[styles.header, headerAnimatedStyle]}>
-        <Text style={styles.title}>{t('recipes.title') || 'Le tue ricette'}</Text>
-        <Text style={styles.subtitle}>{t('recipes.subtitle') || 'Ricette deliziose basate sui tuoi ingredienti'}</Text>
-        
-        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle]}>
-          <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+      <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
+        <Text style={[styles.title, { color: colors.text }]}>{t('recipes.title') || 'Le tue ricette'}</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('recipes.subtitle') || 'Ricette deliziose basate sui tuoi ingredienti'}</Text>
+        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder={t('recipes.searchPlaceholder')}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
           />
         </Animated.View>
-        
         <Animated.View style={filtersAnimatedStyle}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
             {/* Difficoltà */}
             <TouchableOpacity
-              style={[styles.filterBadge, !difficultyFilter && styles.filterBadgeActive]}
+              style={[styles.filterBadge, { backgroundColor: !difficultyFilter ? colors.primary : colors.card, borderColor: !difficultyFilter ? colors.primary : 'transparent' }]}
               onPress={() => setDifficultyFilter('')}
             >
-              <Text style={[styles.filterBadgeText, !difficultyFilter && styles.filterBadgeTextActive]}>{t('common.all')}</Text>
+              <Text style={[styles.filterBadgeText, { color: !difficultyFilter ? colors.buttonText : colors.text }]}>{t('common.all')}</Text>
             </TouchableOpacity>
             {['easy','medium','hard'].map(diff => (
               <TouchableOpacity
                 key={diff}
-                style={[styles.filterBadge, difficultyFilter === diff && styles.filterBadgeActive]}
+                style={[styles.filterBadge, { backgroundColor: difficultyFilter === diff ? colors.primary : colors.card, borderColor: difficultyFilter === diff ? colors.primary : 'transparent' }]}
                 onPress={() => setDifficultyFilter(diff)}
               >
-                <Text style={[styles.filterBadgeText, difficultyFilter === diff && styles.filterBadgeTextActive]}>{t(`recipes.difficulty.${diff}`)}</Text>
+                <Text style={[styles.filterBadgeText, { color: difficultyFilter === diff ? colors.buttonText : colors.text }]}>{t(`recipes.difficulty.${diff}`)}</Text>
               </TouchableOpacity>
             ))}
             {/* Tag dietetici */}
             {dietaryTags.map(tag => (
               <TouchableOpacity
                 key={tag}
-                style={[styles.filterBadge, tagFilter === tag && styles.filterBadgeActive]}
+                style={[styles.filterBadge, { backgroundColor: tagFilter === tag ? colors.primary : colors.card, borderColor: tagFilter === tag ? colors.primary : 'transparent' }]}
                 onPress={() => setTagFilter(tag)}
               >
-                <Text style={[styles.filterBadgeText, tagFilter === tag && styles.filterBadgeTextActive]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
+                <Text style={[styles.filterBadgeText, { color: tagFilter === tag ? colors.buttonText : colors.text }]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -515,19 +548,19 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
           <View style={{ marginBottom: 16 }}>
             <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
-              <Rect x={6} y={8} width={36} height={32} rx={4} stroke="#16A34A" strokeWidth={2.5} fill="#F1F5F9"/>
-              <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill="#16A34A"/>
-              <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill="#A7F3D0"/>
-              <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill="#A7F3D0"/>
-              <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill="#A7F3D0"/>
+              <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card}/>
+              <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary}/>
+              <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.success}/>
+              <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.success}/>
+              <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.success}/>
             </Svg>
           </View>
           {recipes.length === 0 ? (
             <>
               <Text style={styles.emptyTitle}>{t('recipes.noRecipes')}</Text>
               <Text style={styles.emptySubtitle}>{t('recipes.startCreating')}</Text>
-              <TouchableOpacity style={styles.scanButton} onPress={onGoToCamera}>
-                <Text style={styles.scanButtonText}>{t('recipes.scanIngredients') || 'Scansiona Ingredienti'}</Text>
+              <TouchableOpacity style={[styles.scanButton, { backgroundColor: colors.primary }]} onPress={onGoToCamera}>
+                <Text style={[styles.scanButtonText, { color: colors.buttonText }]}>{t('recipes.scanIngredients') || 'Scansiona Ingredienti'}</Text>
               </TouchableOpacity>
             </>
           ) : (
@@ -555,8 +588,8 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
               <RefreshControl
                 refreshing={isLoading}
                 onRefresh={fetchRecipes}
-                colors={['rgb(22, 163, 74)']}
-                tintColor={'rgb(22, 163, 74)'}
+                colors={[colors.primary]}
+                tintColor={colors.primary}
               />
             }
           />
@@ -567,6 +600,14 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={confirmDeleteRecipe}
       />
+      
+      <NotificationModal
+        visible={notification.visible}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={() => setNotification({ ...notification, visible: false })}
+      />
     </View>
   );
 };
@@ -574,35 +615,35 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    // backgroundColor: '#F8F9FA', // rimosso, ora gestito dal tema
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: 'white',
+    // backgroundColor: 'white', // rimosso, ora gestito dal tema
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    // borderBottomColor: '#E9ECEF', // rimosso, ora gestito dal tema
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#212529',
+    // color: '#212529', // rimosso, ora gestito dal tema
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: '#6B7280',
+    // color: '#6B7280', // rimosso, ora gestito dal tema
     marginBottom: 10,
     textAlign: 'left',
   },
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    // backgroundColor: '#F8F9FA', // rimosso, ora gestito dal tema
     borderWidth: 1,
-    borderColor: '#DEE2E6',
+    // borderColor: '#DEE2E6', // rimosso, ora gestito dal tema
     borderRadius: 12,
-    marginBottom: 14, // aggiunto margine sotto la searchbar
+    marginBottom: 14,
   },
   searchIcon: {
     marginLeft: 12,
@@ -615,7 +656,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: 'transparent',
     borderWidth: 0,
-    color: '#212529',
+    // color: '#212529', // rimosso, ora gestito dal tema
   },
   loadingContainer: {
     flex: 1,
@@ -634,7 +675,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   recipeCard: {
-    backgroundColor: 'white',
+    // backgroundColor: 'white', // rimosso, ora gestito dal tema
     borderRadius: 12,
     padding: 16,
   },
@@ -647,7 +688,7 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212529',
+    // color: '#212529', // rimosso, ora gestito dal tema
     flex: 1,
     marginRight: 12,
   },
@@ -657,13 +698,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   difficultyText: {
-    color: 'white',
+    // color: 'white', // rimosso, ora gestito dal tema
     fontSize: 12,
     fontWeight: '600',
   },
   recipeDescription: {
     fontSize: 14,
-    color: '#6C757D',
+    // color: '#6C757D', // rimosso, ora gestito dal tema
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -676,7 +717,7 @@ const styles = StyleSheet.create({
   },
   metadataLabel: {
     fontSize: 12,
-    color: '#495057',
+    // color: '#495057', // rimosso, ora gestito dal tema
     fontWeight: '500',
   },
   dietaryTags: {
@@ -685,7 +726,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dietaryTag: {
-    backgroundColor: '#E7F3FF',
+    // backgroundColor: '#E7F3FF', // rimosso, ora gestito dal tema
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -693,41 +734,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   dietaryTagText: {
-    color: '#007AFF',
+    // color: '#007AFF', // rimosso, ora gestito dal tema
     fontSize: 10,
     fontWeight: '600',
   },
   moreTagsText: {
     fontSize: 10,
-    color: '#6C757D',
+    // color: '#6C757D', // rimosso, ora gestito dal tema
     alignSelf: 'center',
   },
   recipeDate: {
     fontSize: 11,
-    color: '#ADB5BD',
+    // color: '#ADB5BD', // rimosso, ora gestito dal tema
     textAlign: 'right',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyIconWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#495057',
+    // color: '#495057', // rimosso, ora gestito dal tema
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#6C757D',
+    // color: '#6C757D', // rimosso, ora gestito dal tema
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -741,7 +771,6 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   filterBadge: {
-    backgroundColor: '#F1F5F9',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -750,36 +779,27 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   filterBadgeActive: {
-    backgroundColor: '#16A34A',
-    borderColor: '#16A34A',
+    // backgroundColor e borderColor gestiti inline
   },
   filterBadgeText: {
-    color: '#212529',
     fontSize: 14,
     fontWeight: '500',
   },
   filterBadgeTextActive: {
-    color: 'white',
+    // color gestito inline
   },
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#16A34A',
+    // backgroundColor: '#16A34A', // rimosso, ora gestito dal tema
     borderRadius: 24,
     paddingHorizontal: 24,
     paddingVertical: 12,
     marginTop: 28,
   },
-  scanIconWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    height: 22,
-    width: 28,
-  },
   scanButtonText: {
-    color: 'white',
+    // color: 'white', // rimosso, ora gestito dal tema
     fontWeight: 'bold',
     fontSize: 16,
     textAlign: 'center',

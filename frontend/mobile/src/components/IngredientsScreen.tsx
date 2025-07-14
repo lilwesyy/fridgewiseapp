@@ -6,15 +6,17 @@ import {
   StyleSheet,
   FlatList,
   TextInput,
-  Alert,
   ActivityIndicator,
   Modal,
   ScrollView,
   SafeAreaView,
+  Keyboard,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { RecipeGenerationLoader } from './RecipeGenerationLoader';
+import { NotificationModal, NotificationType } from './NotificationModal';
 import Svg, { Path } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -30,6 +32,16 @@ interface Ingredient {
   nameIt?: string;
   category: string;
   confidence: number;
+  usdaId?: number;
+}
+
+interface USDAIngredient {
+  name: string;
+  nameIt: string;
+  category: string;
+  confidence: number;
+  source: string;
+  usdaId?: number;
 }
 
 interface IngredientsScreenProps {
@@ -47,6 +59,8 @@ interface IngredientItemProps {
 }
 
 const IngredientItem: React.FC<IngredientItemProps> = ({ item, index, onRemove, language }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const itemOpacity = useSharedValue(0);
   const itemScale = useSharedValue(0.8);
   const itemTranslateY = useSharedValue(20);
@@ -94,6 +108,8 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const { token, user } = useAuth();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);
 
   // Sync with external ingredient changes (from camera)
@@ -106,6 +122,16 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   const [portions, setPortions] = useState('2');
   const [difficulty, setDifficulty] = useState('easy');
   const [maxTime, setMaxTime] = useState('30');
+  const [searchResults, setSearchResults] = useState<USDAIngredient[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [notification, setNotification] = useState({
+    visible: false,
+    type: 'error' as NotificationType,
+    title: '',
+    message: '',
+  });
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -166,15 +192,70 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
+  const searchUSDAIngredients = async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`${API_URL}/api/analysis/search-ingredients?query=${encodeURIComponent(query)}&limit=10`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setSearchResults(data.data.ingredients);
+        setShowSuggestions(data.data.ingredients.length > 0);
+      } else {
+        setSearchResults([]);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleIngredientInputChange = (text: string) => {
+    setNewIngredient(text);
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for search
+    const timeout = setTimeout(() => {
+      searchUSDAIngredients(text);
+    }, 300);
+    
+    setSearchTimeout(timeout);
+  };
+
+  const addIngredientFromUSDA = (usdaIngredient: USDAIngredient) => {
+    const ingredient: Ingredient = {
+      name: usdaIngredient.name,
+      nameIt: usdaIngredient.nameIt,
+      category: usdaIngredient.category,
+      confidence: usdaIngredient.confidence,
+      usdaId: usdaIngredient.usdaId,
+    };
+    setIngredients([...ingredients, ingredient]);
+    setNewIngredient('');
+    setShowSuggestions(false);
+    setSearchResults([]);
+    Keyboard.dismiss();
+  };
+
   const addIngredient = () => {
-    if (newIngredient.trim()) {
-      const ingredient: Ingredient = {
-        name: newIngredient.trim(),
-        category: 'other',
-        confidence: 1.0,
-      };
-      setIngredients([...ingredients, ingredient]);
-      setNewIngredient('');
+    // Non permettere aggiunta manuale - solo da USDA API
+    if (searchResults.length > 0) {
+      // Se ci sono risultati di ricerca, aggiungi il primo
+      addIngredientFromUSDA(searchResults[0]);
     }
   };
 
@@ -185,7 +266,12 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
   const showRecipePreferences = () => {
     if (ingredients.length === 0) {
-      Alert.alert(t('common.error'), t('recipe.noIngredientsProvided'));
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('recipe.noIngredientsProvided'),
+      });
       return;
     }
     setShowPreferencesModal(true);
@@ -223,7 +309,12 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       onGenerateRecipe(data.data);
     } catch (error) {
       console.error('Recipe generation error:', error);
-      Alert.alert(t('common.error'), t('recipe.generationFailed'));
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('recipe.generationFailed'),
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -251,14 +342,14 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path
               d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
-              stroke="#007AFF"
+              stroke={colors.primary}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <Path
               d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z"
-              stroke="#007AFF"
+              stroke={colors.primary}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -268,16 +359,62 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       </Animated.View>
 
       <Animated.View style={[styles.addIngredientContainer, addSectionAnimatedStyle]}>
-        <TextInput
-          style={styles.textInput}
-          placeholder={t('camera.addIngredient')}
-          value={newIngredient}
-          onChangeText={setNewIngredient}
-          onSubmitEditing={addIngredient}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={addIngredient}>
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Cerca ingredienti USDA..."
+            placeholderTextColor={colors.textSecondary}
+            value={newIngredient}
+            onChangeText={handleIngredientInputChange}
+            onSubmitEditing={addIngredient}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {isSearching && (
+            <ActivityIndicator 
+              size="small" 
+              color={colors.primary} 
+              style={styles.searchIndicator}
+            />
+          )}
+          <TouchableOpacity 
+            style={[
+              styles.addButton, 
+              searchResults.length === 0 && styles.addButtonDisabled
+            ]} 
+            onPress={addIngredient}
+            disabled={searchResults.length === 0}
+          >
+            <Text style={[
+              styles.addButtonText,
+              searchResults.length === 0 && styles.addButtonTextDisabled
+            ]}>+</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {showSuggestions && searchResults.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item, index) => `${item.name}-${index}`}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.suggestionItem}
+                  onPress={() => addIngredientFromUSDA(item)}
+                >
+                  <View style={styles.suggestionContent}>
+                    <Text style={styles.suggestionName}>{item.name}</Text>
+                    <Text style={styles.suggestionCategory}>{item.category}</Text>
+                  </View>
+                  <Text style={styles.suggestionSource}>USDA</Text>
+                </TouchableOpacity>
+              )}
+              style={styles.suggestionsList}
+              nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        )}
       </Animated.View>
 
       {ingredients.length === 0 ? (
@@ -420,14 +557,22 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       </Modal>
       
       <RecipeGenerationLoader visible={isGenerating} />
+      
+      <NotificationModal
+        visible={notification.visible}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={() => setNotification({ ...notification, visible: false })}
+      />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -435,9 +580,9 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: 10,
@@ -446,39 +591,49 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: colors.primary,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#212529',
+    color: colors.text,
     flex: 1,
     textAlign: 'center',
   },
   cameraButton: {
     padding: 10,
     borderRadius: 8,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    backgroundColor: colors.card,
   },
   addIngredientContainer: {
-    flexDirection: 'row',
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: colors.border,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
   },
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#DEE2E6',
-    borderRadius: 8,
-    paddingHorizontal: 15,
+    borderColor: colors.inputBorder,
+    borderRadius: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.inputBackground,
+    color: colors.text,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   addButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     borderRadius: 8,
     width: 50,
     height: 50,
@@ -487,9 +642,65 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   addButtonText: {
-    color: 'white',
+    color: colors.buttonText,
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  addButtonDisabled: {
+    backgroundColor: colors.border,
+  },
+  addButtonTextDisabled: {
+    color: colors.textSecondary,
+  },
+  searchIndicator: {
+    position: 'absolute',
+    right: 70,
+    zIndex: 1,
+  },
+  suggestionsContainer: {
+    marginTop: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    maxHeight: 200,
+  },
+  suggestionsList: {
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  suggestionContent: {
+    flex: 1,
+  },
+  suggestionName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  suggestionCategory: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+    textTransform: 'capitalize',
+  },
+  suggestionSource: {
+    fontSize: 10,
+    color: colors.primary,
+    fontWeight: '600',
+    backgroundColor: colors.card,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
   ingredientsList: {
     flex: 1,
@@ -499,12 +710,12 @@ const styles = StyleSheet.create({
   ingredientItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     paddingHorizontal: 15,
     paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -516,16 +727,16 @@ const styles = StyleSheet.create({
   ingredientName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
     marginBottom: 4,
   },
   ingredientCategory: {
     fontSize: 12,
-    color: '#6C757D',
+    color: colors.textSecondary,
     textTransform: 'capitalize',
   },
   removeButton: {
-    backgroundColor: '#DC3545',
+    backgroundColor: colors.error,
     borderRadius: 15,
     width: 30,
     height: 30,
@@ -533,27 +744,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   removeButtonText: {
-    color: 'white',
+    color: colors.buttonText,
     fontSize: 20,
     fontWeight: 'bold',
   },
   footer: {
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
+    borderTopColor: colors.border,
   },
   generateButton: {
-    backgroundColor: '#28A745',
+    backgroundColor: colors.success,
     borderRadius: 8,
     paddingVertical: 15,
     alignItems: 'center',
   },
   generateButtonDisabled: {
-    backgroundColor: '#6C757D',
+    backgroundColor: colors.textSecondary,
   },
   generateButtonText: {
-    color: 'white',
+    color: colors.buttonText,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -565,7 +776,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#6C757D',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -576,13 +787,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: 'white',
+    color: colors.buttonText,
     fontSize: 16,
     marginTop: 10,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -590,9 +801,9 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: colors.border,
   },
   modalCloseButton: {
     padding: 10,
@@ -606,7 +817,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#212529',
+    color: colors.text,
     textAlign: 'center',
   },
   modalSpacer: {
@@ -624,7 +835,7 @@ const styles = StyleSheet.create({
   preferenceLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
     marginBottom: 15,
   },
   portionsContainer: {
@@ -633,9 +844,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   portionButton: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: '#DEE2E6',
+    borderColor: colors.inputBorder,
     borderRadius: 8,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -643,39 +854,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   portionButtonSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#007AFF',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
   },
   portionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
   },
   portionButtonTextSelected: {
-    color: 'white',
+    color: colors.buttonText,
   },
   difficultyContainer: {
     gap: 10,
   },
   difficultyButton: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: '#DEE2E6',
+    borderColor: colors.inputBorder,
     borderRadius: 8,
     paddingVertical: 15,
     alignItems: 'center',
   },
   difficultyButtonSelected: {
-    borderColor: '#28A745',
-    backgroundColor: '#28A745',
+    borderColor: colors.success,
+    backgroundColor: colors.success,
   },
   difficultyButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
   },
   difficultyButtonTextSelected: {
-    color: 'white',
+    color: colors.buttonText,
   },
   timeContainer: {
     flexDirection: 'row',
@@ -683,25 +894,25 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   timeButton: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: '#DEE2E6',
+    borderColor: colors.inputBorder,
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 12,
     alignItems: 'center',
   },
   timeButtonSelected: {
-    borderColor: '#FFC107',
-    backgroundColor: '#FFC107',
+    borderColor: colors.warning,
+    backgroundColor: colors.warning,
   },
   timeButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212529',
+    color: colors.text,
   },
   timeButtonTextSelected: {
-    color: 'white',
+    color: colors.buttonText,
   },
   modalFooter: {
     position: 'absolute',
@@ -709,10 +920,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-    shadowColor: '#000',
+    borderTopColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -720,13 +931,13 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   generateModalButton: {
-    backgroundColor: '#28A745',
+    backgroundColor: colors.success,
     borderRadius: 8,
     paddingVertical: 15,
     alignItems: 'center',
   },
   generateModalButtonText: {
-    color: 'white',
+    color: colors.buttonText,
     fontSize: 18,
     fontWeight: 'bold',
   },

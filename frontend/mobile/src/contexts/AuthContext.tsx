@@ -7,6 +7,7 @@ interface User {
   name?: string;
   preferredLanguage: 'en' | 'it';
   dietaryRestrictions: string[];
+  role: 'user' | 'admin';
 }
 
 interface AuthContextType {

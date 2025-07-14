@@ -68,14 +68,35 @@ const INGREDIENT_TRANSLATIONS = {
   'pepper': 'pepe'
 };
 
+import { EnhancedRecognizeService } from './enhancedRecognizeService';
+
 export class RecognizeService {
   private apiUrl: string;
+  private enhancedService: EnhancedRecognizeService;
 
   constructor() {
     this.apiUrl = process.env.RECOGNIZE_API_URL || 'http://localhost:8000';
+    this.enhancedService = new EnhancedRecognizeService();
   }
 
   async analyzeImage(imagePath: string): Promise<ProcessedIngredient[]> {
+    console.log('🔍 Delegating to enhanced recognition service...');
+    
+    // Use enhanced service if available
+    try {
+      const results = await this.enhancedService.analyzeImage(imagePath);
+      if (results.length > 0) {
+        return results;
+      }
+    } catch (error) {
+      console.log('⚠️ Enhanced service failed, falling back to legacy:', error);
+    }
+
+    // Legacy fallback
+    return this.legacyAnalyzeImage(imagePath);
+  }
+
+  private async legacyAnalyzeImage(imagePath: string): Promise<ProcessedIngredient[]> {
     try {
       console.log('🔍 Starting image analysis for:', imagePath);
       console.log('📡 Recognition API URL:', this.apiUrl);
@@ -312,16 +333,25 @@ export class RecognizeService {
 
   async healthCheck(): Promise<boolean> {
     try {
-      // Il servizio non ha un endpoint /health, proviamo con OPTIONS su /
+      const enhancedHealth = await this.enhancedService.healthCheck();
+      if (enhancedHealth.overall) {
+        return true;
+      }
+    } catch (error) {
+      console.log('Enhanced service health check failed:', error);
+    }
+
+    // Legacy health check
+    try {
       const response = await fetch(`${this.apiUrl}/`, {
         method: 'OPTIONS',
         timeout: 5000
       });
       
-      console.log('🩺 Health check response:', response.status);
-      return response.status < 500; // Accetta anche 405 Method Not Allowed
+      console.log('🩺 Legacy health check response:', response.status);
+      return response.status < 500;
     } catch (error) {
-      console.error('Recognize API health check failed:', error);
+      console.error('Legacy API health check failed:', error);
       return false;
     }
   }

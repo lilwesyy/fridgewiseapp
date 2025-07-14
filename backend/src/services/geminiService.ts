@@ -25,6 +25,7 @@ interface GeneratedRecipe {
     unit: string;
   }>;
   instructions: string[];
+  stepTimers?: number[]; // Timer in minutes for each step
   cookingTime: number;
   servings: number;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -72,6 +73,13 @@ export class GeminiService {
       return this.parseRecipeResponse(text, language);
     } catch (error) {
       console.error('Error generating recipe with Gemini:', error);
+      
+      // If it's a parsing error, log more details
+      if (error instanceof Error && error.message.includes('JSON')) {
+        console.error('🚨 JSON parsing failed. This may be due to Gemini returning non-JSON response.');
+        console.error('🔄 Consider checking the prompt or adjusting the parsing logic.');
+      }
+      
       console.log('🔄 Falling back to mock recipe due to error');
       return this.createMockRecipe(ingredients, language, servings, cookingTime || 30, difficulty || 'easy');
     }
@@ -108,6 +116,7 @@ Please provide the recipe in the following JSON format:
     }
   ],
   "instructions": ["step 1", "step 2", "step 3"],
+  "stepTimers": [5, 10, 15],
   "cookingTime": 30,
   "servings": 4,
   "difficulty": "easy",
@@ -121,7 +130,11 @@ Important:
 - Include dietary tags if applicable
 - Instructions should be clear and detailed
 - For ingredients without specific units (like spices), use "to taste", "pinch", "dash", etc.
-- Never leave the "unit" field empty - always provide a unit`
+- Never leave the "unit" field empty - always provide a unit
+- stepTimers should contain the estimated time in minutes for each cooking step
+- Each timer in stepTimers corresponds to the instruction at the same index
+- Timer should be realistic for the cooking step (e.g., 2-3 mins for sautéing, 10-15 mins for simmering)
+- If a step doesn't need timing, use 0 or omit that timer`
       },
       it: {
         base: `Crea una ricetta usando questi ingredienti: ${ingredients.join(', ')}`,
@@ -145,6 +158,7 @@ Fornisci la ricetta nel seguente formato JSON:
     }
   ],
   "instructions": ["passaggio 1", "passaggio 2", "passaggio 3"],
+  "stepTimers": [5, 10, 15],
   "cookingTime": 30,
   "servings": 4,
   "difficulty": "easy",
@@ -158,26 +172,57 @@ Importante:
 - Includi tag dietetici se applicabile
 - Le istruzioni devono essere chiare e dettagliate
 - Per ingredienti senza unità specifiche (come spezie), usa "q.b.", "pizzico", "spolverata", ecc.
-- Non lasciare mai il campo "unit" vuoto - fornisci sempre un'unità`
+- Non lasciare mai il campo "unit" vuoto - fornisci sempre un'unità
+- stepTimers deve contenere il tempo stimato in minuti per ogni passaggio di cottura
+- Ogni timer in stepTimers corrisponde all'istruzione con lo stesso indice
+- I timer devono essere realistici per il passaggio di cottura (es. 2-3 min per rosolare, 10-15 min per cuocere a fuoco lento)
+- Se un passaggio non richiede tempistiche, usa 0 o ometti quel timer`
       }
     };
 
     const selectedPrompt = prompts[language];
-    return `${selectedPrompt.base}\n\n${selectedPrompt.constraints.join('\n')}\n\n${selectedPrompt.format}`;
+    return `${selectedPrompt.base}\n\n${selectedPrompt.constraints.join('\n')}\n\n${selectedPrompt.format}\n\nIMPORTANT: Respond ONLY with the JSON object. Do not include any explanatory text before or after the JSON. Start your response with { and end with }.`;
   }
 
   private parseRecipeResponse(response: string, language: 'en' | 'it'): GeneratedRecipe {
     try {
-      // Extract JSON from response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      console.log('🔍 Raw Gemini response (first 500 chars):', response.substring(0, 500));
+      
+      // Extract JSON from response - try multiple patterns
+      let jsonMatch = response.match(/\{[\s\S]*\}/);
+      
       if (!jsonMatch) {
+        // Try looking for JSON wrapped in code blocks
+        jsonMatch = response.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+        if (jsonMatch) {
+          jsonMatch[0] = jsonMatch[1];
+        }
+      }
+      
+      if (!jsonMatch) {
+        // Try looking for JSON without code blocks but with ```
+        jsonMatch = response.match(/```\s*(\{[\s\S]*?\})\s*```/);
+        if (jsonMatch) {
+          jsonMatch[0] = jsonMatch[1];
+        }
+      }
+      
+      if (!jsonMatch) {
+        console.error('❌ No JSON found in Gemini response. Full response:', response);
         throw new Error('No JSON found in response');
       }
-
+      
+      console.log('✅ Found JSON:', jsonMatch[0]);
       const parsed = JSON.parse(jsonMatch[0]);
 
       // Validate required fields
       if (!parsed.title || !parsed.description || !parsed.ingredients || !parsed.instructions) {
+        console.error('❌ Missing required fields in recipe response:', {
+          hasTitle: !!parsed.title,
+          hasDescription: !!parsed.description,
+          hasIngredients: !!parsed.ingredients,
+          hasInstructions: !!parsed.instructions
+        });
         throw new Error('Missing required fields in recipe response');
       }
 
@@ -193,12 +238,18 @@ Importante:
         ? parsed.instructions 
         : [parsed.instructions];
 
+      // Ensure step timers is an array (or undefined)
+      const stepTimers = parsed.stepTimers && Array.isArray(parsed.stepTimers) 
+        ? parsed.stepTimers.map((timer: any) => typeof timer === 'number' ? timer : 0)
+        : undefined;
+
       // Set defaults for missing fields
       const recipe: GeneratedRecipe = {
         title: parsed.title,
         description: parsed.description,
         ingredients,
         instructions,
+        stepTimers,
         cookingTime: parsed.cookingTime || 30,
         servings: parsed.servings || 4,
         difficulty: parsed.difficulty || 'medium',
@@ -243,7 +294,8 @@ Importante:
           `Add remaining ingredients (${ingredients.slice(2).join(', ')}) and cook for ${Math.max(10, cookingTime - 10)} minutes`,
           'Stir occasionally and adjust seasoning if needed',
           `Serve hot for ${servings} people and enjoy!`
-        ]
+        ],
+        stepTimers: [3, 2, 6, 1, Math.max(10, cookingTime - 10), 0, 0]
       },
       it: {
         title: `Deliziosa Ricetta con ${ingredients.join(' e ')}`,
@@ -266,7 +318,8 @@ Importante:
           `Aggiungere gli ingredienti rimanenti (${ingredients.slice(2).join(', ')}) e cuocere per ${Math.max(10, cookingTime - 10)} minuti`,
           'Mescolare occasionalmente e aggiustare il condimento se necessario',
           `Servire caldo per ${servings} persone e buon appetito!`
-        ]
+        ],
+        stepTimers: [3, 2, 6, 1, Math.max(10, cookingTime - 10), 0, 0]
       }
     };
 
@@ -278,6 +331,7 @@ Importante:
       description: selectedRecipe.description,
       ingredients: allIngredients,
       instructions: selectedRecipe.instructions,
+      stepTimers: selectedRecipe.stepTimers,
       cookingTime: cookingTime,
       servings: servings,
       difficulty: difficulty as 'easy' | 'medium' | 'hard',

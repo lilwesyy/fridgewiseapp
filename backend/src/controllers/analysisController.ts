@@ -4,11 +4,10 @@ import path from 'path';
 import fs from 'fs';
 import { AuthRequest } from '../middleware/auth';
 import { Analysis } from '../models/Analysis';
-import { RecognizeService } from '../services/recognizeService';
-import { cloudinaryService } from '../services/cloudinaryService';
+import { USDARecognizeService } from '../services/usdaRecognizeService';
 import { APIResponse } from '@/types';
 
-// Configure multer for memory storage (Cloudinary)
+// Configure multer for memory storage
 const storage = multer.memoryStorage();
 
 const fileFilter = (req: any, file: any, cb: any) => {
@@ -58,9 +57,9 @@ export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<a
     fs.writeFileSync(tempFilePath, req.file.buffer);
     
     // Perform image analysis FIRST
-    console.log('🔍 Starting image recognition...');
+    console.log('🔍 Starting USDA-enhanced image recognition...');
     const startTime = Date.now();
-    const recognizeService = new RecognizeService();
+    const recognizeService = new USDARecognizeService();
 
     try {
       const ingredients = await recognizeService.analyzeImage(tempFilePath);
@@ -69,9 +68,33 @@ export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<a
       fs.unlinkSync(tempFilePath);
       const processingTime = Date.now() - startTime;
 
-      // Check if ingredients were found
-      if (!ingredients || ingredients.length === 0) {
-        console.log('⚠️ No ingredients found in image - not uploading to Cloudinary');
+      // Return results directly without Cloudinary
+      console.log('✅ Image analysis completed successfully');
+      
+      // Only create analysis record if ingredients were found
+      if (ingredients && ingredients.length > 0) {
+        console.log(`🎯 Found ${ingredients.length} ingredients - creating analysis record`);
+        
+        const analysis = new Analysis({
+          userId: user._id,
+          status: 'completed',
+          processingTime,
+          ingredients,
+          // No imageUrl or cloudinaryPublicId anymore
+        });
+
+        await analysis.save();
+        
+        res.status(200).json({
+          success: true,
+          data: {
+            analysisId: analysis._id,
+            ingredients,
+            processingTime
+          }
+        });
+      } else {
+        console.log('⚠️ No ingredients found in image');
         res.status(200).json({
           success: true,
           data: {
@@ -80,45 +103,7 @@ export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<a
             message: 'No ingredients found in image'
           }
         });
-        return;
       }
-
-      // Only upload to Cloudinary if ingredients were found
-      console.log('☁️ Ingredients found - uploading to Cloudinary...');
-      const cloudinaryResult = await cloudinaryService.uploadBuffer(
-        req.file.buffer,
-        {
-          folder: 'fridgewiseai/analyses',
-          public_id: `analysis_${user._id}_${Date.now()}`,
-        }
-      );
-      
-      const imageUrl = cloudinaryResult.secure_url;
-      const cloudinaryPublicId = cloudinaryResult.public_id;
-      console.log('✅ Cloudinary upload successful:', imageUrl);
-
-      // Create analysis record only if ingredients were found
-      const analysis = new Analysis({
-        imageUrl,
-        userId: user._id,
-        status: 'completed',
-        processingTime,
-        ingredients,
-        cloudinaryPublicId
-      });
-
-      await analysis.save();
-
-      console.log('✅ Image analysis completed successfully');
-      res.status(200).json({
-        success: true,
-        data: {
-          analysisId: analysis._id,
-          ingredients,
-          imageUrl,
-          processingTime
-        }
-      });
     } catch (error: any) {
       console.error('❌ Image analysis failed:', error);
       
@@ -217,16 +202,7 @@ export const deleteAnalysis = async (req: AuthRequest, res: Response<APIResponse
       return;
     }
 
-    // Delete image from Cloudinary
-    if (analysis.cloudinaryPublicId) {
-      try {
-        await cloudinaryService.deleteImage(analysis.cloudinaryPublicId);
-      } catch (error) {
-        console.error('Failed to delete image from Cloudinary:', error);
-      }
-    }
-
-    // Delete analysis record
+    // Delete analysis record (no more Cloudinary cleanup needed)
     await Analysis.findByIdAndDelete(id);
 
     res.status(200).json({

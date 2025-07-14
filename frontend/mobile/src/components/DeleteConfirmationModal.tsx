@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing, withRepeat } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 import Svg, { Path } from 'react-native-svg';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -34,6 +35,8 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
   cancelLabel,
 }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const slideY = useSharedValue(screenHeight);
   const opacity = useSharedValue(0);
   // Animation for the warning icon background pulse (come NoIngredientsModal)
@@ -73,7 +76,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
     right: -12,
     bottom: -12,
     borderRadius: 48,
-    backgroundColor: 'rgba(220,53,69,0.13)',
+    backgroundColor: colors.card,
     opacity: 0.6,
     transform: [{ scale: pulseScale.value }],
   }), [pulseScale]);
@@ -97,7 +100,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
                   width: 80,
                   height: 80,
                   borderRadius: 40,
-                  backgroundColor: 'rgba(220,53,69,0.10)',
+                  backgroundColor: colors.card,
                   marginBottom: 16,
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -107,7 +110,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
                     <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
                       <Path
                         d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
-                        stroke="#DC3545"
+                        stroke={colors.error}
                         strokeWidth={2}
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -134,21 +137,21 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'flex-end',
   },
   modal: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     paddingTop: 16,
     paddingBottom: 32,
     paddingHorizontal: 24,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -158,7 +161,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.border,
     alignSelf: 'center',
     marginBottom: 16,
   },
@@ -167,7 +170,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   iconContainer: {
-    backgroundColor: '#FFF5F5',
+    backgroundColor: colors.card,
     borderRadius: 24,
     padding: 12,
     marginBottom: 10,
@@ -175,13 +178,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: colors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   message: {
     fontSize: 16,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 24,
     textAlign: 'center',
   },
@@ -195,7 +198,7 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.card,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -203,7 +206,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     flex: 1,
-    backgroundColor: '#DC3545',
+    backgroundColor: colors.error,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -212,11 +215,11 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
   deleteButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: colors.buttonText,
   },
 });

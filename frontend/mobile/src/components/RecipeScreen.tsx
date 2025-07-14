@@ -12,7 +12,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import Svg, { Path } from 'react-native-svg';
-import { LoadingAnimation } from './LoadingAnimation';
 import { ShareModal } from './ShareModal';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { ChatAIModal } from './ChatAIModal';
@@ -25,6 +24,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -38,6 +38,7 @@ interface Recipe {
     unit: string;
   }>;
   instructions: string[];
+  stepTimers?: number[]; // Timer in minutes for each step
   cookingTime: number;
   servings: number;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -53,6 +54,7 @@ interface RecipeScreenProps {
   onStartOver: () => void;
   onGoToSaved: () => void;
   onGoToRecipes: () => void;
+  onStartCooking?: (recipe: Recipe) => void; // Navigate to cooking mode
   isJustGenerated?: boolean;
   recipes?: Recipe[]; // Array of all recipes for navigation
   currentIndex?: number; // Current recipe index
@@ -66,6 +68,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   onStartOver,
   onGoToSaved,
   onGoToRecipes,
+  onStartCooking,
   isJustGenerated = false,
   recipes = [],
   currentIndex = 0,
@@ -74,7 +77,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
+  const { colors } = useTheme();
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showChatAIModal, setShowChatAIModal] = useState(false);
@@ -198,74 +201,22 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     }
   };
 
-  const saveRecipe = async () => {
-    setIsSaving(true);
-    try {
-      if (recipe.isSaved) {
-        setNotification({
-          visible: true,
-          type: 'warning',
-          title: t('common.warning'),
-          message: t('recipe.alreadySavedMessage'),
-        });
-        return;
-      }
-
-      const recipeId = recipe.id || recipe._id;
-      let saveResponse;
-
-      if (recipeId) {
-        // Recipe already exists in database, just mark as saved
-        saveResponse = await fetch(`${API_URL}/api/recipe/save/${recipeId}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-      } else {
-        // Temporary recipe, save it to database
-        saveResponse = await fetch(`${API_URL}/api/recipe/save`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(recipe),
-        });
-      }
-
-      if (saveResponse.ok) {
-        setNotification({
-          visible: true,
-          type: 'success',
-          title: t('common.success'),
-          message: t('recipe.recipeSaved'),
-        });
-        // Aggiorna lo stato della ricetta per riflettere che è salvata
-        if (typeof recipe.isSaved === 'undefined' || recipe.isSaved === false) {
-          recipe.isSaved = true;
-        }
-      } else {
-        throw new Error('Failed to save recipe');
-      }
-    } catch (error) {
-      setNotification({
-        visible: true,
-        type: 'error',
-        title: t('common.error'),
-        message: t('recipe.saveError'),
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleStartCooking = async () => {
     try {
       const recipeId = recipe.id || recipe._id;
-      if (!recipeId) {
-        // Temporary recipe, save it to database (but not to user's saved recipes)
-        const saveResponse = await fetch(`${API_URL}/api/recipe`, {
+      
+      console.log('🎯 handleStartCooking called');
+      console.log('🎯 isJustGenerated:', isJustGenerated);
+      console.log('🎯 recipeId:', recipeId);
+      console.log('🎯 recipe:', recipe);
+      
+      // If recipe is just generated (temporary), save it first and show normal recipe view
+      if (isJustGenerated && !recipeId) {
+        console.log('🎯 Saving temporary recipe...');
+        
+        // Save recipe to database and add to user's collection
+        const saveResponse = await fetch(`${API_URL}/api/recipe/save`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -273,23 +224,59 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           },
           body: JSON.stringify(recipe),
         });
-        if (saveResponse.ok) {
-          // Recipe saved to general database, now go back
-          onGoBack();
-        } else {
+        
+        console.log('🎯 Save response status:', saveResponse.status);
+        
+        if (!saveResponse.ok) {
+          const errorText = await saveResponse.text();
+          console.error('🎯 Save response error:', errorText);
           throw new Error('Failed to save recipe to database');
         }
+        
+        const savedRecipe = await saveResponse.json();
+        console.log('🎯 Saved recipe:', savedRecipe);
+        
+        // MongoDB returns _id, but we need to handle both id and _id
+        const recipeId = savedRecipe.data._id || savedRecipe.data.id;
+        console.log('🎯 Recipe ID from backend:', recipeId);
+        
+        const updatedRecipe = {
+          ...recipe,
+          id: recipeId,
+          _id: recipeId,
+          isSaved: false // Not in collection yet - will be saved when cooking is finished
+        };
+        
+        console.log('🎯 Updated recipe:', updatedRecipe);
+        
+        // Update recipe with saved data and show normal recipe view
+        if (onRecipeUpdate) {
+          console.log('🎯 Calling onRecipeUpdate...');
+          onRecipeUpdate(updatedRecipe);
+        } else {
+          console.log('🎯 No onRecipeUpdate callback available');
+        }
+        
+        // This will re-render the component with the saved recipe (no longer isJustGenerated)
+        return;
+      }
+      
+      console.log('🎯 Recipe already saved, going to cooking mode');
+      
+      // For saved recipes, go directly to cooking mode
+      if (onStartCooking) {
+        onStartCooking(recipe);
       } else {
-        // Recipe already exists in database, just go back
+        // Fallback: just go back
         onGoBack();
       }
     } catch (error) {
-      console.error('Error saving recipe to database:', error);
+      console.error('Error starting cooking:', error);
       setNotification({
         visible: true,
         type: 'error',
         title: t('common.error'),
-        message: t('recipe.saveError'),
+        message: t('recipe.cookingError'),
       });
     }
   };
@@ -359,25 +346,48 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   };
 
   const renderIngredient = (ingredient: any, index: number) => (
-    <View key={index} style={styles.ingredientItem}>
-      <Text style={styles.ingredientAmount}>
+    <View
+      key={index}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        marginBottom: 8,
+        borderRadius: 8,
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        shadowColor: colors.shadow || '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+        elevation: 1,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 15,
+          fontWeight: '600',
+          color: colors.primary,
+          width: 80,
+          marginRight: 10,
+        }}
+      >
         {ingredient.amount} {ingredient.unit}
       </Text>
-      <Text style={styles.ingredientName}>{ingredient.name}</Text>
+      <Text
+        style={{
+          fontSize: 16,
+          color: colors.text,
+          flex: 1,
+          fontWeight: '500',
+        }}
+      >
+        {ingredient.name}
+      </Text>
     </View>
   );
-
-  const renderInstruction = (instruction: string, index: number) => (
-    <View key={index} style={styles.instructionItem}>
-      <View style={styles.instructionNumber}>
-        <Text style={styles.instructionNumberText}>{index + 1}</Text>
-      </View>
-      <View style={styles.instructionTextContainer}>
-        <Text style={styles.instructionText}>{instruction}</Text>
-      </View>
-    </View>
-  );
-
 
   // Auto-close notification after 1.3s
   useEffect(() => {
@@ -390,86 +400,63 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   }, [notification.visible]);
 
   return (
-    <View style={styles.container} {...panResponder.panHandlers}>
-      <Animated.View style={[styles.header, headerAnimatedStyle]}>
-          <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
-            <Text style={styles.backButtonText}>←</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]} {...panResponder.panHandlers}>
+      <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: 1 }]}> 
+        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+          <Text style={[styles.backButtonText, { color: colors.primary } ]}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.titleContainer}>
+          <Text style={[styles.title, { color: colors.text }]}>{t('recipe.title')}</Text>
+          {recipes.length > 1 && (
+            <Text style={[styles.recipeCounter, { color: colors.textSecondary }]}>
+              {currentIndex + 1} / {recipes.length}
+            </Text>
+          )}
+        </View>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.shareButton} onPress={() => handleShare()}>
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
+                stroke={colors.primary}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
           </TouchableOpacity>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>{t('recipe.title')}</Text>
-            {recipes.length > 1 && (
-              <Text style={styles.recipeCounter}>
-                {currentIndex + 1} / {recipes.length}
-              </Text>
-            )}
-          </View>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity style={styles.shareButton} onPress={() => handleShare()}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
-                  stroke="rgb(22, 163, 74)"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveButton} onPress={saveRecipe} disabled={isSaving}>
-            {isSaving ? (
-              <LoadingAnimation size={20} color="rgb(22, 163, 74)" />
-            ) : (
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
-                  stroke="rgb(22, 163, 74)"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Path
-                  d="M17 21v-8H7v8M7 3v5h8"
-                  stroke="rgb(22, 163, 74)"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            )}
-            </TouchableOpacity>
-          </View>
+        </View>
       </Animated.View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View style={[styles.recipeHeader, titleAnimatedStyle]}>
-            <Text style={styles.recipeTitle}>{recipe.title}</Text>
-            <Text style={styles.recipeDescription}>{recipe.description}</Text>
+      <ScrollView>
+        <Animated.View style={[styles.recipeHeader, titleAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
+          <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.title}</Text>
+          <Text style={[styles.recipeDescription, { color: colors.textSecondary }]}>{recipe.description}</Text>
         </Animated.View>
 
-        <Animated.View style={[styles.recipeMetadata, contentAnimatedStyle]}>
-            <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>{t('recipe.cookingTime')}</Text>
-              <Text style={styles.metadataValue}>{recipe.cookingTime} min</Text>
-            </View>
-            <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>{t('recipe.servings')}</Text>
-              <Text style={styles.metadataValue}>{recipe.servings}</Text>
-            </View>
-            <View style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>{t('recipe.difficultyLabel')}</Text>
-              <Text style={[styles.metadataValue, { color: getDifficultyColor(recipe.difficulty) }]}> 
-                {t(`recipe.difficulty.${recipe.difficulty}`)}
-              </Text>
-            </View>
+        <Animated.View style={[styles.recipeMetadata, contentAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
+          <View style={styles.metadataItem}>
+            <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>{t('recipe.cookingTime')}</Text>
+            <Text style={[styles.metadataValue, { color: colors.text }]}>{recipe.cookingTime} min</Text>
+          </View>
+          <View style={styles.metadataItem}>
+            <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>{t('recipe.servings')}</Text>
+            <Text style={[styles.metadataValue, { color: colors.text }]}>{recipe.servings}</Text>
+          </View>
+          <View style={styles.metadataItem}>
+            <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>{t('recipe.difficultyLabel')}</Text>
+            <Text style={[styles.metadataValue, { color: getDifficultyColor(recipe.difficulty) } ]}> 
+              {t(`recipe.difficulty.${recipe.difficulty}`)}
+            </Text>
+          </View>
         </Animated.View>
 
         {recipe.dietaryTags.length > 0 && (
-          <Animated.View style={[styles.dietaryTagsContainer, contentAnimatedStyle]}>
-              <Text style={styles.sectionTitle}>{t('recipe.dietary')}</Text>
+          <Animated.View style={[styles.dietaryTagsContainer, contentAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.dietary')}</Text>
               <View style={styles.dietaryTags}>
                 {recipe.dietaryTags.map((tag) => (
-                  <View key={tag} style={styles.dietaryTag}>
-                    <Text style={styles.dietaryTagText}>
+                  <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }] }>
+                    <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
                       {t(`recipes.dietary.${tag.replace('-', '')}`)}
                     </Text>
                   </View>
@@ -478,74 +465,119 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           </Animated.View>
         )}
 
-        <Animated.View style={buttonsAnimatedStyle}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('recipe.ingredients')}</Text>
-            <View style={styles.ingredientsList}>
-              {recipe.ingredients.map(renderIngredient)}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('recipe.instructions')}</Text>
-            <View style={styles.instructionsList}>
-              {recipe.instructions.map(renderInstruction)}
-            </View>
-          </View>
-
-          <View style={styles.deleteSection}>
-            <TouchableOpacity style={styles.deleteButton} onPress={() => setShowDeleteModal(true)}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
-                <Path
-                  d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"
-                  stroke="white"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Path
-                  d="M10 11v6M14 11v6"
-                  stroke="white"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-              <Text style={styles.deleteButtonText}>{t('recipe.deleteRecipe')}</Text>
-            </TouchableOpacity>
+        <Animated.View style={[styles.section, { backgroundColor: colors.surface }] }>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.ingredients')}</Text>
+          <View style={{
+            backgroundColor: colors.card,
+            borderRadius: 10,
+            padding: 10,
+            marginBottom: 8,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}>
+            {recipe.ingredients.map(renderIngredient)}
           </View>
         </Animated.View>
-      </ScrollView>
 
-      <Animated.View style={[styles.footer, buttonsAnimatedStyle]}>
+        <Animated.View style={[styles.section, { backgroundColor: colors.surface }] }>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.instructions')}</Text>
+          <View style={{
+            backgroundColor: colors.card,
+            borderRadius: 10,
+            padding: 10,
+            marginBottom: 8,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}>
+            {recipe.instructions.map((instruction, index) => (
+              <View
+                key={index}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  marginBottom: 16,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: colors.primary,
+                    borderRadius: 15,
+                    width: 30,
+                    height: 30,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginRight: 16,
+                  }}
+                >
+                  <Text style={{ color: colors.buttonText, fontSize: 14, fontWeight: 'bold' }}>{index + 1}</Text>
+                </View>
+                <View style={{ flex: 1, flexShrink: 1 }}>
+                  <Text style={{ fontSize: 16, color: colors.text, lineHeight: 24 }}>{instruction}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+
+        <View style={[styles.deleteSection, { backgroundColor: colors.surface }] }>
+          <TouchableOpacity style={[styles.deleteButton, { backgroundColor: colors.error }]} onPress={() => setShowDeleteModal(true)}>
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
+              <Path
+                d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"
+                stroke="white"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d="M10 11v6M14 11v6"
+                stroke="white"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={styles.deleteButtonText}>{t('recipe.deleteRecipe')}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      <Animated.View style={[styles.footer, buttonsAnimatedStyle, { backgroundColor: colors.surface, borderTopColor: colors.border }] }>
         {isJustGenerated ? (
           <View style={styles.dualButtonContainer}>
-            <TouchableOpacity style={styles.startOverButton} onPress={onStartOver}>
-              <Text style={styles.startOverButtonText}>{t('common.startOver')}</Text>
+            <TouchableOpacity style={[styles.startOverButton, { backgroundColor: colors.textSecondary }]} onPress={onStartOver}>
+              <Text style={[styles.startOverButtonText, { color: colors.buttonText }]}>{t('common.startOver')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.startCookingButton} onPress={handleStartCooking}>
-              <Text style={styles.startCookingButtonText}>{t('recipe.startCooking')}</Text>
+            <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
+              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.startCooking')}</Text>
             </TouchableOpacity>
           </View>
         ) : recipe.isSaved === true ? (
           <View style={styles.dualButtonContainer}>
-            <TouchableOpacity style={styles.startCookingButton} onPress={handleStartCooking}>
-              <Text style={styles.startCookingButtonText}>{t('recipe.startCooking')}</Text>
+            <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
+              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.startCooking')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.aiEditButton} onPress={() => setShowChatAIModal(true)}>
+            <TouchableOpacity style={[styles.aiEditButton, { backgroundColor: colors.card }]} onPress={() => setShowChatAIModal(true)}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
-                <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </Svg>
-              <Text style={styles.aiEditButtonText}>{t('common.edit') || 'Modifica'}</Text>
+              <Text style={[styles.aiEditButtonText, { color: colors.primary }]}>{t('common.edit') || 'Modifica'}</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity style={styles.startCookingButtonSingle} onPress={handleStartCooking}>
-            <Text style={styles.startCookingButtonText}>{t('recipe.startCooking')}</Text>
-          </TouchableOpacity>
+          <View style={styles.dualButtonContainer}>
+            <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
+              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.startCooking')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.aiEditButton, { backgroundColor: colors.card }]} onPress={() => setShowChatAIModal(true)}>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
+                <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </Svg>
+              <Text style={[styles.aiEditButtonText, { color: colors.primary }]}>{t('common.edit') || 'Modifica'}</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </Animated.View>
-      
       <ShareModal
         visible={showShareModal}
         recipe={recipe}
@@ -576,7 +608,6 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -585,7 +616,6 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
@@ -619,18 +649,11 @@ const styles = StyleSheet.create({
     padding: 10,
     marginRight: 8,
   },
-  saveButton: {
-    padding: 10,
-  },
-  saveButtonText: {
-    fontSize: 20,
-  },
   content: {
     flex: 1,
   },
   recipeHeader: {
     padding: 20,
-    backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
@@ -649,7 +672,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 20,
-    backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
@@ -669,7 +691,6 @@ const styles = StyleSheet.create({
   },
   dietaryTagsContainer: {
     padding: 20,
-    backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
@@ -702,33 +723,10 @@ const styles = StyleSheet.create({
     color: '#212529',
     marginBottom: 16,
   },
-  ingredientsList: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    padding: 16,
-  },
-  ingredientItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
-  },
-  ingredientAmount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
-    width: 80,
-  },
-  ingredientName: {
-    fontSize: 16,
-    color: '#212529',
-    flex: 1,
-  },
   instructionsList: {
     backgroundColor: '#F8F9FA',
     borderRadius: 8,
-    padding: 16,
+    padding: 8,
   },
   instructionItem: {
     flexDirection: 'row',

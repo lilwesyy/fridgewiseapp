@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 import Svg, { Path } from 'react-native-svg';
 
 export type TabName = 'home' | 'camera' | 'recipes' | 'saved' | 'profile';
@@ -10,8 +11,8 @@ interface BottomNavigationProps {
   onTabPress: (tab: TabName) => void;
 }
 
-const TabIcon: React.FC<{ name: TabName; isActive: boolean }> = ({ name, isActive }) => {
-  const iconColor = isActive ? 'rgb(22, 163, 74)' : '#9CA3AF';
+const TabIcon: React.FC<{ name: TabName; isActive: boolean; colors: any }> = ({ name, isActive, colors }) => {
+  const iconColor = isActive ? colors.primary : colors.textSecondary;
   const size = 24;
 
   switch (name) {
@@ -89,7 +90,14 @@ const TabIcon: React.FC<{ name: TabName; isActive: boolean }> = ({ name, isActiv
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Path
-            d="M19 21L12 16L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z"
+            d="M8.5 12.5L10.5 14.5L15.5 9.5"
+            stroke={iconColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
             stroke={iconColor}
             strokeWidth="2"
             strokeLinecap="round"
@@ -123,6 +131,8 @@ const TabIcon: React.FC<{ name: TabName; isActive: boolean }> = ({ name, isActiv
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onTabPress }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
 
   const tabs: { key: TabName; label: string }[] = [
     { key: 'home', label: t('navigation.home') },
@@ -142,7 +152,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, o
           activeOpacity={0.7}
         >
           <View style={styles.iconContainer}>
-            <TabIcon name={tab.key} isActive={activeTab === tab.key} />
+            <TabIcon name={tab.key} isActive={activeTab === tab.key} colors={colors} />
           </View>
           <Text style={[styles.label, activeTab === tab.key && styles.activeLabel]}>
             {tab.label}
@@ -153,15 +163,15 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, o
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: colors.border,
     paddingBottom: 20,
     paddingTop: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -184,13 +194,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#6B7280',
+    color: colors.textSecondary,
     fontFamily: 'System',
     textAlign: 'center',
     marginTop: 2,
   },
   activeLabel: {
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     fontWeight: '600',
   },
 });

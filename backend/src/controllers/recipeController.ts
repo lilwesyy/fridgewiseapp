@@ -4,6 +4,69 @@ import { Recipe } from '../models/Recipe';
 import { GeminiService } from '../services/geminiService';
 import { APIResponse } from '@/types';
 
+// Helper function to normalize dietary tags
+const normalizeDietaryTags = (tags: string[]): string[] => {
+  if (!tags || !Array.isArray(tags)) return [];
+  
+  const validTags = ['vegetarian', 'vegan', 'pescatarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'];
+  const tagMap: { [key: string]: string } = {
+    // Italian mappings
+    'vegetariano': 'vegetarian',
+    'vegano': 'vegan',
+    'pescetariano': 'pescatarian',
+    'senza glutine': 'gluten-free',
+    'senza lattosio': 'dairy-free',
+    'senza latte': 'dairy-free',
+    'senza frutta secca': 'nut-free',
+    'senza soia': 'soy-free',
+    'senza uova': 'egg-free',
+    'low carb': 'low-carb',
+    'basso contenuto di carboidrati': 'low-carb',
+    'chetogenico': 'keto',
+    'paleo': 'paleo',
+    // Common variations
+    'gluten-free': 'gluten-free',
+    'dairy-free': 'dairy-free',
+    'nut-free': 'nut-free',
+    'egg-free': 'egg-free',
+    'low-carb': 'low-carb'
+  };
+  
+  const normalizedTags: string[] = [];
+  
+  for (const tag of tags) {
+    if (!tag || typeof tag !== 'string') continue;
+    
+    const lowercaseTag = tag.toLowerCase().trim();
+    
+    // Direct match
+    if (validTags.includes(lowercaseTag)) {
+      normalizedTags.push(lowercaseTag);
+      continue;
+    }
+    
+    // Mapped match
+    if (tagMap[lowercaseTag]) {
+      normalizedTags.push(tagMap[lowercaseTag]);
+      continue;
+    }
+    
+    // Partial match for common cases
+    if (lowercaseTag.includes('vegetarian') || lowercaseTag.includes('vegetariano')) {
+      normalizedTags.push('vegetarian');
+    } else if (lowercaseTag.includes('vegan') || lowercaseTag.includes('vegano')) {
+      normalizedTags.push('vegan');
+    } else if (lowercaseTag.includes('gluten') && (lowercaseTag.includes('free') || lowercaseTag.includes('senza'))) {
+      normalizedTags.push('gluten-free');
+    } else if ((lowercaseTag.includes('dairy') || lowercaseTag.includes('latte') || lowercaseTag.includes('lattosio')) && (lowercaseTag.includes('free') || lowercaseTag.includes('senza'))) {
+      normalizedTags.push('dairy-free');
+    }
+  }
+  
+  // Remove duplicates
+  return [...new Set(normalizedTags)];
+};
+
 export const generateRecipe = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
   try {
     const user = req.user!;
@@ -28,12 +91,20 @@ export const generateRecipe = async (req: AuthRequest, res: Response<APIResponse
       return;
     }
 
+    // Use dietary restrictions from user profile (database) as priority
+    const userDietaryRestrictions = user.dietaryRestrictions || [];
+    const finalDietaryRestrictions = dietaryRestrictions 
+      ? [...userDietaryRestrictions, ...dietaryRestrictions].filter((v, i, a) => a.indexOf(v) === i) // merge and deduplicate
+      : userDietaryRestrictions;
+
+    console.log(`🍽️ Using dietary restrictions: ${finalDietaryRestrictions.join(', ') || 'none'} for user ${user.email}`);
+
     // Generate recipe with Gemini AI
     const geminiService = new GeminiService();
     const generatedRecipe = await geminiService.generateRecipe({
       ingredients,
-      language: language || 'en',
-      dietaryRestrictions: dietaryRestrictions || user.dietaryRestrictions,
+      language: language || user.preferredLanguage || 'en',
+      dietaryRestrictions: finalDietaryRestrictions,
       servings: portions || servings || 4, // Use portions from frontend, fallback to servings or 4
       cookingTime: maxTime || cookingTime || 30, // Use maxTime from frontend, fallback to cookingTime or 30
       difficulty: difficulty || 'easy'
@@ -61,6 +132,8 @@ export const generateRecipe = async (req: AuthRequest, res: Response<APIResponse
       originalIngredients: ingredients,
       language: language || 'en',
       isSaved: false,
+      // Normalize dietary tags to ensure they match the validation schema
+      dietaryTags: normalizeDietaryTags(generatedRecipe.dietaryTags || []),
       // Add a temporary ID for frontend use
       _id: null,
       id: null
@@ -75,6 +148,70 @@ export const generateRecipe = async (req: AuthRequest, res: Response<APIResponse
     res.status(500).json({
       success: false,
       error: error.message || 'Recipe generation failed'
+    });
+  }
+};
+
+export const createRecipe = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = req.user!;
+    const recipeData = req.body;
+    
+    if (!recipeData) {
+      res.status(400).json({
+        success: false,
+        error: 'Recipe data is required'
+      });
+      return;
+    }
+
+    // Remove null/undefined id fields that come from frontend
+    const cleanRecipeData = { ...recipeData };
+    delete cleanRecipeData._id;
+    delete cleanRecipeData.id;
+
+    // Normalize dietary tags to ensure they match the validation schema
+    if (cleanRecipeData.dietaryTags) {
+      cleanRecipeData.dietaryTags = normalizeDietaryTags(cleanRecipeData.dietaryTags);
+    }
+
+    // Clean ingredients to ensure all required fields are present
+    const cleanedIngredients = cleanRecipeData.ingredients?.map((ingredient: any) => {
+      let defaultUnit = 'to taste';
+      if (cleanRecipeData.language === 'it') {
+        defaultUnit = 'q.b.'; // quanto basta
+      }
+      
+      return {
+        name: ingredient.name || '',
+        amount: ingredient.amount || '',
+        unit: ingredient.unit && ingredient.unit.trim() !== '' ? ingredient.unit : defaultUnit
+      };
+    }) || [];
+
+    const newRecipe = new Recipe({
+      ...cleanRecipeData,
+      ingredients: cleanedIngredients,
+      userId: user._id,
+      originalIngredients: cleanRecipeData.originalIngredients || cleanRecipeData.ingredients?.map((ing: any) => ing.name) || [],
+      language: cleanRecipeData.language || 'en',
+      isSaved: false, // Create without saving to collection
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    await newRecipe.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Recipe created successfully',
+      data: newRecipe
+    });
+  } catch (error: any) {
+    console.error('Error creating recipe:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create recipe'
     });
   }
 };
@@ -113,10 +250,20 @@ export const saveRecipe = async (req: AuthRequest, res: Response<APIResponse<any
       return;
     }
 
+    // Remove null/undefined id fields that come from frontend
+    const cleanRecipeData = { ...recipeData };
+    delete cleanRecipeData._id;
+    delete cleanRecipeData.id;
+
+    // Normalize dietary tags to ensure they match the validation schema
+    if (cleanRecipeData.dietaryTags) {
+      cleanRecipeData.dietaryTags = normalizeDietaryTags(cleanRecipeData.dietaryTags);
+    }
+
     const newRecipe = new Recipe({
-      ...recipeData,
+      ...cleanRecipeData,
       userId: user._id,
-      isSaved: true,
+      isSaved: false, // Don't add to collection yet - only when cooking is finished
       createdAt: new Date(),
       updatedAt: new Date()
     });

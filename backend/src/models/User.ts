@@ -7,6 +7,7 @@ export interface IUser extends Document {
   name?: string;
   preferredLanguage: 'en' | 'it';
   dietaryRestrictions: string[];
+  role: 'user' | 'admin';
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -51,6 +52,11 @@ const userSchema = new Schema<IUser>({
       },
       message: 'Invalid dietary restriction'
     }
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   }
 }, {
   timestamps: true

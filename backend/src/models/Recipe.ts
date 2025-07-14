@@ -11,6 +11,7 @@ export interface IRecipe extends Document {
   description: string;
   ingredients: IRecipeIngredient[];
   instructions: string[];
+  stepTimers?: number[]; // Timer in minutes for each step
   cookingTime: number;
   servings: number;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -75,6 +76,16 @@ const recipeSchema = new Schema<IRecipe>({
       message: 'Recipe must have at least one instruction'
     }
   },
+  stepTimers: {
+    type: [Number],
+    required: false,
+    validate: {
+      validator: function(v: number[]) {
+        return !v || v.every(timer => typeof timer === 'number' && timer >= 0);
+      },
+      message: 'Step timers must be positive numbers'
+    }
+  },
   cookingTime: {
     type: Number,
     required: true,
@@ -97,7 +108,7 @@ const recipeSchema = new Schema<IRecipe>({
     default: [],
     validate: {
       validator: function(v: string[]) {
-        const validTags = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'];
+        const validTags = ['vegetarian', 'vegan', 'pescatarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'];
         return v.every(tag => validTags.includes(tag));
       },
       message: 'Invalid dietary tag'

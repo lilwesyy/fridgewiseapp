@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 import Svg, { Path } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -45,6 +46,8 @@ interface ShareModalProps {
 
 export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const slideY = useSharedValue(screenHeight);
   const opacity = useSharedValue(0);
 
@@ -110,11 +113,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
                     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                       <Path
                         d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-                        stroke="rgb(22, 163, 74)"
+                        stroke={colors.success}
                         strokeWidth={2}
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        fill="rgba(22, 163, 74, 0.1)"
+                        fill={colors.card}
                       />
                     </Svg>
                   </View>
@@ -136,7 +139,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
                         strokeWidth={2}
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        fill="rgba(59, 130, 246, 0.1)"
+                        fill={colors.card}
                       />
                       <Path
                         d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
@@ -168,14 +171,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modal: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 34, // Safe area for iPhone
@@ -184,7 +187,7 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.border,
     borderRadius: 2,
     alignSelf: 'center',
     marginTop: 12,
@@ -197,12 +200,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
   options: {
     paddingHorizontal: 24,
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -220,7 +223,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -231,29 +234,29 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
+    color: colors.text,
     marginBottom: 4,
   },
   optionDescription: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   optionArrow: {
     fontSize: 18,
-    color: '#9CA3AF',
+    color: colors.textSecondary,
     fontWeight: 'bold',
   },
   cancelButton: {
     marginHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.card,
     borderRadius: 12,
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
 });

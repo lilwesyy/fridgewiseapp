@@ -1,20 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator, TextInput, ScrollView, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, TextInput, ScrollView, SafeAreaView, StatusBar as RNStatusBar } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { CameraScreen } from './src/components/CameraScreen';
 import { IngredientsScreen } from './src/components/IngredientsScreen';
 import { RecipeScreen } from './src/components/RecipeScreen';
 import { RecipesScreen } from './src/components/RecipesScreen';
 import { SavedScreen } from './src/components/SavedScreen';
 import { ProfileScreen } from './src/components/ProfileScreen';
+import { PrivacyPolicyScreen } from './src/components/PrivacyPolicyScreen';
+import { TermsOfServiceScreen } from './src/components/TermsOfServiceScreen';
+import { AdminStatsScreen } from './src/components/AdminStatsScreen';
 import { HomeScreen } from './src/components/HomeScreen';
+import { CookingModeScreen } from './src/components/CookingModeScreen';
 import { BottomNavigation, TabName } from './src/components/BottomNavigation';
+import { NotificationModal, NotificationType } from './src/components/NotificationModal';
+import { MaintenanceScreen } from './src/components/MaintenanceScreen';
+import { checkBackendAvailability, BackendHealthMonitor } from './src/utils/healthCheck';
 import Svg, { Path, G } from 'react-native-svg';
 import './src/i18n';
 
-type Screen = 'home' | 'camera' | 'ingredients' | 'recipe' | 'recipes' | 'saved' | 'profile';
+type Screen = 'home' | 'camera' | 'ingredients' | 'recipe' | 'recipes' | 'saved' | 'profile' | 'cooking' | 'privacy' | 'terms' | 'admin-stats';
 
 interface AppState {
   currentScreen: Screen;
@@ -71,6 +79,27 @@ const LogoComponent: React.FC<{ width?: number; height?: number }> = ({ width = 
 const AppContent: React.FC = () => {
   const { t } = useTranslation();
   const { user, token, isLoading, login, register } = useAuth();
+  const { isDarkMode, themeMode } = useTheme();
+  
+  // Force StatusBar update when theme changes
+  useEffect(() => {
+    console.log('📱 StatusBar update - isDarkMode:', isDarkMode, 'themeMode:', themeMode);
+    
+    // Force native StatusBar update
+    const barStyle = isDarkMode ? 'light-content' : 'dark-content';
+    RNStatusBar.setBarStyle(barStyle, true);
+  }, [isDarkMode, themeMode]);
+  
+  // Safety wrapper for translations
+  const safeT = (key: string, fallback?: string) => {
+    try {
+      const result = t(key);
+      return typeof result === 'string' ? result : (fallback || key);
+    } catch (error) {
+      console.warn('Translation error for key:', key, error);
+      return fallback || key;
+    }
+  };
   const [appState, setAppState] = useState<AppState>({
     currentScreen: 'home',
     activeTab: 'home',
@@ -93,23 +122,96 @@ const AppContent: React.FC = () => {
     confirmPassword: '',
   });
 
+  const [notification, setNotification] = useState({
+    visible: false,
+    type: 'error' as NotificationType,
+    title: '',
+    message: '',
+  });
+
+  const [backendStatus, setBackendStatus] = useState({
+    isHealthy: true,
+    isMaintenance: false,
+    isCheckingHealth: true,
+  });
+
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+
+  // Health check on app startup
+  useEffect(() => {
+    const performInitialHealthCheck = async () => {
+      try {
+        const result = await checkBackendAvailability(API_URL, 2, 1000);
+        setBackendStatus({
+          isHealthy: result.isHealthy,
+          isMaintenance: result.isMaintenance,
+          isCheckingHealth: false,
+        });
+      } catch (error) {
+        console.error('Initial health check failed:', error);
+        setBackendStatus({
+          isHealthy: false,
+          isMaintenance: false,
+          isCheckingHealth: false,
+        });
+      }
+    };
+
+    performInitialHealthCheck();
+  }, []);
+
+  const handleRetryConnection = async () => {
+    setBackendStatus(prev => ({ ...prev, isCheckingHealth: true }));
+    
+    try {
+      const result = await checkBackendAvailability(API_URL, 3, 2000);
+      setBackendStatus({
+        isHealthy: result.isHealthy,
+        isMaintenance: result.isMaintenance,
+        isCheckingHealth: false,
+      });
+    } catch (error) {
+      console.error('Retry health check failed:', error);
+      setBackendStatus({
+        isHealthy: false,
+        isMaintenance: false,
+        isCheckingHealth: false,
+      });
+    }
+  };
+
   const handleLogin = async () => {
     try {
       await login(loginForm.email, loginForm.password);
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: error.message,
+      });
     }
   };
 
   const handleRegister = async () => {
     if (registerForm.password !== registerForm.confirmPassword) {
-      Alert.alert(t('common.error'), 'Passwords do not match');
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: 'Passwords do not match',
+      });
       return;
     }
     try {
       await register(registerForm.email, registerForm.password, registerForm.name);
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: error.message,
+      });
     }
   };
 
@@ -187,6 +289,9 @@ const AppContent: React.FC = () => {
         // Otherwise, go back to ingredients (default flow from camera/ingredients)
         setAppState({ ...appState, currentScreen: 'ingredients' });
       }
+    } else if (appState.currentScreen === 'cooking') {
+      // Go back to recipe screen from cooking mode
+      setAppState({ ...appState, currentScreen: 'recipe' });
     }
   };
 
@@ -198,6 +303,26 @@ const AppContent: React.FC = () => {
         currentRecipeIndex: index,
       });
     }
+  };
+
+  const handleStartCooking = (recipe: any) => {
+    console.log('🍳 handleStartCooking called with recipe:', recipe);
+    console.log('🍳 Recipe title:', recipe?.title);
+    console.log('🍳 Recipe ingredients:', recipe?.ingredients?.length);
+    
+    setAppState({
+      ...appState,
+      currentScreen: 'cooking',
+      recipe,
+    });
+  };
+
+  const handleFinishCooking = () => {
+    setAppState({
+      ...appState,
+      currentScreen: 'saved',
+      activeTab: 'saved',
+    });
   };
 
   const handleSelectRecipeFromList = (recipe: any, allRecipes: any[], index: number, tab: TabName) => {
@@ -212,11 +337,23 @@ const AppContent: React.FC = () => {
     });
   };
 
-  if (isLoading) {
+  // Show maintenance screen if backend is down or in maintenance
+  if (!backendStatus.isHealthy || backendStatus.isMaintenance) {
+    return (
+      <MaintenanceScreen
+        onRetry={handleRetryConnection}
+        isRetrying={backendStatus.isCheckingHealth}
+      />
+    );
+  }
+
+  if (isLoading || backendStatus.isCheckingHealth) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="rgb(22, 163, 74)" />
-        <Text style={styles.loadingText}>{t('common.loading')}</Text>
+        <Text style={styles.loadingText}>
+          {backendStatus.isCheckingHealth ? 'Checking connection...' : safeT('common.loading')}
+        </Text>
       </SafeAreaView>
     );
   }
@@ -233,7 +370,7 @@ const AppContent: React.FC = () => {
                 <Text style={styles.welcomeTagline}>Smart. Simple. Delicious.</Text>
               </View>
               <Text style={styles.welcomeSubtitle}>
-                {t('home.subtitle')}
+                {safeT('home.subtitle')}
               </Text>
             </View>
             
@@ -283,18 +420,18 @@ const AppContent: React.FC = () => {
               style={styles.primaryButton} 
               onPress={() => setAuthMode('register')}
             >
-              <Text style={styles.primaryButtonText}>{t('auth.register')}</Text>
+              <Text style={styles.primaryButtonText}>{safeT('auth.register')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.secondaryButton} 
               onPress={() => setAuthMode('login')}
             >
-              <Text style={styles.secondaryButtonText}>{t('auth.login')}</Text>
+              <Text style={styles.secondaryButtonText}>{safeT('auth.login')}</Text>
             </TouchableOpacity>
           </View>
           
-          <StatusBar style="dark" />
+          <StatusBar style={isDarkMode ? "light" : "dark"} />
         </SafeAreaView>
       );
     }
@@ -308,19 +445,19 @@ const AppContent: React.FC = () => {
                 style={styles.backButton} 
                 onPress={() => setAuthMode('welcome')}
               >
-                <Text style={styles.backButtonText}>← {t('common.back')}</Text>
+                <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
               </TouchableOpacity>
-              <Text style={styles.authTitle}>{t('auth.signIn')}</Text>
+              <Text style={styles.authTitle}>{safeT('auth.signIn')}</Text>
             </View>
             
             <View style={styles.authForm}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('auth.email')}</Text>
+                <Text style={styles.label}>{safeT('auth.email')}</Text>
                 <TextInput
                   style={styles.input}
                   value={loginForm.email}
                   onChangeText={(text) => setLoginForm({ ...loginForm, email: text })}
-                  placeholder={t('auth.email')}
+                  placeholder={safeT('auth.email')}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -329,12 +466,12 @@ const AppContent: React.FC = () => {
               </View>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('auth.password')}</Text>
+                <Text style={styles.label}>{safeT('auth.password')}</Text>
                 <TextInput
                   style={styles.input}
                   value={loginForm.password}
                   onChangeText={(text) => setLoginForm({ ...loginForm, password: text })}
-                  placeholder={t('auth.password')}
+                  placeholder={safeT('auth.password')}
                   secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -343,7 +480,7 @@ const AppContent: React.FC = () => {
               </View>
               
               <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                <Text style={styles.primaryButtonText}>{t('auth.signIn')}</Text>
+                <Text style={styles.primaryButtonText}>{safeT('auth.signIn')}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -351,12 +488,12 @@ const AppContent: React.FC = () => {
                 onPress={() => setAuthMode('register')}
               >
                 <Text style={styles.linkButtonText}>
-                  Don't have an account? {t('auth.register')}
+                  {String(`Don't have an account? ${safeT('auth.register')}`)}
                 </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
-          <StatusBar style="dark" />
+          <StatusBar style={isDarkMode ? "light" : "dark"} />
         </SafeAreaView>
       );
     }
@@ -370,19 +507,19 @@ const AppContent: React.FC = () => {
                 style={styles.backButton} 
                 onPress={() => setAuthMode('welcome')}
               >
-                <Text style={styles.backButtonText}>← {t('common.back')}</Text>
+                <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
               </TouchableOpacity>
-              <Text style={styles.authTitle}>{t('auth.register')}</Text>
+              <Text style={styles.authTitle}>{safeT('auth.register')}</Text>
             </View>
             
             <View style={styles.authForm}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('auth.name')}</Text>
+                <Text style={styles.label}>{safeT('auth.name')}</Text>
                 <TextInput
                   style={styles.input}
                   value={registerForm.name}
                   onChangeText={(text) => setRegisterForm({ ...registerForm, name: text })}
-                  placeholder={t('auth.name')}
+                  placeholder={safeT('auth.name')}
                   autoCapitalize="words"
                   autoCorrect={false}
                   placeholderTextColor="#9CA3AF"
@@ -390,12 +527,12 @@ const AppContent: React.FC = () => {
               </View>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('auth.email')}</Text>
+                <Text style={styles.label}>{safeT('auth.email')}</Text>
                 <TextInput
                   style={styles.input}
                   value={registerForm.email}
                   onChangeText={(text) => setRegisterForm({ ...registerForm, email: text })}
-                  placeholder={t('auth.email')}
+                  placeholder={safeT('auth.email')}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -404,12 +541,12 @@ const AppContent: React.FC = () => {
               </View>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('auth.password')}</Text>
+                <Text style={styles.label}>{safeT('auth.password')}</Text>
                 <TextInput
                   style={styles.input}
                   value={registerForm.password}
                   onChangeText={(text) => setRegisterForm({ ...registerForm, password: text })}
-                  placeholder={t('auth.password')}
+                  placeholder={safeT('auth.password')}
                   secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -418,12 +555,12 @@ const AppContent: React.FC = () => {
               </View>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('auth.confirmPassword')}</Text>
+                <Text style={styles.label}>{safeT('auth.confirmPassword')}</Text>
                 <TextInput
                   style={styles.input}
                   value={registerForm.confirmPassword}
                   onChangeText={(text) => setRegisterForm({ ...registerForm, confirmPassword: text })}
-                  placeholder={t('auth.confirmPassword')}
+                  placeholder={safeT('auth.confirmPassword')}
                   secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -432,7 +569,7 @@ const AppContent: React.FC = () => {
               </View>
               
               <TouchableOpacity style={styles.primaryButton} onPress={handleRegister}>
-                <Text style={styles.primaryButtonText}>{t('auth.register')}</Text>
+                <Text style={styles.primaryButtonText}>{safeT('auth.register')}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -440,12 +577,12 @@ const AppContent: React.FC = () => {
                 onPress={() => setAuthMode('login')}
               >
                 <Text style={styles.linkButtonText}>
-                  Already have an account? {t('auth.login')}
+                  Already have an account? {safeT('auth.login')}
                 </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
-          <StatusBar style="dark" />
+          <StatusBar style={isDarkMode ? "light" : "dark"} />
         </SafeAreaView>
       );
     }
@@ -471,6 +608,7 @@ const AppContent: React.FC = () => {
         onStartOver={handleStartOver}
         onGoToSaved={() => setAppState({ ...appState, currentScreen: 'saved', activeTab: 'saved' })}
         onGoToRecipes={() => setAppState({ ...appState, currentScreen: 'recipes', activeTab: 'recipes' })}
+        onStartCooking={handleStartCooking}
         isJustGenerated={appState.isRecipeJustGenerated}
         recipes={appState.allRecipes}
         currentIndex={appState.currentRecipeIndex}
@@ -479,11 +617,32 @@ const AppContent: React.FC = () => {
           console.log('🍕 App.tsx - Updating recipe...');
           console.log('🍕 App.tsx - Current recipe ingredients:', appState.recipe?.ingredients?.length || 0);
           console.log('🍕 App.tsx - New recipe ingredients:', updatedRecipe.ingredients?.length || 0);
+          console.log('🍕 App.tsx - isRecipeJustGenerated:', appState.isRecipeJustGenerated);
+          console.log('🍕 App.tsx - Current recipe ID:', appState.recipe?.id || appState.recipe?._id);
+          console.log('🍕 App.tsx - Updated recipe ID:', updatedRecipe.id || updatedRecipe._id);
+          
+          // Check if this is a transition from temporary to saved recipe
+          const wasTempRecipe = appState.isRecipeJustGenerated && !appState.recipe?.id && !appState.recipe?._id;
+          const isNowSaved = updatedRecipe.id || updatedRecipe._id;
+          
+          console.log('🍕 App.tsx - wasTempRecipe:', wasTempRecipe);
+          console.log('🍕 App.tsx - isNowSaved:', isNowSaved);
+          
+          if (wasTempRecipe && isNowSaved) {
+            console.log('🍕 App.tsx - Transitioning from temporary to saved recipe');
+            // Transition from temporary to saved recipe - update state to show normal recipe view
+            setAppState({ 
+              ...appState, 
+              recipe: updatedRecipe,
+              isRecipeJustGenerated: false // No longer just generated
+            });
+            return;
+          }
           
           // Update state immediately for UI responsiveness
           setAppState({ ...appState, recipe: updatedRecipe });
           
-          // Save to database
+          // Save to database if recipe has ID (for AI chat modifications)
           if (updatedRecipe._id) {
             try {
               console.log('💾 Saving recipe to database...');
@@ -499,6 +658,7 @@ const AppContent: React.FC = () => {
                 description: updatedRecipe.description,
                 ingredients: fixedIngredients,
                 instructions: updatedRecipe.instructions,
+                stepTimers: updatedRecipe.stepTimers,
                 cookingTime: updatedRecipe.cookingTime,
                 servings: updatedRecipe.servings,
                 difficulty: updatedRecipe.difficulty,
@@ -530,6 +690,30 @@ const AppContent: React.FC = () => {
             console.log('📝 Recipe has no ID, skipping database save');
           }
         }}
+      />
+    );
+  }
+  
+  if (appState.currentScreen === 'privacy') {
+    return (
+      <PrivacyPolicyScreen
+        onGoBack={() => setAppState({ ...appState, currentScreen: 'profile' })}
+      />
+    );
+  }
+  
+  if (appState.currentScreen === 'terms') {
+    return (
+      <TermsOfServiceScreen
+        onGoBack={() => setAppState({ ...appState, currentScreen: 'profile' })}
+      />
+    );
+  }
+  
+  if (appState.currentScreen === 'admin-stats') {
+    return (
+      <AdminStatsScreen
+        onGoBack={() => setAppState({ ...appState, currentScreen: 'profile' })}
       />
     );
   }
@@ -565,8 +749,20 @@ const AppContent: React.FC = () => {
         return (
           <ProfileScreen
             onLogout={handleLogout}
+            onShowPrivacyPolicy={() => setAppState({ ...appState, currentScreen: 'privacy' })}
+            onShowTermsOfService={() => setAppState({ ...appState, currentScreen: 'terms' })}
+            onShowAdminStats={() => setAppState({ ...appState, currentScreen: 'admin-stats' })}
           />
         );
+      
+      case 'cooking':
+        return appState.recipe ? (
+          <CookingModeScreen
+            recipe={appState.recipe}
+            onGoBack={handleGoBack}
+            onFinishCooking={handleFinishCooking}
+          />
+        ) : null;
       
       default: // 'home'
         return (
@@ -585,15 +781,24 @@ const AppContent: React.FC = () => {
         activeTab={appState.activeTab}
         onTabPress={handleTabPress}
       />
+      <NotificationModal
+        visible={notification.visible}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        onClose={() => setNotification({ ...notification, visible: false })}
+      />
     </View>
   );
 };
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

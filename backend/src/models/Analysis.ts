@@ -9,12 +9,10 @@ export interface IIngredient {
 
 export interface IAnalysis extends Document {
   ingredients: IIngredient[];
-  imageUrl: string;
   userId: mongoose.Types.ObjectId;
   processingTime: number;
   status: 'pending' | 'completed' | 'failed';
   errorMessage?: string;
-  cloudinaryPublicId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,11 +46,6 @@ const analysisSchema = new Schema<IAnalysis>({
     type: [ingredientSchema],
     default: []
   },
-  imageUrl: {
-    type: String,
-    required: true,
-    trim: true
-  },
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
@@ -72,10 +65,6 @@ const analysisSchema = new Schema<IAnalysis>({
     type: String,
     trim: true
   },
-  cloudinaryPublicId: {
-    type: String,
-    trim: true
-  }
 }, {
   timestamps: true
 });
