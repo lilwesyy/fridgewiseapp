@@ -8,6 +8,10 @@ interface User {
   preferredLanguage: 'en' | 'it';
   dietaryRestrictions: string[];
   role: 'user' | 'admin';
+  avatar?: {
+    url: string;
+    publicId: string;
+  };
 }
 
 interface AuthContextType {
@@ -17,6 +21,8 @@ interface AuthContextType {
   register: (email: string, password: string, name?: string, preferredLanguage?: 'en' | 'it') => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
+  uploadAvatar: (imageUri: string) => Promise<User>;
+  deleteAvatar: () => Promise<User>;
   isLoading: boolean;
 }
 
@@ -121,10 +127,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(token);
       setUser(user);
     } catch (error) {
-      console.error('🚨 Registration error details:', error);
-      console.error('🚨 Error type:', typeof error);
-      console.error('🚨 Error message:', error?.message);
-      console.error('🚨 Error cause:', error?.cause);
+      // console.error('🚨 Registration error details:', error);
+      // console.error('🚨 Error type:', typeof error);
+      // console.error('🚨 Error message:', error?.message);
+      // console.error('🚨 Error cause:', error?.cause);
       throw error;
     }
   };
@@ -162,8 +168,84 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Update stored user
       await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Profile update error:', error);
+      throw error;
+    }
+  };
+
+  const uploadAvatar = async (imageUri: string) => {
+    try {
+      const formData = new FormData();
+      
+      // Handle both file URI and base64 image
+      if (imageUri.startsWith('data:')) {
+        // Base64 image
+        formData.append('avatar', imageUri);
+      } else {
+        // File URI - React Native specific handling
+        const filename = imageUri.split('/').pop() || 'avatar.jpg';
+        const fileType = filename.split('.').pop() || 'jpg';
+        
+        formData.append('avatar', {
+          uri: imageUri,
+          type: `image/${fileType}`,
+          name: filename,
+        } as any);
+      }
+
+      const response = await fetch(`${API_URL}/api/upload/avatar`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Avatar upload failed');
+      }
+
+      const updatedUser = data.data;
+      
+      // Update stored user
+      await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      return updatedUser;
+    } catch (error: any) {
+      console.error('Avatar upload error:', error);
+      throw error;
+    }
+  };
+
+  const deleteAvatar = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/upload/avatar`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Avatar deletion failed');
+      }
+
+      const updatedUser = data.data;
+      
+      // Update stored user
+      await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      return updatedUser;
+    } catch (error: any) {
+      console.error('Avatar deletion error:', error);
       throw error;
     }
   };
@@ -175,6 +257,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateProfile,
+    uploadAvatar,
+    deleteAvatar,
     isLoading,
   };
 

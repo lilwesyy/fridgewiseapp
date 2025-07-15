@@ -110,7 +110,11 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteT
         <Text style={styles.deleteText}>{deleteText}</Text>
       </TouchableOpacity>
       <Animated.View
-        style={[styles.swipeRow, animatedStyle]}
+        style={[
+          styles.swipeRow, 
+          animatedStyle
+        ]}
+        pointerEvents='auto'
         {...panResponder.panHandlers}
       >
         {children}

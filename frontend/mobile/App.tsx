@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, TextInput, ScrollView, SafeAreaView, StatusBar as RNStatusBar } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { useTranslation } from 'react-i18next';
+import i18n from './src/i18n';
+import { Switch } from 'react-native';
+
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { CameraScreen } from './src/components/CameraScreen';
@@ -10,8 +14,6 @@ import { RecipeScreen } from './src/components/RecipeScreen';
 import { RecipesScreen } from './src/components/RecipesScreen';
 import { SavedScreen } from './src/components/SavedScreen';
 import { ProfileScreen } from './src/components/ProfileScreen';
-import { PrivacyPolicyScreen } from './src/components/PrivacyPolicyScreen';
-import { TermsOfServiceScreen } from './src/components/TermsOfServiceScreen';
 import { AdminStatsScreen } from './src/components/AdminStatsScreen';
 import { HomeScreen } from './src/components/HomeScreen';
 import { CookingModeScreen } from './src/components/CookingModeScreen';
@@ -19,10 +21,10 @@ import { BottomNavigation, TabName } from './src/components/BottomNavigation';
 import { NotificationModal, NotificationType } from './src/components/NotificationModal';
 import { MaintenanceScreen } from './src/components/MaintenanceScreen';
 import { checkBackendAvailability, BackendHealthMonitor } from './src/utils/healthCheck';
-import Svg, { Path, G } from 'react-native-svg';
+import Svg, { Path, G, Circle } from 'react-native-svg';
 import './src/i18n';
 
-type Screen = 'home' | 'camera' | 'ingredients' | 'recipe' | 'recipes' | 'saved' | 'profile' | 'cooking' | 'privacy' | 'terms' | 'admin-stats';
+type Screen = 'home' | 'camera' | 'ingredients' | 'recipe' | 'recipes' | 'saved' | 'profile' | 'cooking' | 'admin-stats';
 
 interface AppState {
   currentScreen: Screen;
@@ -76,15 +78,94 @@ const LogoComponent: React.FC<{ width?: number; height?: number }> = ({ width = 
   </Svg>
 );
 
+const ValidationIcon: React.FC<{ isValid: boolean; colors: any }> = ({ isValid, colors }) => (
+  <View style={{ marginLeft: 8 }}>
+    {isValid ? (
+      <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+        <Circle cx="10" cy="10" r="10" fill={colors.success} />
+        <Path
+          d="M6 10L8.5 12.5L14 7"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    ) : (
+      <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+        <Circle cx="10" cy="10" r="10" fill={colors.error} />
+        <Path
+          d="M7 7L13 13M7 13L13 7"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    )}
+  </View>
+);
+
+const PasswordStrengthIndicator: React.FC<{ strength: number; colors: any; t: any }> = ({ strength, colors, t }) => {
+  const getStrengthColor = (level: number) => {
+    if (level <= 2) return colors.error;
+    if (level <= 3) return colors.warning;
+    return colors.success;
+  };
+
+  const getStrengthText = (level: number) => {
+    if (level <= 2) return t('validation.weak');
+    if (level <= 3) return t('validation.medium');
+    return t('validation.strong');
+  };
+
+  return (
+    <View style={{ marginTop: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+        <Text style={{ fontSize: 12, color: colors.textSecondary, marginRight: 8 }}>
+          {t('validation.passwordSecurity')}:
+        </Text>
+        <Text style={{ fontSize: 12, color: getStrengthColor(strength), fontWeight: '600' }}>
+          {getStrengthText(strength)}
+        </Text>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 2 }}>
+        {[1, 2, 3, 4, 5].map((level) => (
+          <View
+            key={level}
+            style={{
+              flex: 1,
+              height: 4,
+              backgroundColor: level <= strength ? getStrengthColor(strength) : colors.border,
+              borderRadius: 2,
+            }}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
+
 const AppContent: React.FC = () => {
-  const { t } = useTranslation();
-  const { user, token, isLoading, login, register } = useAuth();
-  const { isDarkMode, themeMode } = useTheme();
+  const { t, i18n: i18nInstance } = useTranslation();
+  const { user, token, isLoading, login, register, logout } = useAuth();
+  const { isDarkMode, themeMode, colors } = useTheme();
+  
+  // Handle splash screen
+  useEffect(() => {
+    const hideSplash = async () => {
+      // Wait for the theme to be loaded
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await SplashScreen.hideAsync();
+    };
+    
+    if (!isLoading) {
+      hideSplash();
+    }
+  }, [isLoading, isDarkMode]);
   
   // Force StatusBar update when theme changes
   useEffect(() => {
-    console.log('📱 StatusBar update - isDarkMode:', isDarkMode, 'themeMode:', themeMode);
-    
     // Force native StatusBar update
     const barStyle = isDarkMode ? 'light-content' : 'dark-content';
     RNStatusBar.setBarStyle(barStyle, true);
@@ -96,7 +177,7 @@ const AppContent: React.FC = () => {
       const result = t(key);
       return typeof result === 'string' ? result : (fallback || key);
     } catch (error) {
-      console.warn('Translation error for key:', key, error);
+      // Translation error for key
       return fallback || key;
     }
   };
@@ -120,6 +201,14 @@ const AppContent: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    acceptTerms: false,
+  });
+
+  const [validation, setValidation] = useState({
+    name: { isValid: false, message: '' },
+    email: { isValid: false, message: '' },
+    password: { isValid: false, message: '', strength: 0 },
+    confirmPassword: { isValid: false, message: '' },
   });
 
   const [notification, setNotification] = useState({
@@ -148,7 +237,7 @@ const AppContent: React.FC = () => {
           isCheckingHealth: false,
         });
       } catch (error) {
-        console.error('Initial health check failed:', error);
+        // Initial health check failed
         setBackendStatus({
           isHealthy: false,
           isMaintenance: false,
@@ -171,7 +260,7 @@ const AppContent: React.FC = () => {
         isCheckingHealth: false,
       });
     } catch (error) {
-      console.error('Retry health check failed:', error);
+      // Retry health check failed
       setBackendStatus({
         isHealthy: false,
         isMaintenance: false,
@@ -193,18 +282,122 @@ const AppContent: React.FC = () => {
     }
   };
 
+  // Validation functions
+  const validateName = (name: string) => {
+    if (!name.trim()) {
+      return { isValid: false, message: safeT('validation.nameRequired') };
+    }
+    if (name.trim().length < 2) {
+      return { isValid: false, message: safeT('validation.nameTooShort') };
+    }
+    return { isValid: true, message: '' };
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      return { isValid: false, message: safeT('validation.emailRequired') };
+    }
+    if (!emailRegex.test(email)) {
+      return { isValid: false, message: safeT('validation.emailInvalid') };
+    }
+    return { isValid: true, message: '' };
+  };
+
+  const validatePassword = (password: string) => {
+    if (!password) {
+      return { isValid: false, message: safeT('validation.passwordRequired'), strength: 0 };
+    }
+    if (password.length < 8) {
+      return { isValid: false, message: safeT('validation.passwordTooShort'), strength: 1 };
+    }
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    const isValid = strength >= 3;
+    const message = isValid ? '' : safeT('validation.passwordWeak');
+    
+    return { isValid, message, strength };
+  };
+
+  const validateConfirmPassword = (password: string, confirmPassword: string) => {
+    if (!confirmPassword) {
+      return { isValid: false, message: safeT('validation.confirmPasswordRequired') };
+    }
+    if (password !== confirmPassword) {
+      return { isValid: false, message: safeT('validation.passwordsDoNotMatch') };
+    }
+    return { isValid: true, message: '' };
+  };
+
+  const handleRegisterFormChange = (field: string, value: string | boolean) => {
+    const newForm = { ...registerForm, [field]: value };
+    setRegisterForm(newForm);
+    
+    // Real-time validation
+    if (field === 'name') {
+      setValidation(prev => ({ ...prev, name: validateName(value as string) }));
+    } else if (field === 'email') {
+      setValidation(prev => ({ ...prev, email: validateEmail(value as string) }));
+    } else if (field === 'password') {
+      const passwordValidation = validatePassword(value as string);
+      const confirmPasswordValidation = validateConfirmPassword(value as string, newForm.confirmPassword);
+      setValidation(prev => ({ 
+        ...prev, 
+        password: passwordValidation,
+        confirmPassword: confirmPasswordValidation
+      }));
+    } else if (field === 'confirmPassword') {
+      setValidation(prev => ({ 
+        ...prev, 
+        confirmPassword: validateConfirmPassword(newForm.password, value as string)
+      }));
+    }
+  };
+
   const handleRegister = async () => {
-    if (registerForm.password !== registerForm.confirmPassword) {
+    // Validate all fields
+    const nameValidation = validateName(registerForm.name);
+    const emailValidation = validateEmail(registerForm.email);
+    const passwordValidation = validatePassword(registerForm.password);
+    const confirmPasswordValidation = validateConfirmPassword(registerForm.password, registerForm.confirmPassword);
+    
+    setValidation({
+      name: nameValidation,
+      email: emailValidation,
+      password: passwordValidation,
+      confirmPassword: confirmPasswordValidation,
+    });
+    
+    if (!nameValidation.isValid || !emailValidation.isValid || !passwordValidation.isValid || !confirmPasswordValidation.isValid) {
       setNotification({
         visible: true,
         type: 'error',
         title: safeT('common.error'),
-        message: 'Passwords do not match',
+        message: safeT('validation.fixErrors'),
       });
       return;
     }
+    
+    if (!registerForm.acceptTerms) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: safeT('validation.acceptTermsRequired'),
+      });
+      return;
+    }
+    
     try {
-      await register(registerForm.email, registerForm.password, registerForm.name);
+      // Use current system language
+      const currentLanguage = i18nInstance?.language || 'en';
+      await register(registerForm.email, registerForm.password, registerForm.name, currentLanguage as 'en' | 'it');
     } catch (error: any) {
       setNotification({
         visible: true,
@@ -264,16 +457,21 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    setAppState({
-      currentScreen: 'home',
-      activeTab: 'home',
-      ingredients: [],
-      recipe: null,
-      isRecipeJustGenerated: false,
-      allRecipes: [],
-      currentRecipeIndex: 0,
-    });
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setAppState({
+        currentScreen: 'home',
+        activeTab: 'home',
+        ingredients: [],
+        recipe: null,
+        isRecipeJustGenerated: false,
+        allRecipes: [],
+        currentRecipeIndex: 0,
+      });
+    } catch (error) {
+      // Logout error
+    }
   };
 
   const handleGoBack = () => {
@@ -306,9 +504,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleStartCooking = (recipe: any) => {
-    console.log('🍳 handleStartCooking called with recipe:', recipe);
-    console.log('🍳 Recipe title:', recipe?.title);
-    console.log('🍳 Recipe ingredients:', recipe?.ingredients?.length);
+    // handleStartCooking called with recipe
     
     setAppState({
       ...appState,
@@ -347,10 +543,12 @@ const AppContent: React.FC = () => {
     );
   }
 
+  const styles = getStyles(colors);
+
   if (isLoading || backendStatus.isCheckingHealth) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="rgb(22, 163, 74)" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>
           {backendStatus.isCheckingHealth ? 'Checking connection...' : safeT('common.loading')}
         </Text>
@@ -461,7 +659,7 @@ const AppContent: React.FC = () => {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
               
@@ -475,7 +673,7 @@ const AppContent: React.FC = () => {
                   secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
               
@@ -488,7 +686,7 @@ const AppContent: React.FC = () => {
                 onPress={() => setAuthMode('register')}
               >
                 <Text style={styles.linkButtonText}>
-                  {String(`Don't have an account? ${safeT('auth.register')}`)}
+                  {safeT('auth.dontHaveAccount')} {safeT('auth.register')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -515,60 +713,135 @@ const AppContent: React.FC = () => {
             <View style={styles.authForm}>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>{safeT('auth.name')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={registerForm.name}
-                  onChangeText={(text) => setRegisterForm({ ...registerForm, name: text })}
-                  placeholder={safeT('auth.name')}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  placeholderTextColor="#9CA3AF"
-                />
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      validation.name.message ? styles.inputError : null,
+                      validation.name.isValid ? styles.inputValid : null
+                    ]}
+                    value={registerForm.name}
+                    onChangeText={(text) => handleRegisterFormChange('name', text)}
+                    placeholder={safeT('auth.name')}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                  {registerForm.name.length > 0 && (
+                    <ValidationIcon isValid={validation.name.isValid} colors={colors} />
+                  )}
+                </View>
+                {validation.name.message ? (
+                  <Text style={styles.errorText}>{validation.name.message}</Text>
+                ) : null}
               </View>
               
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>{safeT('auth.email')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={registerForm.email}
-                  onChangeText={(text) => setRegisterForm({ ...registerForm, email: text })}
-                  placeholder={safeT('auth.email')}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  placeholderTextColor="#9CA3AF"
-                />
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      validation.email.message ? styles.inputError : null,
+                      validation.email.isValid ? styles.inputValid : null
+                    ]}
+                    value={registerForm.email}
+                    onChangeText={(text) => handleRegisterFormChange('email', text)}
+                    placeholder={safeT('auth.email')}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                  {registerForm.email.length > 0 && (
+                    <ValidationIcon isValid={validation.email.isValid} colors={colors} />
+                  )}
+                </View>
+                {validation.email.message ? (
+                  <Text style={styles.errorText}>{validation.email.message}</Text>
+                ) : null}
               </View>
               
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>{safeT('auth.password')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={registerForm.password}
-                  onChangeText={(text) => setRegisterForm({ ...registerForm, password: text })}
-                  placeholder={safeT('auth.password')}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  placeholderTextColor="#9CA3AF"
-                />
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      validation.password.message ? styles.inputError : null,
+                      validation.password.isValid ? styles.inputValid : null
+                    ]}
+                    value={registerForm.password}
+                    onChangeText={(text) => handleRegisterFormChange('password', text)}
+                    placeholder={safeT('auth.password')}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                  {registerForm.password.length > 0 && (
+                    <ValidationIcon isValid={validation.password.isValid} colors={colors} />
+                  )}
+                </View>
+                {validation.password.message ? (
+                  <Text style={styles.errorText}>{validation.password.message}</Text>
+                ) : null}
+                {registerForm.password.length > 0 && (
+                  <PasswordStrengthIndicator strength={validation.password.strength} colors={colors} t={safeT} />
+                )}
               </View>
               
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>{safeT('auth.confirmPassword')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={registerForm.confirmPassword}
-                  onChangeText={(text) => setRegisterForm({ ...registerForm, confirmPassword: text })}
-                  placeholder={safeT('auth.confirmPassword')}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  placeholderTextColor="#9CA3AF"
-                />
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      validation.confirmPassword.message ? styles.inputError : null,
+                      validation.confirmPassword.isValid ? styles.inputValid : null
+                    ]}
+                    value={registerForm.confirmPassword}
+                    onChangeText={(text) => handleRegisterFormChange('confirmPassword', text)}
+                    placeholder={safeT('auth.confirmPassword')}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                  {registerForm.confirmPassword.length > 0 && (
+                    <ValidationIcon isValid={validation.confirmPassword.isValid} colors={colors} />
+                  )}
+                </View>
+                {validation.confirmPassword.message ? (
+                  <Text style={styles.errorText}>{validation.confirmPassword.message}</Text>
+                ) : null}
               </View>
               
-              <TouchableOpacity style={styles.primaryButton} onPress={handleRegister}>
+              <View style={styles.termsContainer}>
+                <Switch
+                  value={registerForm.acceptTerms}
+                  onValueChange={(value) => handleRegisterFormChange('acceptTerms', value)}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor={registerForm.acceptTerms ? colors.buttonText : colors.textSecondary}
+                />
+                <View style={styles.termsTextContainer}>
+                  <Text style={styles.termsText}>
+                    {safeT('auth.acceptTerms')}{' '}
+                    <Text style={styles.termsLink}>{safeT('auth.termsOfService')}</Text>
+                    {' '}{safeT('auth.and')}{' '}
+                    <Text style={styles.termsLink}>{safeT('auth.privacyPolicy')}</Text>
+                  </Text>
+                </View>
+              </View>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.primaryButton,
+                  (!validation.name.isValid || !validation.email.isValid || !validation.password.isValid || !validation.confirmPassword.isValid || !registerForm.acceptTerms) && styles.primaryButtonDisabled
+                ]} 
+                onPress={handleRegister}
+                disabled={!validation.name.isValid || !validation.email.isValid || !validation.password.isValid || !validation.confirmPassword.isValid || !registerForm.acceptTerms}
+              >
                 <Text style={styles.primaryButtonText}>{safeT('auth.register')}</Text>
               </TouchableOpacity>
               
@@ -577,7 +850,7 @@ const AppContent: React.FC = () => {
                 onPress={() => setAuthMode('login')}
               >
                 <Text style={styles.linkButtonText}>
-                  Already have an account? {safeT('auth.login')}
+                  {safeT('auth.alreadyHaveAccount')} {safeT('auth.login')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -614,22 +887,16 @@ const AppContent: React.FC = () => {
         currentIndex={appState.currentRecipeIndex}
         onNavigateToRecipe={handleNavigateToRecipe}
         onRecipeUpdate={async (updatedRecipe) => {
-          console.log('🍕 App.tsx - Updating recipe...');
-          console.log('🍕 App.tsx - Current recipe ingredients:', appState.recipe?.ingredients?.length || 0);
-          console.log('🍕 App.tsx - New recipe ingredients:', updatedRecipe.ingredients?.length || 0);
-          console.log('🍕 App.tsx - isRecipeJustGenerated:', appState.isRecipeJustGenerated);
-          console.log('🍕 App.tsx - Current recipe ID:', appState.recipe?.id || appState.recipe?._id);
-          console.log('🍕 App.tsx - Updated recipe ID:', updatedRecipe.id || updatedRecipe._id);
+          // Updating recipe
           
           // Check if this is a transition from temporary to saved recipe
           const wasTempRecipe = appState.isRecipeJustGenerated && !appState.recipe?.id && !appState.recipe?._id;
           const isNowSaved = updatedRecipe.id || updatedRecipe._id;
           
-          console.log('🍕 App.tsx - wasTempRecipe:', wasTempRecipe);
-          console.log('🍕 App.tsx - isNowSaved:', isNowSaved);
+          // Recipe state transition
           
           if (wasTempRecipe && isNowSaved) {
-            console.log('🍕 App.tsx - Transitioning from temporary to saved recipe');
+            // Transitioning from temporary to saved recipe
             // Transition from temporary to saved recipe - update state to show normal recipe view
             setAppState({ 
               ...appState, 
@@ -645,7 +912,7 @@ const AppContent: React.FC = () => {
           // Save to database if recipe has ID (for AI chat modifications)
           if (updatedRecipe._id) {
             try {
-              console.log('💾 Saving recipe to database...');
+              // Saving recipe to database
               
               // Fix ingredients with empty units (database requires non-empty unit field)
               const fixedIngredients = updatedRecipe.ingredients.map((ing: any) => ({
@@ -665,7 +932,7 @@ const AppContent: React.FC = () => {
                 dietaryTags: updatedRecipe.dietaryTags
               };
               
-              console.log('💾 Request body:', JSON.stringify(requestBody, null, 2));
+              // Request body prepared
               
               const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/recipe/${updatedRecipe._id}`, {
                 method: 'PUT',
@@ -677,38 +944,22 @@ const AppContent: React.FC = () => {
               });
               
               if (response.ok) {
-                console.log('🎉 Recipe saved successfully to database');
+                // Recipe saved successfully to database
               } else {
                 const errorText = await response.text();
-                console.error('⚠️ Failed to save recipe to database:', response.status);
-                console.error('⚠️ Error response:', errorText);
+                // Failed to save recipe to database
               }
             } catch (error) {
-              console.error('⚠️ Error saving recipe:', error);
+              // Error saving recipe
             }
           } else {
-            console.log('📝 Recipe has no ID, skipping database save');
+            // Recipe has no ID, skipping database save
           }
         }}
       />
     );
   }
   
-  if (appState.currentScreen === 'privacy') {
-    return (
-      <PrivacyPolicyScreen
-        onGoBack={() => setAppState({ ...appState, currentScreen: 'profile' })}
-      />
-    );
-  }
-  
-  if (appState.currentScreen === 'terms') {
-    return (
-      <TermsOfServiceScreen
-        onGoBack={() => setAppState({ ...appState, currentScreen: 'profile' })}
-      />
-    );
-  }
   
   if (appState.currentScreen === 'admin-stats') {
     return (
@@ -749,8 +1000,6 @@ const AppContent: React.FC = () => {
         return (
           <ProfileScreen
             onLogout={handleLogout}
-            onShowPrivacyPolicy={() => setAppState({ ...appState, currentScreen: 'privacy' })}
-            onShowTermsOfService={() => setAppState({ ...appState, currentScreen: 'terms' })}
             onShowAdminStats={() => setAppState({ ...appState, currentScreen: 'admin-stats' })}
           />
         );
@@ -792,6 +1041,9 @@ const AppContent: React.FC = () => {
   );
 };
 
+// Keep splash screen visible during initial load
+SplashScreen.preventAutoHideAsync();
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -802,11 +1054,11 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   // App Container
   appContainer: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background,
   },
   
   // Loading Screen
@@ -814,12 +1066,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     fontWeight: '500',
     fontFamily: 'System',
   },
@@ -827,7 +1079,7 @@ const styles = StyleSheet.create({
   // Welcome Screen
   welcomeContainer: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -846,7 +1098,7 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 36,
     fontWeight: '800',
-    color: '#1F2937',
+    color: colors.text,
     marginTop: 20,
     marginBottom: 6,
     fontFamily: 'System',
@@ -855,14 +1107,14 @@ const styles = StyleSheet.create({
   welcomeTagline: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     letterSpacing: 1,
     textTransform: 'uppercase',
     fontFamily: 'System',
   },
   welcomeSubtitle: {
     fontSize: 17,
-    color: '#6B7280',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 26,
     maxWidth: 300,
@@ -876,16 +1128,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   phoneFrame: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 20,
-    shadowColor: '#000',
+    elevation: 10,
+    shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
-    elevation: 10,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: colors.border || '#F3F4F6',
     transform: [{ rotate: '2deg' }],
     maxWidth: 300,
     width: '100%',
@@ -901,7 +1153,7 @@ const styles = StyleSheet.create({
   ingredientItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.card,
     borderRadius: 10,
     padding: 8,
     marginBottom: 8,
@@ -909,7 +1161,7 @@ const styles = StyleSheet.create({
   ingredientIcon: {
     width: 28,
     height: 28,
-    backgroundColor: '#FEF3F2',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
@@ -921,7 +1173,7 @@ const styles = StyleSheet.create({
   ingredientText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#374151',
+    color: colors.text,
     fontFamily: 'System',
   },
   aiMagicColumn: {
@@ -945,7 +1197,7 @@ const styles = StyleSheet.create({
   aiText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#6B7280',
+    color: colors.textSecondary,
     fontFamily: 'System',
   },
   recipeResult: {
@@ -965,7 +1217,7 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1F2937',
+    color: colors.text,
     fontFamily: 'System',
   },
 
@@ -975,43 +1227,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 24,
     paddingTop: 16,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: colors.border,
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
-    shadowColor: 'rgb(22, 163, 74)',
+    elevation: 6,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 6,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: colors.textSecondary,
+    opacity: 0.6,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: colors.buttonText,
     fontSize: 17,
     fontWeight: '700',
     fontFamily: 'System',
   },
   secondaryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
     elevation: 2,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   secondaryButtonText: {
-    color: '#4B5563',
+    color: colors.textSecondary,
     fontSize: 17,
     fontWeight: '600',
     fontFamily: 'System',
@@ -1020,7 +1276,7 @@ const styles = StyleSheet.create({
   // Auth Screens
   authContainer: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background,
   },
   authHeader: {
     marginBottom: 40,
@@ -1031,14 +1287,14 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     fontWeight: '600',
     fontFamily: 'System',
   },
   authTitle: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1F2937',
+    color: colors.text,
     textAlign: 'center',
     fontFamily: 'System',
     letterSpacing: -0.5,
@@ -1054,25 +1310,65 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.text,
     marginBottom: 8,
     fontFamily: 'System',
   },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
   input: {
+    flex: 1,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.inputBorder,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    backgroundColor: '#FFFFFF',
-    color: '#1F2937',
+    backgroundColor: colors.inputBackground,
+    color: colors.text,
     fontFamily: 'System',
-    shadowColor: '#000',
+    elevation: 1,
+    shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 1,
+  },
+  inputError: {
+    borderColor: colors.error,
+    borderWidth: 2,
+  },
+  inputValid: {
+    borderColor: colors.success,
+    borderWidth: 2,
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.error,
+    marginTop: 4,
+    fontFamily: 'System',
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 24,
+    paddingHorizontal: 4,
+  },
+  termsTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  termsText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    fontFamily: 'System',
+  },
+  termsLink: {
+    color: colors.primary,
+    fontWeight: '600',
   },
   linkButton: {
     marginTop: 24,
@@ -1080,7 +1376,7 @@ const styles = StyleSheet.create({
   },
   linkButtonText: {
     fontSize: 15,
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     fontWeight: '600',
     fontFamily: 'System',
   },
@@ -1088,7 +1384,7 @@ const styles = StyleSheet.create({
   // Home Screen (legacy)
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
@@ -1096,32 +1392,32 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1F2937',
+    color: colors.text,
     marginBottom: 8,
     fontFamily: 'System',
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 17,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginBottom: 40,
     textAlign: 'center',
     fontFamily: 'System',
   },
   button: {
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 16,
-    shadowColor: 'rgb(22, 163, 74)',
+    elevation: 6,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 6,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.buttonText,
     fontSize: 17,
     fontWeight: '700',
     fontFamily: 'System',

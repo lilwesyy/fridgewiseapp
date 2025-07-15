@@ -265,7 +265,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: colors.surface,
     borderRadius: 12,
-    shadowColor: colors.shadow,
+    shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -307,7 +307,10 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   retryButtonDisabled: {
     backgroundColor: colors.textTertiary,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   retryButtonText: {
     color: colors.buttonText,

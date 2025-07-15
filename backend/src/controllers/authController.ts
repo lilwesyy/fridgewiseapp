@@ -115,14 +115,15 @@ export const getMe = async (req: Request, res: Response<APIResponse<any>>): Prom
 export const updateProfile = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
   try {
     const user = (req as any).user;
-    const { name, preferredLanguage, dietaryRestrictions } = req.body;
+    const { name, preferredLanguage, dietaryRestrictions, avatar } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
       user._id,
       {
         name,
         preferredLanguage,
-        dietaryRestrictions
+        dietaryRestrictions,
+        ...(avatar && { avatar })
       },
       {
         new: true,
@@ -138,6 +139,56 @@ export const updateProfile = async (req: Request, res: Response<APIResponse<any>
     res.status(400).json({
       success: false,
       error: error.message || 'Profile update failed'
+    });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = (req as any).user;
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        success: false,
+        error: 'Please provide current and new password'
+      });
+      return;
+    }
+
+    // Get user with password field
+    const userWithPassword = await User.findById(user._id).select('+password');
+    if (!userWithPassword) {
+      res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+      return;
+    }
+
+    // Check current password
+    const isMatch = await userWithPassword.comparePassword(currentPassword);
+    if (!isMatch) {
+      res.status(401).json({
+        success: false,
+        error: 'Current password is incorrect'
+      });
+      return;
+    }
+
+    // Update password
+    userWithPassword.password = newPassword;
+    await userWithPassword.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Password change failed'
     });
   }
 };

@@ -13,10 +13,10 @@ fi
 # Check if GPU is available
 if command -v nvidia-smi &> /dev/null; then
     echo "🔥 GPU detected, starting with GPU support..."
-    docker-compose up -d mongodb recognize-api
+    docker compose up -d mongodb recognize-api
 else
     echo "💻 No GPU detected, starting with CPU-only version..."
-    docker-compose --profile cpu up -d mongodb recognize-api-cpu
+    docker compose --profile cpu up -d mongodb recognize-api-cpu
 fi
 
 # Wait for services to be ready
@@ -46,4 +46,4 @@ echo "🎉 Services started successfully!"
 echo "📊 MongoDB: mongodb://localhost:27017/fridgewiseai"
 echo "🔍 Recognize API: http://localhost:8000 (or 8001 for CPU)"
 echo ""
-echo "To stop services: docker-compose down"
+echo "To stop services: docker compose down"

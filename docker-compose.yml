@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   recognize-api:
     image: mnahkies/recognize-anything-api:latest

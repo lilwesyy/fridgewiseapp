@@ -9,6 +9,9 @@ import {
   ActivityIndicator,
   Switch,
   SafeAreaView,
+  Image,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +21,9 @@ import { NotificationModal, NotificationType } from './NotificationModal';
 import { AccountInfoModal } from './AccountInfoModal';
 import { AppPreferencesModal } from './AppPreferencesModal';
 import { DietaryPreferencesModal } from './DietaryPreferencesModal';
+import { AvatarEditModal } from './AvatarEditModal';
+import { PrivacyPolicyModal } from './PrivacyPolicyModal';
+import { TermsOfServiceModal } from './TermsOfServiceModal';
 import Svg, { Path, Circle, G } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -30,8 +36,6 @@ import Animated, {
 
 interface ProfileScreenProps {
   onLogout: () => void;
-  onShowPrivacyPolicy: () => void;
-  onShowTermsOfService: () => void;
   onShowAdminStats?: () => void;
 }
 
@@ -82,18 +86,29 @@ const ChevronIcon = () => (
   </Svg>
 );
 
+const EditIcon = () => (
+  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+    <Path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="rgb(22, 163, 74)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="rgb(22, 163, 74)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+  </Svg>
+);
+
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ 
   onLogout, 
-  onShowPrivacyPolicy, 
-  onShowTermsOfService, 
   onShowAdminStats 
 }) => {
   const { t, i18n } = useTranslation();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, uploadAvatar, deleteAvatar } = useAuth();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [profileForm, setProfileForm] = useState({
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [profileForm, setProfileForm] = useState<{
+    name: string;
+    email: string;
+    preferredLanguage: 'en' | 'it';
+    dietaryRestrictions: string[];
+  }>({
     name: user?.name || '',
     email: user?.email || '',
     preferredLanguage: user?.preferredLanguage || 'en',
@@ -103,6 +118,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [showDietaryModal, setShowDietaryModal] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [notification, setNotification] = useState<{
     visible: boolean;
@@ -216,7 +234,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   const handleLanguageToggle = () => {
-    const newLanguage = profileForm.preferredLanguage === 'en' ? 'it' : 'en';
+    const newLanguage: 'en' | 'it' = profileForm.preferredLanguage === 'en' ? 'it' : 'en';
     const updates = { ...profileForm, preferredLanguage: newLanguage };
     setProfileForm(updates);
     i18n.changeLanguage(newLanguage);
@@ -256,11 +274,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   const getMemberSinceDate = () => {
+    // @ts-ignore - createdAt might exist on user object
     if (!user?.createdAt) return '';
+    // @ts-ignore
     const date = new Date(user.createdAt);
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'long' 
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long'
     };
     return date.toLocaleDateString(i18n.language === 'it' ? 'it-IT' : 'en-US', options);
   };
@@ -272,11 +292,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         {/* Profile Header */}
         <Animated.View style={[styles.profileHeader, headerStyle]}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+              onPress={() => setShowAvatarModal(true)}
+            >
+              {user?.avatar?.url ? (
+                <Image
+                  source={{ uri: `${user.avatar.url}?v=${Date.now()}` }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarText}>
+                    {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.editAvatarButton}>
+                <EditIcon />
+              </View>
+            </TouchableOpacity>
           </View>
           <Text style={styles.userName}>{user?.name || user?.email}</Text>
           <Text style={styles.userEmail}>{user?.email}</Text>
@@ -345,14 +380,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <SettingRow 
               title={safeT('profile.privacyPolicy', 'Privacy Policy')}
               subtitle={safeT('profile.privacyPolicyDesc', 'Learn how we protect your data')}
-              onPress={onShowPrivacyPolicy}
+              onPress={() => setShowPrivacyModal(true)}
             >
               <ChevronIcon />
             </SettingRow>
             <SettingRow 
               title={safeT('profile.termsOfService', 'Terms of Service')}
               subtitle={safeT('profile.termsOfServiceDesc', 'Read our terms and conditions')}
-              onPress={onShowTermsOfService}
+              onPress={() => setShowTermsModal(true)}
             >
               <ChevronIcon />
             </SettingRow>
@@ -413,6 +448,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         onClose={() => setShowDietaryModal(false)}
       />
 
+      <AvatarEditModal
+        visible={showAvatarModal}
+        onClose={() => setShowAvatarModal(false)}
+        onAvatarUpdated={(updatedUser) => {
+          // Force re-render and clear image cache
+          setProfileForm(prev => ({ ...prev, _forceUpdate: Date.now() }));
+        }}
+      />
+      
+      <PrivacyPolicyModal
+        visible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
+      
+      <TermsOfServiceModal
+        visible={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
+      
       <NotificationModal
         visible={notification.visible}
         type={notification.type}
@@ -443,18 +497,46 @@ const getStyles = (colors: any) => StyleSheet.create({
   avatarContainer: {
     marginBottom: 16,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  avatarWrapper: {
+    position: 'relative',
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: colors.primary,
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.primary,
   },
   avatarText: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '600',
     color: colors.buttonText,
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  editAvatarText: {
+    fontSize: 16,
   },
   userName: {
     fontSize: 24,

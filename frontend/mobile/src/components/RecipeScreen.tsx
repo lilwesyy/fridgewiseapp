@@ -400,7 +400,15 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   }, [notification.visible]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]} {...panResponder.panHandlers}>
+    <View 
+      style={[
+        styles.container, 
+        { 
+          backgroundColor: colors.background
+        }
+      ]} 
+      pointerEvents='auto'
+      {...panResponder.panHandlers}>
       <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: 1 }]}> 
         <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
           <Text style={[styles.backButtonText, { color: colors.primary } ]}>←</Text>

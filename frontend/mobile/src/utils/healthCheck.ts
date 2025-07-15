@@ -100,7 +100,7 @@ export const checkBackendAvailability = async (
   let lastError: string | undefined;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    console.log(`Health check attempt ${attempt}/${maxRetries}`);
+    // Health check attempt
     
     const result = await performHealthCheck(apiUrl);
     

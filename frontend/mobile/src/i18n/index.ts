@@ -43,7 +43,7 @@ i18n
       },
     },
     fallbackLng: 'en',
-    debug: __DEV__,
+    debug: false,
     interpolation: {
       escapeValue: false,
     },

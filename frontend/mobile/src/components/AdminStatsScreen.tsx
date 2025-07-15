@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { NotificationModal, NotificationType } from './NotificationModal';
 import Animated, {
   useSharedValue,
@@ -24,7 +25,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 // Stats Icons
 const UsersIcon: React.FC<{ size?: number; color?: string }> = ({ 
   size = 24, 
-  color = 'rgb(22, 163, 74)' 
+  color 
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -40,7 +41,7 @@ const UsersIcon: React.FC<{ size?: number; color?: string }> = ({
 
 const RecipeIcon: React.FC<{ size?: number; color?: string }> = ({ 
   size = 24, 
-  color = 'rgb(22, 163, 74)' 
+  color 
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -53,7 +54,7 @@ const RecipeIcon: React.FC<{ size?: number; color?: string }> = ({
 
 const AnalysisIcon: React.FC<{ size?: number; color?: string }> = ({ 
   size = 24, 
-  color = 'rgb(22, 163, 74)' 
+  color 
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -75,7 +76,7 @@ const AnalysisIcon: React.FC<{ size?: number; color?: string }> = ({
 
 const CameraIcon: React.FC<{ size?: number; color?: string }> = ({ 
   size = 24, 
-  color = 'rgb(22, 163, 74)' 
+  color 
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -135,6 +136,8 @@ interface AppStats {
 export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [stats, setStats] = useState<AppStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -287,10 +290,10 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'user_registered': return <UsersIcon size={16} />;
-      case 'recipe_generated': return <RecipeIcon size={16} />;
-      case 'analysis_performed': return <AnalysisIcon size={16} />;
-      default: return <CameraIcon size={16} />;
+      case 'user_registered': return <UsersIcon size={16} color={colors.primary} />;
+      case 'recipe_generated': return <RecipeIcon size={16} color={colors.success} />;
+      case 'analysis_performed': return <AnalysisIcon size={16} color={colors.warning} />;
+      default: return <CameraIcon size={16} color={colors.textSecondary} />;
     }
   };
 
@@ -413,10 +416,10 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'user_registered': return '#3B82F6';
-      case 'recipe_generated': return 'rgb(22, 163, 74)';
-      case 'analysis_performed': return '#F59E0B';
-      default: return '#6B7280';
+      case 'user_registered': return colors.primary;
+      case 'recipe_generated': return colors.success;
+      case 'analysis_performed': return colors.warning;
+      default: return colors.textSecondary;
     }
   };
 
@@ -424,7 +427,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="rgb(22, 163, 74)" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>{t('admin.loadingStats')}</Text>
         </View>
       </SafeAreaView>
@@ -450,8 +453,8 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={onRefresh}
-              colors={['rgb(22, 163, 74)']}
-              tintColor="rgb(22, 163, 74)"
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
         >
@@ -460,28 +463,28 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
             <Text style={styles.sectionTitle}>{t('admin.overview')}</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
-                <UsersIcon size={32} />
+                <UsersIcon size={32} color={colors.primary} />
                 <Text style={styles.statNumber}>{formatNumber(stats?.totalUsers || 0)}</Text>
                 <Text style={styles.statLabel}>{t('admin.totalUsers')}</Text>
                 <Text style={styles.statSubtext}>+{stats?.todayUsers || 0} {t('admin.today')}</Text>
               </View>
               
               <View style={styles.statCard}>
-                <RecipeIcon size={32} />
+                <RecipeIcon size={32} color={colors.success} />
                 <Text style={styles.statNumber}>{formatNumber(stats?.totalRecipes || 0)}</Text>
                 <Text style={styles.statLabel}>{t('admin.totalRecipes')}</Text>
                 <Text style={styles.statSubtext}>+{stats?.todayRecipes || 0} {t('admin.today')}</Text>
               </View>
 
               <View style={styles.statCard}>
-                <AnalysisIcon size={32} />
+                <AnalysisIcon size={32} color={colors.warning} />
                 <Text style={styles.statNumber}>{formatNumber(stats?.totalAnalyses || 0)}</Text>
                 <Text style={styles.statLabel}>{t('admin.totalAnalyses')}</Text>
                 <Text style={styles.statSubtext}>+{stats?.todayAnalyses || 0} {t('admin.today')}</Text>
               </View>
 
               <View style={styles.statCard}>
-                <CameraIcon size={32} />
+                <CameraIcon size={32} color={colors.info} />
                 <Text style={styles.statNumber}>{formatNumber(stats?.totalIngredients || 0)}</Text>
                 <Text style={styles.statLabel}>{t('admin.totalIngredients')}</Text>
                 <Text style={styles.statSubtext}>{t('admin.detected')}</Text>
@@ -525,7 +528,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                 <Text style={styles.statLabel}>This Month</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={[styles.statNumber, { color: stats?.userGrowthRate >= 0 ? 'rgb(22, 163, 74)' : '#DC3545' }]}>
+                <Text style={[styles.statNumber, { color: stats?.userGrowthRate >= 0 ? colors.success : colors.error }]}>
                   {stats?.userGrowthRate >= 0 ? '+' : ''}{stats?.userGrowthRate?.toFixed(1) || '0.0'}%
                 </Text>
                 <Text style={styles.statLabel}>Growth Rate</Text>
@@ -549,7 +552,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
               </TouchableOpacity>
             </View>
             {isLoadingUsers ? (
-              <ActivityIndicator size="small" color="rgb(22, 163, 74)" />
+              <ActivityIndicator size="small" color={colors.primary} />
             ) : (
               <View style={styles.usersList}>
                 {users.slice(0, 5).map((user, index) => (
@@ -714,10 +717,10 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -727,7 +730,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     fontWeight: '500',
   },
   header: {
@@ -736,8 +739,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: 'white',
-    shadowColor: '#000',
+    backgroundColor: colors.surface,
+    shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -749,12 +752,12 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
   },
   placeholder: {
     width: 44,
@@ -771,10 +774,10 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -783,7 +786,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
     marginBottom: 16,
   },
   statsGrid: {
@@ -794,29 +797,29 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: 'rgba(22, 163, 74, 0.05)',
+    backgroundColor: colors.primaryLight || 'rgba(22, 163, 74, 0.05)',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(22, 163, 74, 0.1)',
+    borderColor: colors.border,
   },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     marginTop: 8,
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 4,
     fontWeight: '500',
   },
   statSubtext: {
     fontSize: 10,
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     marginTop: 2,
     fontWeight: '600',
   },
@@ -828,17 +831,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.card,
     borderRadius: 8,
   },
   averageNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
   },
   averageLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 4,
   },
@@ -850,14 +853,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.card,
     borderRadius: 8,
   },
   ingredientRank: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -870,12 +873,12 @@ const styles = StyleSheet.create({
   ingredientName: {
     flex: 1,
     fontSize: 14,
-    color: '#333',
+    color: colors.text,
     fontWeight: '500',
   },
   ingredientCount: {
     fontSize: 14,
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     fontWeight: 'bold',
   },
   activityList: {
@@ -899,12 +902,12 @@ const styles = StyleSheet.create({
   },
   activityDetails: {
     fontSize: 14,
-    color: '#333',
+    color: colors.text,
     fontWeight: '500',
   },
   activityTime: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   systemInfo: {
@@ -916,17 +919,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.card,
     borderRadius: 8,
   },
   systemLabel: {
     fontSize: 14,
-    color: '#333',
+    color: colors.text,
     fontWeight: '500',
   },
   systemValue: {
     fontSize: 14,
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
     fontWeight: 'bold',
   },
   usersList: {
@@ -937,14 +940,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.card,
     borderRadius: 8,
   },
   userAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -960,25 +963,25 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   userDetails: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textSecondary,
   },
   adminBadgeInline: {
     fontSize: 10,
     fontWeight: '700',
-    color: 'rgb(22, 163, 74)',
+    color: colors.primary,
   },
   viewAllButton: {
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -990,7 +993,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -998,27 +1001,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: colors.border,
   },
   modalCloseButton: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalCloseText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#666',
+    color: colors.textSecondary,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212529',
+    color: colors.text,
   },
   modalContent: {
     flex: 1,
@@ -1029,10 +1032,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 12,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     marginBottom: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -1043,7 +1046,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   promoteButton: {
-    backgroundColor: 'rgb(22, 163, 74)',
+    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -1054,7 +1057,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   deleteButton: {
-    backgroundColor: '#DC3545',
+    backgroundColor: colors.error,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -1070,7 +1073,13 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     fontStyle: 'italic',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
 });

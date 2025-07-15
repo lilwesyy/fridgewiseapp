@@ -151,7 +151,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     paddingBottom: 32,
     paddingHorizontal: 24,
     alignItems: 'center',
-    shadowColor: colors.shadow,
+    shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,

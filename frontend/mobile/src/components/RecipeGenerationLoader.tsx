@@ -83,7 +83,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     padding: 40,
     alignItems: 'center',
     maxWidth: 300,
-    shadowColor: colors.shadow,
+    shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

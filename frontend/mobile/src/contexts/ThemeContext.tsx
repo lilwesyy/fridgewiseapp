@@ -41,7 +41,7 @@ export interface ThemeColors {
 }
 
 export const lightTheme: ThemeColors = {
-  background: '#F0F0F0',
+  background: '#F8F9FA',
   surface: '#FFFFFF',
   card: '#F8F9FA',
   sectionHeader: '#FFFFFF',
@@ -118,23 +118,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [themeMode, setThemeMode] = useState<ThemeMode>('auto');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Debug logging
-  console.log('🎨 ThemeProvider Debug:', {
-    systemColorScheme,
-    themeMode,
-    currentTime: new Date().toLocaleTimeString()
-  });
 
   // Calculate if dark mode should be active
   const isDarkMode = themeMode === 'auto' 
     ? systemColorScheme === 'dark' 
     : themeMode === 'dark';
 
-  console.log('🌙 Theme Result:', {
-    isDarkMode,
-    systemColorScheme,
-    themeMode
-  });
 
   // Load theme preference from storage
   useEffect(() => {
@@ -143,17 +132,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Monitor system color scheme changes
   useEffect(() => {
-    console.log('🔄 System color scheme changed:', systemColorScheme);
-    
     // Also check Appearance API
     const appearanceScheme = Appearance.getColorScheme();
-    console.log('🎨 Appearance API says:', appearanceScheme);
   }, [systemColorScheme]);
 
   // Add Appearance listener as backup
   useEffect(() => {
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-      console.log('📲 Appearance listener triggered:', colorScheme);
+      // Color scheme changed
     });
 
     return () => subscription?.remove();
@@ -162,13 +148,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const loadThemePreference = async () => {
     try {
       const savedThemeMode = await AsyncStorage.getItem('theme_mode');
-      console.log('📱 Loaded theme from storage:', savedThemeMode);
       
       if (savedThemeMode !== null && ['auto', 'light', 'dark'].includes(savedThemeMode)) {
-        console.log('✅ Setting theme mode to:', savedThemeMode);
         setThemeMode(savedThemeMode as ThemeMode);
       } else {
-        console.log('🔄 No saved theme, defaulting to auto');
         setThemeMode('auto');
       }
     } catch (error) {
