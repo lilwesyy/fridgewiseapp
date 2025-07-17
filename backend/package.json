@@ -31,7 +31,8 @@
     "mongoose": "^8.16.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "npm": "^11.4.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
