@@ -1,4 +1,20 @@
 services:
+  mongodb:
+    image: mongo:7.0
+    container_name: fridgewise-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: fridgewise
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - fridgewiseai-network
+
   recognize-api:
     image: mnahkies/recognize-anything-api:latest
     container_name: fridgewiseai-recognize-api
@@ -6,33 +22,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - CUDA_VISIBLE_DEVICES=0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    networks:
-      - fridgewiseai-network
-
-  # Alternative CPU-only version if GPU not available
-  recognize-api-cpu:
-    image: mnahkies/recognize-anything-api:latest
-    container_name: fridgewiseai-recognize-api-cpu
-    restart: unless-stopped
-    ports:
-      - "8001:8000"
-    environment:
       - CUDA_VISIBLE_DEVICES=""
-    profiles:
-      - cpu
     networks:
       - fridgewiseai-network
 
 volumes:
-  placeholder:
+  mongodb_data:
 
 networks:
   fridgewiseai-network:
