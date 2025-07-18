@@ -116,7 +116,9 @@
     "manualInputInstead": "Inserimento Manuale",
     "initializing": "Inizializzazione fotocamera...",
     "starting": "Avvio fotocamera...",
-    "error": "Errore Fotocamera"
+    "error": "Errore Fotocamera",
+    "aiRecognition": "Riconoscimento IA",
+    "aiDisclaimerText": "Il riconoscimento ingredienti basato su IA potrebbe non essere accurato al 100%. Verifica sempre i risultati e controlla gli allergeni."
   },
   "home": {
     "welcome": "Benvenuto in FridgeWise",
@@ -245,7 +247,10 @@
       "difficulty": "Difficoltà",
       "maxTime": "Tempo Massimo di Cottura"
     },
-    "editWithAI": "Modifica con AI"
+    "aiGenerated": "Ricetta Generata da IA",
+    "aiDisclaimerText": "Questa ricetta è stata generata dall'intelligenza artificiale. Verifica sempre le istruzioni di cottura, gli ingredienti e le informazioni sugli allergeni prima di preparare.",
+    "editWithAI": "Modifica con AI",
+    "alreadyCooked": "Già Cucinato"
   },
   "cookingMode": {
     "preparation": "Preparazione",
@@ -287,7 +292,13 @@
     "timerStartedFor": "Timer avviato per",
     "minutes": "minuti",
     "autoTimerMessage": "Timer avviato automaticamente per {{minutes}} minuti per questo passaggio.",
-    "stepTimer": "Timer Passaggio"
+    "stepTimer": "Timer Passaggio",
+    "dishPhoto": "Foto del Piatto",
+    "dishPhotoDesc": "Scatta una foto del tuo piatto completato da salvare con la ricetta!",
+    "skipPhoto": "Salta Foto",
+    "saveToCollection": "Salva nella Collezione",
+    "uploadingPhoto": "Caricamento foto...",
+    "photoUploadFailed": "Caricamento foto fallito, salvataggio senza foto"
   },
   "navigation": {
     "home": "Home",
@@ -308,7 +319,8 @@
     "noSaved": "Nessun piatto nella collezione",
     "startSaving": "Cucina le ricette per trovarle qui più tardi",
     "savedOn": "Cucinato il",
-    "recipesCount": "piatti nella collezione"
+    "recipesCount": "piatti nella collezione",
+    "alreadyCooked": "Già cucinato il"
   },
   "profile": {
     "title": "Profilo",

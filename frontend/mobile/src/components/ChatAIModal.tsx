@@ -228,6 +228,19 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
               </View>
             </View>
 
+            {/* AI Disclaimer */}
+            <View style={styles.aiDisclaimer}>
+              <View style={styles.aiDisclaimerHeader}>
+                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
+                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                  <Path d="M12 8V16" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                  <Path d="M8 12H16" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                </Svg>
+                <Text style={styles.aiDisclaimerTitle}>AI-Generated Content</Text>
+              </View>
+              <Text style={styles.aiDisclaimerText}>Responses are AI-generated and may not always be accurate. Always verify cooking instructions and ingredient safety.</Text>
+            </View>
+
             {/* Messages */}
             <ScrollView 
               ref={scrollViewRef}
@@ -405,6 +418,34 @@ const styles = StyleSheet.create({
   messagesContainer: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  aiDisclaimer: {
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  aiDisclaimerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  aiIcon: {
+    marginRight: 6,
+  },
+  aiDisclaimerTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  aiDisclaimerText: {
+    fontSize: 11,
+    color: '#6c757d',
+    lineHeight: 14,
   },
   messagesContent: {
     paddingHorizontal: 20,

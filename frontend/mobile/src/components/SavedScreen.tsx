@@ -10,6 +10,7 @@ import {
   ScrollView,
   Dimensions,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,6 +49,8 @@ interface SavedRecipe {
   dietaryTags: string[];
   language: 'en' | 'it';
   savedAt: string;
+  dishPhoto?: string; // Cloudinary URL della foto del piatto
+  cookedAt?: string; // Data e ora in cui è stato cucinato
 }
 
 interface SavedScreenProps {
@@ -773,28 +776,71 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
         onPress={onPress}
         activeOpacity={0.7}
       >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, flex: 1, marginRight: 12 }} numberOfLines={2}>
-            {item.title}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: getDifficultyColor(item.difficulty) }}>
-              <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>
-                {t(`recipes.difficulty.${item.difficulty}`)}
-              </Text>
+        <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+          {/* Foto del piatto se disponibile */}
+          {item.dishPhoto && (
+            <View style={{ marginRight: 12 }}>
+              <Image 
+                source={{ uri: item.dishPhoto }} 
+                style={{ 
+                  width: 80, 
+                  height: 80, 
+                  borderRadius: 8, 
+                  backgroundColor: colors.border 
+                }} 
+                resizeMode="cover"
+              />
             </View>
-            <TouchableOpacity activeOpacity={0.7}
-              style={{ backgroundColor: colors.error, borderRadius: 12, width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}
-              onPress={onDelete}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold', lineHeight: 16 }}>×</Text>
-            </TouchableOpacity>
+          )}
+          
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, flex: 1, marginRight: 12 }} numberOfLines={2}>
+                {item.title}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: getDifficultyColor(item.difficulty) }}>
+                  <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>
+                    {t(`recipes.difficulty.${item.difficulty}`)}
+                  </Text>
+                </View>
+                <TouchableOpacity activeOpacity={0.7}
+                  style={{ backgroundColor: colors.error, borderRadius: 12, width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}
+                  onPress={onDelete}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold', lineHeight: 16 }}>×</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Indicatore "già cucinato" se disponibile */}
+            {item.cookedAt && (
+              <View style={{ 
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                backgroundColor: colors.success + '15',
+                borderColor: colors.success,
+                borderWidth: 1,
+                borderRadius: 8,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                marginBottom: 8,
+                alignSelf: 'flex-start'
+              }}>
+                <Text style={{ fontSize: 12, marginRight: 4 }}>👨‍🍳</Text>
+                <Text style={{ fontSize: 11, color: colors.success, fontWeight: '600' }}>
+                  {t('saved.alreadyCooked')} {formatDate(item.cookedAt)}
+                </Text>
+              </View>
+            )}
+
+            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 12 }} numberOfLines={item.dishPhoto ? 2 : 3}>
+              {item.description}
+            </Text>
           </View>
         </View>
-        <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 12 }} numberOfLines={3}>
-          {item.description}
-        </Text>
+
         <View style={{ flexDirection: 'row', marginBottom: 12 }}>
           <View style={{ marginRight: 16 }}>
             <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>⏱️ {item.cookingTime} min</Text>

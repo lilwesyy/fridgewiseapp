@@ -9,12 +9,16 @@ import {
   Dimensions,
   Vibration,
   Modal,
+  Image,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { NotificationModal, NotificationType } from './NotificationModal';
+import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -130,6 +134,8 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const [customTimerMinutes, setCustomTimerMinutes] = useState(10);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showFinishModal, setShowFinishModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [dishPhoto, setDishPhoto] = useState<string | null>(null);
   const [hasAutoStartedTimer, setHasAutoStartedTimer] = useState(false);
   const [showAutoTimerModal, setShowAutoTimerModal] = useState(false);
   const [autoTimerMinutes, setAutoTimerMinutes] = useState<number | null>(null);
@@ -307,13 +313,177 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     setShowFinishModal(true);
   };
 
+  const requestCameraPermission = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    return status === 'granted';
+  };
+
+  const requestMediaLibraryPermission = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    return status === 'granted';
+  };
+
+  const takePhoto = async () => {
+    try {
+      const hasPermission = await requestCameraPermission();
+      if (!hasPermission) {
+        Alert.alert(
+          safeT('camera.permissionTitle', 'Camera Permission Required'),
+          safeT('camera.permissionMessage', 'We need camera access to capture your dish photo')
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setDishPhoto(result.assets[0].uri);
+        setShowPhotoModal(false);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert(
+        safeT('common.error', 'Error'),
+        safeT('camera.cameraError', 'Camera error')
+      );
+    }
+  };
+
+  const pickFromGallery = async () => {
+    try {
+      const hasPermission = await requestMediaLibraryPermission();
+      if (!hasPermission) {
+        Alert.alert(
+          safeT('camera.permissionTitle', 'Gallery Permission Required'),
+          safeT('camera.permissionMessage', 'We need gallery access to select your dish photo')
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setDishPhoto(result.assets[0].uri);
+        setShowPhotoModal(false);
+      }
+    } catch (error) {
+      console.error('Error picking photo:', error);
+      Alert.alert(
+        safeT('common.error', 'Error'),
+        safeT('camera.galleryError', 'Gallery error')
+      );
+    }
+  };
+
+  const skipPhoto = () => {
+    setShowPhotoModal(false);
+    setDishPhoto(null);
+  };
+
   const finishCooking = async () => {
+    setShowFinishModal(false);
+    // Show photo capture option
+    setShowPhotoModal(true);
+  };
+
+  const uploadDishPhoto = async (imageUri: string) => {
+    try {
+      console.log('🔄 Starting dish photo upload...');
+      console.log('📸 Image URI:', imageUri);
+      
+      const formData = new FormData();
+      
+      // Handle file URI - React Native specific handling (same as avatar)
+      const filename = imageUri.split('/').pop() || 'dish-photo.jpg';
+      const fileType = filename.split('.').pop() || 'jpg';
+      
+      formData.append('dishPhoto', {
+        uri: imageUri,
+        type: `image/${fileType}`,
+        name: filename,
+      } as any);
+
+      console.log('🌐 Uploading to backend...');
+
+      const response = await fetch(`${API_URL}/api/upload/dish-photo`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response status text:', response.statusText);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Dish photo upload successful:', data.url);
+        return data.url;
+      } else {
+        const errorData = await response.text();
+        console.error('❌ Backend response error:', errorData);
+        throw new Error(`Dish photo upload failed: ${response.status} - ${errorData}`);
+      }
+    } catch (error) {
+      console.error('❌ Error uploading dish photo:', error);
+      throw error;
+    }
+  };
+
+  const saveDishToCollection = async () => {
     try {
       const recipeId = recipe?.id || recipe?._id || '';
       
       if (!recipeId) {
         throw new Error('Recipe ID not found');
       }
+
+      let dishPhotoUrl = null;
+
+      // Upload photo to backend if available
+      if (dishPhoto) {
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: safeT('common.loading', 'Loading'),
+          message: safeT('cookingMode.uploadingPhoto', 'Uploading photo...'),
+        });
+
+        try {
+          dishPhotoUrl = await uploadDishPhoto(dishPhoto);
+        } catch (uploadError) {
+          console.error('Photo upload failed:', uploadError);
+          
+          // Continue without photo if upload fails
+          setNotification({
+            visible: true,
+            type: 'warning',
+            title: safeT('common.warning', 'Warning'),
+            message: safeT('cookingMode.photoUploadFailed', 'Photo upload failed, saving without photo'),
+          });
+          
+          // Aspetta un po' prima di continuare
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      }
+
+      // Prepare request body
+      const requestBody = {
+        dishPhoto: dishPhotoUrl,
+        cookedAt: new Date().toISOString(),
+      };
 
       // Add recipe to user's "I miei piatti" collection
       const addToDishesResponse = await fetch(`${API_URL}/api/recipe/save/${recipeId}`, {
@@ -322,19 +492,21 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(requestBody),
       });
 
       if (addToDishesResponse.ok) {
         // Update recipe state to reflect it's now in user's collection
         (recipe as any).isSaved = true;
+        (recipe as any).dishPhoto = dishPhotoUrl;
+        (recipe as any).cookedAt = new Date().toISOString();
 
         // Show completed phase
         phaseTransition.value = withTiming(1, { 
-      duration: ANIMATION_DURATIONS.MODAL,
-      easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
-    });
+          duration: ANIMATION_DURATIONS.MODAL,
+          easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+        });
         setCurrentPhase('completed');
-        setShowFinishModal(false);
 
         // After a short delay, go back to saved recipes
         setTimeout(() => {
@@ -573,18 +745,24 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const renderCompletedScreen = () => (
     <View style={styles.completedContainer}>
       <View style={styles.completedContent}>
-        <View style={styles.completedIcon}>
-          <Svg width={80} height={80} viewBox="0 0 24 24" fill="none">
-            <Circle cx={12} cy={12} r={10} stroke={colors.success} strokeWidth={2} />
-            <Path
-              d="M9 12L11 14L15 10"
-              stroke={colors.success}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg>
-        </View>
+        {dishPhoto ? (
+          <View style={styles.dishPhotoContainer}>
+            <Image source={{ uri: dishPhoto }} style={styles.dishPhoto} />
+          </View>
+        ) : (
+          <View style={styles.completedIcon}>
+            <Svg width={80} height={80} viewBox="0 0 24 24" fill="none">
+              <Circle cx={12} cy={12} r={10} stroke={colors.success} strokeWidth={2} />
+              <Path
+                d="M9 12L11 14L15 10"
+                stroke={colors.success}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </View>
+        )}
         <Text style={styles.completedTitle}>{safeT('cookingMode.congratulations', 'Congratulations!')}</Text>
         <Text style={styles.completedSubtitle}>
           {String(`${safeT('cookingMode.youHaveCompleted', 'You have completed')} ${recipe?.title || safeT('cookingMode.theRecipe', 'the recipe')}!`)}
@@ -774,6 +952,93 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                 onPress={finishCooking}
               >
                 <Text style={styles.modalButtonTextPrimary}>{safeT('cookingMode.finishConfirm', 'Save to my dishes')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Photo Capture Modal */}
+      <Modal
+        visible={showPhotoModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPhotoModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.photoModalContent}>
+            <View style={styles.photoModalHeader}>
+              <Text style={styles.photoModalTitle}>{safeT('cookingMode.dishPhoto', 'Dish Photo')}</Text>
+              <Text style={styles.photoModalSubtitle}>{safeT('cookingMode.dishPhotoDesc', 'Capture a photo of your completed dish to save with your recipe!')}</Text>
+            </View>
+            
+            {dishPhoto && (
+              <View style={styles.photoPreviewContainer}>
+                <Image source={{ uri: dishPhoto }} style={styles.photoPreview} />
+              </View>
+            )}
+            
+            <View style={styles.photoButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.photoButton, styles.photoButtonCamera]}
+                onPress={takePhoto}
+              >
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 4H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z"
+                    stroke={colors.primary}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <Circle cx={12} cy={13} r={4} stroke={colors.primary} strokeWidth={2} />
+                </Svg>
+                <Text style={styles.photoButtonText}>{safeT('camera.takePicture', 'Take Photo')}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.photoButton, styles.photoButtonGallery]}
+                onPress={pickFromGallery}
+              >
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M21 19V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19Z"
+                    stroke={colors.primary}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <Path
+                    d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z"
+                    stroke={colors.primary}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <Path
+                    d="M21 15L16 10L5 21"
+                    stroke={colors.primary}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </Svg>
+                <Text style={styles.photoButtonText}>{safeT('camera.selectImage', 'Gallery')}</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.photoModalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={skipPhoto}
+              >
+                <Text style={styles.modalButtonTextSecondary}>{safeT('cookingMode.skipPhoto', 'Skip Photo')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={saveDishToCollection}
+              >
+                <Text style={styles.modalButtonTextPrimary}>{safeT('cookingMode.saveToCollection', 'Save to Collection')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1110,6 +1375,21 @@ const getStyles = (colors: any) => StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
+  dishPhotoContainer: {
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  dishPhoto: {
+    width: 200,
+    height: 150,
+    borderRadius: 16,
+  },
 
   // Footer
   footer: {
@@ -1255,5 +1535,84 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.buttonText,
+  },
+  
+  // Photo Modal styles
+  photoModalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  photoModalHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  photoModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  photoModalSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  photoPreviewContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  photoPreview: {
+    width: 280,
+    height: 180,
+    borderRadius: 12,
+  },
+  photoButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 24,
+  },
+  photoButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
+    minWidth: 120,
+  },
+  photoButtonCamera: {
+    marginRight: 8,
+  },
+  photoButtonGallery: {
+    marginLeft: 8,
+  },
+  photoButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+    marginTop: 8,
+  },
+  photoModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
   },
 });

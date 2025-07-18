@@ -3,6 +3,11 @@
     "name": "FridgeWise",
     "slug": "fridgewise-app",
     "version": "1.0.0",
+    "description": "AI-powered food recognition and recipe generation app that helps you manage your fridge inventory and discover delicious recipes based on available ingredients",
+    "privacy": "public",
+    "primaryColor": "#16A34A",
+    "category": "Food & Drink",
+    "keywords": ["food", "recipes", "cooking", "AI", "ingredients", "fridge", "meal planning", "food recognition"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -19,14 +24,28 @@
     },
     "ios": {
       "supportsTablet": true,
-      "userInterfaceStyle": "automatic"
+      "bundleIdentifier": "com.fridgewise.app",
+      "buildNumber": "1",
+      "userInterfaceStyle": "automatic",
+      "infoPlist": {
+        "NSCameraUsageDescription": "FridgeWise needs camera access to scan and identify ingredients from your fridge for recipe suggestions",
+        "NSPhotoLibraryUsageDescription": "FridgeWise needs photo library access to select ingredient images for analysis and recipe generation",
+        "NSPhotoLibraryAddUsageDescription": "FridgeWise may save generated recipes and ingredient photos to your photo library"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png"
       },
+      "package": "com.fridgewise.app",
+      "versionCode": 1,
       "edgeToEdgeEnabled": true,
-      "userInterfaceStyle": "automatic"
+      "userInterfaceStyle": "automatic",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   PanResponder,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -47,6 +48,8 @@ interface Recipe {
   language: 'en' | 'it';
   isSaved?: boolean;
   _id?: string;
+  dishPhoto?: string; // Cloudinary URL della foto del piatto
+  cookedAt?: string; // Data e ora in cui è stato cucinato
 }
 
 interface RecipeScreenProps {
@@ -440,6 +443,43 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         <Animated.View style={[styles.recipeHeader, titleAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
           <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.title}</Text>
           <Text style={[styles.recipeDescription, { color: colors.textSecondary }]}>{recipe.description}</Text>
+          
+          {/* AI-Generated Content Disclaimer */}
+          <View style={[styles.aiDisclaimer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.aiDisclaimerHeader}>
+              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
+                <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                <Path d="M12 8V16" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                <Path d="M8 12H16" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+              </Svg>
+              <Text style={[styles.aiDisclaimerTitle, { color: colors.primary }]}>{t('recipe.aiGenerated')}</Text>
+            </View>
+            <Text style={[styles.aiDisclaimerText, { color: colors.textSecondary }]}>{t('recipe.aiDisclaimerText')}</Text>
+          </View>
+
+          {/* Indicatore "Già cucinato" con foto */}
+          {recipe.cookedAt && (
+            <View style={[styles.cookedIndicator, { backgroundColor: colors.success + '15', borderColor: colors.success }]}>
+              <View style={styles.cookedIndicatorHeader}>
+                <View style={styles.cookedIndicatorInfo}>
+                  <Text style={styles.cookedIndicatorEmoji}>👨‍🍳</Text>
+                  <View>
+                    <Text style={[styles.cookedIndicatorTitle, { color: colors.success }]}>{t('recipe.alreadyCooked')}</Text>
+                    <Text style={[styles.cookedIndicatorDate, { color: colors.textSecondary }]}>
+                      {new Date(recipe.cookedAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+                {recipe.dishPhoto && (
+                  <Image 
+                    source={{ uri: recipe.dishPhoto }} 
+                    style={[styles.cookedDishPhoto, { borderColor: colors.success }]} 
+                    resizeMode="cover"
+                  />
+                )}
+              </View>
+            </View>
+          )}
         </Animated.View>
 
         <Animated.View style={[styles.recipeMetadata, contentAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
@@ -490,40 +530,22 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
         <Animated.View style={[styles.section, { backgroundColor: colors.surface }] }>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.instructions')}</Text>
-          <View style={{
-            backgroundColor: colors.card,
-            borderRadius: 10,
-            padding: 10,
-            marginBottom: 8,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}>
+          <View style={[styles.instructionsContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {recipe.instructions.map((instruction, index) => (
-              <View
-                key={index}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  marginBottom: 16,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor: colors.primary,
-                    borderRadius: 15,
-                    width: 30,
-                    height: 30,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    marginRight: 16,
-                  }}
-                >
-                  <Text style={{ color: colors.buttonText, fontSize: 14, fontWeight: 'bold' }}>{index + 1}</Text>
+              <View key={index}>
+                <View style={styles.instructionStep}>
+                  <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
+                    <Text style={[styles.stepNumberText, { color: colors.buttonText }]}>{index + 1}</Text>
+                  </View>
+                  <View style={styles.stepContent}>
+                    <Text style={[styles.stepText, { color: colors.text }]}>
+                      {instruction.replace(/(\d+\s*(?:minutes?|mins?|hours?|hrs?|seconds?|secs?))/gi, (match) => `⏱️ ${match}`)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1, flexShrink: 1 }}>
-                  <Text style={{ fontSize: 16, color: colors.text, lineHeight: 24 }}>{instruction}</Text>
-                </View>
+                {index < recipe.instructions.length - 1 && (
+                  <View style={[styles.stepSeparator, { borderColor: colors.border }]} />
+                )}
               </View>
             ))}
           </View>
@@ -676,6 +698,64 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6C757D',
     lineHeight: 24,
+    marginBottom: 16,
+  },
+  aiDisclaimer: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  aiDisclaimerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  aiIcon: {
+    marginRight: 6,
+  },
+  aiDisclaimerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  aiDisclaimerText: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  cookedIndicator: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 12,
+  },
+  cookedIndicatorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cookedIndicatorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  cookedIndicatorEmoji: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  cookedIndicatorTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cookedIndicatorDate: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  cookedDishPhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    borderWidth: 2,
+    marginLeft: 12,
   },
   recipeMetadata: {
     flexDirection: 'row',
@@ -737,11 +817,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
   },
+  instructionsContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
   instructionItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 16,
     flexWrap: 'wrap',
+  },
+  instructionStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 4,
   },
   instructionNumber: {
     backgroundColor: '#007AFF',
@@ -752,12 +844,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 16,
   },
+  stepNumber: {
+    backgroundColor: '#007AFF',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    marginTop: 2,
+  },
   instructionNumberText: {
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
   },
+  stepNumberText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   instructionTextContainer: {
+    flex: 1,
+    flexShrink: 1,
+  },
+  stepContent: {
     flex: 1,
     flexShrink: 1,
   },
@@ -765,6 +876,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#212529',
     lineHeight: 24,
+  },
+  stepText: {
+    fontSize: 16,
+    color: '#212529',
+    lineHeight: 24,
+    fontWeight: '400',
+  },
+  stepSeparator: {
+    height: 1,
+    backgroundColor: '#E9ECEF',
+    marginVertical: 16,
+    marginLeft: 48,
+    borderTopWidth: 1,
   },
   deleteSection: {
     padding: 20,
