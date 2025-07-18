@@ -26,6 +26,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS } from '../constants/animations';
 
 interface Ingredient {
   name: string;
@@ -67,9 +68,9 @@ const IngredientItem: React.FC<IngredientItemProps> = ({ item, index, onRemove, 
 
   React.useEffect(() => {
     const delay = 600 + (index * 100); // Start after list container animation
-    itemOpacity.value = withDelay(delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }));
+    itemOpacity.value = withDelay(delay, withTiming(1, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     itemScale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 100 }));
-    itemTranslateY.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) }));
+    itemTranslateY.value = withDelay(delay, withTiming(0, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
   }, [index]);
 
   const itemAnimatedStyle = useAnimatedStyle(() => ({
@@ -90,7 +91,7 @@ const IngredientItem: React.FC<IngredientItemProps> = ({ item, index, onRemove, 
           {item.category} • {Math.round(item.confidence * 100)}%
         </Text>
       </View>
-      <TouchableOpacity
+      <TouchableOpacity activeOpacity={0.7}
         style={styles.removeButton}
         onPress={onRemove}
       >
@@ -150,21 +151,21 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   // Entrance animations
   useEffect(() => {
     // Header animation
-    headerOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+    headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
     headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
-    headerTranslateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+    headerTranslateY.value = withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
     
     // Add section animation
-    addSectionOpacity.value = withDelay(150, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    addSectionTranslateY.value = withDelay(150, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    addSectionOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    addSectionTranslateY.value = withDelay(150, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     
     // List animation
-    listOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    listTranslateY.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    listOpacity.value = withDelay(300, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    listTranslateY.value = withDelay(300, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     
     // Footer animation
-    footerOpacity.value = withDelay(450, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    footerTranslateY.value = withDelay(450, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    footerOpacity.value = withDelay(450, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    footerTranslateY.value = withDelay(450, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
   }, []);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -334,11 +335,11 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.header, headerAnimatedStyle]}>
-        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+        <TouchableOpacity activeOpacity={0.7} style={styles.backButton} onPress={onGoBack}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>{t('camera.ingredients')}</Text>
-        <TouchableOpacity style={styles.cameraButton} onPress={() => onGoToCamera(ingredients)}>
+        <TouchableOpacity activeOpacity={0.7} style={styles.cameraButton} onPress={() => onGoToCamera(ingredients)}>
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path
               d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
@@ -369,6 +370,8 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
             onSubmitEditing={addIngredient}
             autoCapitalize="none"
             autoCorrect={false}
+            textContentType="none"
+            autoComplete="off"
           />
           {isSearching && (
             <ActivityIndicator 
@@ -377,7 +380,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
               style={styles.searchIndicator}
             />
           )}
-          <TouchableOpacity 
+          <TouchableOpacity activeOpacity={0.7} 
             style={[
               styles.addButton, 
               searchResults.length === 0 && styles.addButtonDisabled
@@ -398,7 +401,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
               data={searchResults}
               keyExtractor={(item, index) => `${item.name}-${index}`}
               renderItem={({ item }) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.7}
                   style={styles.suggestionItem}
                   onPress={() => addIngredientFromUSDA(item)}
                 >
@@ -434,7 +437,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       )}
 
       <Animated.View style={[styles.footer, footerAnimatedStyle]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.7}
           style={[styles.generateButton, (isGenerating || ingredients.length === 0) && styles.generateButtonDisabled]}
           onPress={showRecipePreferences}
           disabled={isGenerating || ingredients.length === 0}
@@ -462,7 +465,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               style={styles.modalCloseButton} 
               onPress={() => setShowPreferencesModal(false)}
             >
@@ -482,7 +485,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
               <Text style={styles.preferenceLabel}>{t('recipe.preferences.portions')}</Text>
               <View style={styles.portionsContainer}>
                 {['1', '2', '3', '4', '6', '8'].map((num) => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.7}
                     key={num}
                     style={[
                       styles.portionButton,
@@ -504,7 +507,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
               <Text style={styles.preferenceLabel}>{t('recipe.preferences.difficulty')}</Text>
               <View style={styles.difficultyContainer}>
                 {['easy', 'medium', 'hard'].map((level) => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.7}
                     key={level}
                     style={[
                       styles.difficultyButton,
@@ -526,7 +529,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
               <Text style={styles.preferenceLabel}>{t('recipe.preferences.maxTime')}</Text>
               <View style={styles.timeContainer}>
                 {['15', '30', '45', '60', '90', '120'].map((time) => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.7}
                     key={time}
                     style={[
                       styles.timeButton,
@@ -546,7 +549,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
           </View>
 
           <View style={styles.modalFooter}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={styles.generateModalButton}
               onPress={generateRecipe}
             >

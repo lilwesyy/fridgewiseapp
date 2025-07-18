@@ -19,7 +19,9 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, EASING_CURVES, ANIMATION_DELAYS } from '../constants/animations';
 import Svg, { Path, Circle } from 'react-native-svg';
 
 // Stats Icons
@@ -163,10 +165,11 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
   const sectionsOpacity = useSharedValue(0);
 
   useEffect(() => {
-    // Entrance animations
-    headerOpacity.value = withTiming(1, { duration: 600 });
-    contentOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-    sectionsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
+    // iOS-style entrance animations
+    const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+    headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing });
+    contentOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+    sectionsOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_2, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
     
     fetchStats();
     fetchUsers();

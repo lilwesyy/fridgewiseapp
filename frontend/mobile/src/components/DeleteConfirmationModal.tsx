@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing, withRepeat } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import Svg, { Path } from 'react-native-svg';
@@ -44,16 +45,20 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
 
   useEffect(() => {
     if (visible) {
+      const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+      
       pulseScale.value = withRepeat(
-        withTiming(1.3, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.3, { duration: ANIMATION_DURATIONS.MODAL, easing }),
         -1,
         true
       );
-      opacity.value = withTiming(1, { duration: 200 });
-      slideY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      opacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.QUICK, easing });
+      slideY.value = withSpring(0, SPRING_CONFIGS.MODAL);
     } else {
-      opacity.value = withTiming(0, { duration: 200 });
-      slideY.value = withTiming(screenHeight, { duration: 200 });
+      const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+      
+      opacity.value = withTiming(0, { duration: ANIMATION_DURATIONS.QUICK, easing });
+      slideY.value = withTiming(screenHeight, { duration: ANIMATION_DURATIONS.QUICK, easing });
     }
   }, [visible]);
 
@@ -87,7 +92,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
     <Modal
       transparent
       visible={visible}
-      animationType="none"
+      animationType="slide"
       onRequestClose={onCancel}
     >
       <TouchableWithoutFeedback onPress={onCancel}>
@@ -122,10 +127,10 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
                 <Text style={styles.message}>{message || t('recipe.deleteMessage')}</Text>
               </View>
               <View style={styles.actionsRow}>
-                <TouchableOpacity style={[styles.cancelButton, { marginRight: 6 }]} onPress={onCancel}>
+                <TouchableOpacity activeOpacity={0.7} style={[styles.cancelButton, { marginRight: 6 }]} onPress={onCancel}>
                   <Text style={styles.cancelButtonText}>{cancelLabel || t('common.cancel')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.deleteButton, { marginLeft: 6 }]} onPress={onConfirm}>
+                <TouchableOpacity activeOpacity={0.7} style={[styles.deleteButton, { marginLeft: 6 }]} onPress={onConfirm}>
                   <Text style={styles.deleteButtonText}>{confirmLabel || t('common.delete')}</Text>
                 </TouchableOpacity>
               </View>

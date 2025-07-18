@@ -10,6 +10,14 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -30,6 +38,43 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
   const { user, uploadAvatar, deleteAvatar } = useAuth();
   const { colors } = useTheme();
   const [isUploading, setIsUploading] = useState(false);
+
+  // iOS-style animations
+  const scale = useSharedValue(0.9);
+  const opacity = useSharedValue(0);
+
+  React.useEffect(() => {
+    if (visible) {
+      opacity.value = withTiming(1, {
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2),
+      });
+      scale.value = withSpring(1, {
+        damping: 30,
+        stiffness: 300,
+        mass: 1.2,
+      });
+    } else {
+      opacity.value = withTiming(0, {
+        duration: ANIMATION_DURATIONS.QUICK,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
+      });
+      scale.value = withSpring(0.9, {
+        damping: 30,
+        stiffness: 300,
+        mass: 0.8,
+      });
+    }
+  }, [visible]);
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  const modalStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
 
   const styles = getStyles(colors);
 
@@ -132,11 +177,11 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+      <Animated.View style={[styles.modalOverlay, backdropStyle]}>
+        <Animated.View style={[styles.modalContent, modalStyle]}>
           <Text style={styles.modalTitle}>
             {t('profile.avatar.title', 'Change Avatar')}
           </Text>
@@ -154,7 +199,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
           </View>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[styles.button, styles.cameraButton]}
               onPress={() => handleImagePick(true)}
               disabled={isUploading}
@@ -164,7 +209,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[styles.button, styles.galleryButton]}
               onPress={() => handleImagePick(false)}
               disabled={isUploading}
@@ -175,7 +220,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
             </TouchableOpacity>
 
             {user?.avatar?.url && (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 style={[styles.button, styles.deleteButton]}
                 onPress={handleDeleteAvatar}
                 disabled={isUploading}
@@ -186,7 +231,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[styles.button, styles.cancelButton]}
               onPress={onClose}
               disabled={isUploading}
@@ -205,8 +250,8 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
               </Text>
             </View>
           )}
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };

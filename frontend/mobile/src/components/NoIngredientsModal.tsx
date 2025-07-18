@@ -19,6 +19,7 @@ import Animated, {
   withSpring,
   Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -51,19 +52,28 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
 
   React.useEffect(() => {
     if (visible) {
+      // More subtle pulse for iOS-like feel
       pulseScale.value = withRepeat(
-        withTiming(1.3, { 
-          duration: 800, 
-          easing: Easing.inOut(Easing.ease) 
+        withTiming(1.1, { 
+          duration: ANIMATION_DURATIONS.LONG, 
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
         }),
         -1,
         true
       );
-      opacity.value = withTiming(1, { duration: 200 });
-      slideY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      // iOS sheet presentation timing
+      opacity.value = withTiming(1, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+      });
+      slideY.value = withSpring(0, { damping: 30, stiffness: 300, mass: 1.2 });
     } else {
-      opacity.value = withTiming(0, { duration: 200 });
-      slideY.value = withTiming(screenHeight, { duration: 200 });
+      // iOS sheet dismissal
+      opacity.value = withTiming(0, { 
+        duration: ANIMATION_DURATIONS.QUICK,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+      });
+      slideY.value = withSpring(screenHeight, { damping: 35, stiffness: 400, mass: 1 });
     }
   }, [visible]);
 
@@ -102,7 +112,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
     <Modal
       transparent
       visible={visible}
-      animationType="none"
+      animationType="slide"
       onRequestClose={() => {}}
     >
       <TouchableWithoutFeedback>
@@ -124,7 +134,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
               </View>
 
               <View style={styles.actions}>
-                <TouchableOpacity style={styles.primaryAction} onPress={handleRetakePhoto}>
+                <TouchableOpacity activeOpacity={0.7} style={styles.primaryAction} onPress={handleRetakePhoto}>
                   <View style={styles.actionIcon}>
                     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                       <Path
@@ -147,7 +157,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
 
                 <View style={styles.secondaryActions}>
                   {onTryGallery && (
-                    <TouchableOpacity style={styles.secondaryAction} onPress={handleTryGallery}>
+                    <TouchableOpacity activeOpacity={0.7} style={styles.secondaryAction} onPress={handleTryGallery}>
                       <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                         <Path
                           d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"
@@ -162,7 +172,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
                     </TouchableOpacity>
                   )}
 
-                  <TouchableOpacity style={styles.secondaryAction} onPress={handleManualInput}>
+                  <TouchableOpacity activeOpacity={0.7} style={styles.secondaryAction} onPress={handleManualInput}>
                     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                       <Path
                         d="M12 5V19M5 12H19"
@@ -177,7 +187,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.cancelButton} onPress={onCancel || onClose}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onCancel || onClose}>
                 <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </Animated.View>

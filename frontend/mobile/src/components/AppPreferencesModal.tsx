@@ -19,7 +19,9 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
 
 interface AppPreferencesModalProps {
   visible: boolean;
@@ -57,10 +59,13 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
       contentOpacity.value = 0;
       sectionsOpacity.value = 0;
       
+      // iOS easing curve
+      const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+      
       // Entrance animations
-      headerOpacity.value = withTiming(1, { duration: 600 });
-      contentOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-      sectionsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
+      headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+      contentOpacity.value = withDelay(100, withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing }));
+      sectionsOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing }));
     }
   }, [visible]);
 
@@ -114,12 +119,11 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
     }, 1000);
   };
 
-  const handleLanguageToggle = () => {
-    const newLanguage = preferences.preferredLanguage === 'en' ? 'it' : 'en';
-    const updates = { ...preferences, preferredLanguage: newLanguage };
+  const handleLanguageChange = (language: string) => {
+    const updates = { ...preferences, preferredLanguage: language };
     setPreferences(updates);
-    i18n.changeLanguage(newLanguage);
-    debouncedSave({ preferredLanguage: newLanguage });
+    i18n.changeLanguage(language);
+    debouncedSave({ preferredLanguage: language });
   };
 
   const PreferenceRow: React.FC<{
@@ -151,7 +155,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
     isSelected: boolean;
     onPress: () => void;
   }> = ({ title, subtitle, isSelected, onPress }) => (
-    <TouchableOpacity style={styles.themeOption} onPress={onPress}>
+    <TouchableOpacity activeOpacity={0.7} style={styles.themeOption} onPress={onPress}>
       <View style={styles.themeOptionContent}>
         <Text style={styles.themeOptionTitle}>{title}</Text>
         <Text style={styles.themeOptionSubtitle}>{subtitle}</Text>
@@ -171,7 +175,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
     >
       <SafeAreaView style={styles.container}>
         <Animated.View style={[styles.header, headerAnimatedStyle]}>
-          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
           <Text style={styles.title}>
@@ -197,17 +201,37 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
                 {safeT('profile.languageSettings', 'Language Settings')}
               </Text>
               
-              <PreferenceRow
-                title={safeT('profile.language', 'Language')}
-                subtitle={preferences.preferredLanguage === 'en' ? 'English' : 'Italiano'}
+              <TouchableOpacity activeOpacity={0.7} 
+                style={styles.languageOption} 
+                onPress={() => handleLanguageChange('en')}
               >
-                <Switch
-                  value={preferences.preferredLanguage === 'it'}
-                  onValueChange={handleLanguageToggle}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor="white"
-                />
-              </PreferenceRow>
+                <View style={styles.languageOptionContent}>
+                  <Text style={styles.languageFlag}>🇺🇸</Text>
+                  <View style={styles.languageTextContent}>
+                    <Text style={styles.languageOptionTitle}>English</Text>
+                    <Text style={styles.languageOptionSubtitle}>English</Text>
+                  </View>
+                </View>
+                <View style={[styles.radioButton, preferences.preferredLanguage === 'en' && styles.radioButtonSelected]}>
+                  {preferences.preferredLanguage === 'en' && <View style={styles.radioButtonInner} />}
+                </View>
+              </TouchableOpacity>
+              
+              <TouchableOpacity activeOpacity={0.7} 
+                style={styles.languageOption} 
+                onPress={() => handleLanguageChange('it')}
+              >
+                <View style={styles.languageOptionContent}>
+                  <Text style={styles.languageFlag}>🇮🇹</Text>
+                  <View style={styles.languageTextContent}>
+                    <Text style={styles.languageOptionTitle}>Italiano</Text>
+                    <Text style={styles.languageOptionSubtitle}>Italian</Text>
+                  </View>
+                </View>
+                <View style={[styles.radioButton, preferences.preferredLanguage === 'it' && styles.radioButtonSelected]}>
+                  {preferences.preferredLanguage === 'it' && <View style={styles.radioButtonInner} />}
+                </View>
+              </TouchableOpacity>
             </Animated.View>
 
             {/* Notifications Section */}
@@ -299,7 +323,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
                 {safeT('profile.dataStorage', 'Data & Storage')}
               </Text>
               
-              <TouchableOpacity style={styles.actionRow} disabled>
+              <TouchableOpacity activeOpacity={0.7} style={styles.actionRow} disabled>
                 <Text style={[styles.actionText, styles.disabledText]}>
                   {safeT('profile.clearCache', 'Clear Cache')}
                 </Text>
@@ -308,7 +332,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.actionRow} disabled>
+              <TouchableOpacity activeOpacity={0.7} style={styles.actionRow} disabled>
                 <Text style={[styles.actionText, styles.disabledText]}>
                   {safeT('profile.exportData', 'Export My Data')}
                 </Text>
@@ -495,5 +519,36 @@ const getStyles = (colors: any) => StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: colors.primary,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.divider,
+  },
+  languageOptionContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  languageFlag: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  languageTextContent: {
+    flex: 1,
+  },
+  languageOptionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  languageOptionSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
 });

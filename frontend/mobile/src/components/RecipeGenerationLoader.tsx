@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { LoadingAnimation } from './LoadingAnimation';
+import { ANIMATION_DURATIONS } from '../constants/animations';
 
 interface RecipeGenerationLoaderProps {
   visible: boolean;
@@ -26,19 +27,19 @@ export const RecipeGenerationLoader: React.FC<RecipeGenerationLoaderProps> = ({ 
     if (visible) {
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 300,
+        duration: ANIMATION_DURATIONS.STANDARD,
         useNativeDriver: true,
       }).start();
 
       const interval = setInterval(() => {
         setCurrentStep((prev) => (prev + 1) % steps.length);
-      }, 2000);
+      }, ANIMATION_DURATIONS.LOADING * 4); // 1600ms instead of 2000ms
 
       return () => clearInterval(interval);
     } else {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 300,
+        duration: ANIMATION_DURATIONS.STANDARD,
         useNativeDriver: true,
       }).start();
     }

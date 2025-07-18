@@ -33,6 +33,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS } from '../constants/animations';
 
 interface ProfileScreenProps {
   onLogout: () => void;
@@ -140,8 +141,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const sectionsOpacity = useSharedValue(0);
 
   useEffect(() => {
-    headerOpacity.value = withTiming(1, { duration: 600 });
-    sectionsOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
+    const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+    
+    // iOS-style staggered content entrance
+    headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+    sectionsOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
   }, []);
 
   const headerStyle = useAnimatedStyle(() => ({
@@ -183,7 +187,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     children: React.ReactNode;
     onPress?: () => void;
   }> = ({ title, subtitle, children, onPress }) => (
-    <TouchableOpacity style={styles.settingRow} onPress={onPress} disabled={!onPress}>
+    <TouchableOpacity activeOpacity={0.7} style={styles.settingRow} onPress={onPress} disabled={!onPress}>
       <View style={styles.settingContent}>
         <Text style={styles.settingTitle}>{title}</Text>
         {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
@@ -292,7 +296,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         {/* Profile Header */}
         <Animated.View style={[styles.profileHeader, headerStyle]}>
           <View style={styles.avatarContainer}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={styles.avatarWrapper}
               onPress={() => setShowAvatarModal(true)}
             >
@@ -412,7 +416,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
           {/* Account Actions */}
           <Section>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.logoutButton} onPress={handleLogout}>
               <Text style={styles.logoutButtonText}>
                 {safeT('profile.logout', 'Logout')}
               </Text>
@@ -483,6 +487,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: Platform.OS === 'ios' ? 0 : 24, // SafeAreaView handles iOS automatically
   },
   scrollView: {
     flex: 1,

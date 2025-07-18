@@ -28,6 +28,7 @@ import Animated,
   runOnJS,
 } from 'react-native-reanimated';
 import { useTheme } from '../contexts/ThemeContext';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -46,7 +47,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteT
   // Reset when resetTrigger changes
   useEffect(() => {
     if (resetTrigger !== undefined) {
-      translateX.value = withSpring(0, { damping: 15, stiffness: 100 });
+      translateX.value = withSpring(0, SPRING_CONFIGS.STANDARD);
       setIsRevealed(false);
     }
   }, [resetTrigger]);
@@ -72,23 +73,23 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteT
     onPanResponderRelease: (_, gestureState) => {
       if (gestureState.dx < -50) {
         // Swipe left enough to reveal delete button
-        translateX.value = withSpring(-deleteButtonWidth, { damping: 15, stiffness: 100 });
+        translateX.value = withSpring(-deleteButtonWidth, SPRING_CONFIGS.STANDARD);
         runOnJS(setIsRevealed)(true);
       } else if (gestureState.dx > 50 && isRevealed) {
         // Swipe right enough to hide delete button when revealed
-        translateX.value = withSpring(0, { damping: 15, stiffness: 100 });
+        translateX.value = withSpring(0, SPRING_CONFIGS.STANDARD);
         runOnJS(setIsRevealed)(false);
       } else {
         // Snap to appropriate position based on current state
         const targetValue = isRevealed ? -deleteButtonWidth : 0;
-        translateX.value = withSpring(targetValue, { damping: 15, stiffness: 100 });
+        translateX.value = withSpring(targetValue, SPRING_CONFIGS.STANDARD);
       }
     },
   });
 
   const handleDelete = () => {
     // Animate the deletion
-    translateX.value = withTiming(-screenWidth, { duration: 300 }, (finished) => {
+    translateX.value = withTiming(-screenWidth, { duration: ANIMATION_DURATIONS.STANDARD }, (finished) => {
       if (finished) {
         runOnJS(onDelete)();
       }
@@ -101,7 +102,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteT
 
   return (
     <View style={styles.swipeContainer}>
-      <TouchableOpacity
+      <TouchableOpacity activeOpacity={0.7}
         style={styles.deleteBackground}
         onPress={handleDelete}
         activeOpacity={0.7}
@@ -173,10 +174,11 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   const cardTranslateY = useSharedValue(30);
 
   React.useEffect(() => {
-    const delay = 600 + (index * 100); // Start after list container animation
-    cardOpacity.value = withDelay(delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }));
-    cardScale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 100 }));
-    cardTranslateY.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) }));
+    const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+    const delay = ANIMATION_DURATIONS.CONTENT + (index * 50); // Start after list container animation, reduced delay
+    cardOpacity.value = withDelay(delay, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+    cardScale.value = withDelay(delay, withSpring(1, SPRING_CONFIGS.STANDARD));
+    cardTranslateY.value = withDelay(delay, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
   }, [index]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
@@ -194,7 +196,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
         deleteText={t('common.delete')}
         resetTrigger={resetTrigger}
       >
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.7}
           style={[styles.recipeCard, { backgroundColor: colors.surface }]}
           onPress={onPress}
           activeOpacity={0.7}
@@ -281,24 +283,26 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   const listOpacity = useSharedValue(0);
   const listTranslateY = useSharedValue(40);
 
-  // Entrance animations
+  // Entrance animations with iOS standards
   useEffect(() => {
-    // Header animation
-    headerOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
-    headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
-    headerTranslateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+    const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
     
-    // Search bar animation
-    searchOpacity.value = withDelay(150, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    searchTranslateY.value = withDelay(150, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    // Header animation - immediate
+    headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+    headerScale.value = withSpring(1, SPRING_CONFIGS.GENTLE);
+    headerTranslateY.value = withTiming(0, { duration: ANIMATION_DURATIONS.CONTENT, easing });
     
-    // Filters animation
-    filtersOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    filtersTranslateX.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    // Search bar animation - quick delay
+    searchOpacity.value = withDelay(100, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+    searchTranslateY.value = withDelay(100, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
     
-    // List animation
-    listOpacity.value = withDelay(450, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    listTranslateY.value = withDelay(450, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    // Filters animation - quick stagger
+    filtersOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+    filtersTranslateX.value = withDelay(150, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+    
+    // List animation - final stagger
+    listOpacity.value = withDelay(200, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+    listTranslateY.value = withDelay(200, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
   }, []);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -514,19 +518,23 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={colors.textSecondary}
+            textContentType="none"
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
         </Animated.View>
         <Animated.View style={filtersAnimatedStyle}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
             {/* Difficoltà */}
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[styles.filterBadge, { backgroundColor: !difficultyFilter ? colors.primary : colors.card, borderColor: !difficultyFilter ? colors.primary : 'transparent' }]}
               onPress={() => setDifficultyFilter('')}
             >
               <Text style={[styles.filterBadgeText, { color: !difficultyFilter ? colors.buttonText : colors.text }]}>{t('common.all')}</Text>
             </TouchableOpacity>
             {['easy','medium','hard'].map(diff => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 key={diff}
                 style={[styles.filterBadge, { backgroundColor: difficultyFilter === diff ? colors.primary : colors.card, borderColor: difficultyFilter === diff ? colors.primary : 'transparent' }]}
                 onPress={() => setDifficultyFilter(diff)}
@@ -536,7 +544,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             ))}
             {/* Tag dietetici */}
             {dietaryTags.map(tag => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 key={tag}
                 style={[styles.filterBadge, { backgroundColor: tagFilter === tag ? colors.primary : colors.card, borderColor: tagFilter === tag ? colors.primary : 'transparent' }]}
                 onPress={() => setTagFilter(tag)}
@@ -554,25 +562,25 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
               <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card}/>
               <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary}/>
-              <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.success}/>
-              <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.success}/>
-              <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.success}/>
+              <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.primary}/>
+              <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.primary}/>
+              <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.primary}/>
             </Svg>
           </View>
           {recipes.length === 0 ? (
             <>
-              <Text style={styles.emptyTitle}>{t('recipes.noRecipes')}</Text>
-              <Text style={styles.emptySubtitle}>{t('recipes.startCreating')}</Text>
-              <TouchableOpacity style={[styles.scanButton, { backgroundColor: colors.primary }]} onPress={onGoToCamera}>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('recipes.noRecipes')}</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('recipes.startCreating')}</Text>
+              <TouchableOpacity activeOpacity={0.7} style={[styles.scanButton, { backgroundColor: colors.primary }]} onPress={onGoToCamera}>
                 <Text style={[styles.scanButtonText, { color: colors.buttonText }]}>{t('recipes.scanIngredients') || 'Scansiona Ingredienti'}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Text style={styles.emptyTitle}>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {searchQuery ? t('recipes.noResults') : t('recipes.noRecipes')}
               </Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                 {searchQuery ? t('recipes.tryDifferentSearch') : t('recipes.startCreating')}
               </Text>
             </>
@@ -751,6 +759,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     // color: '#ADB5BD', // rimosso, ora gestito dal tema
     textAlign: 'right',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
   },
   emptyTitle: {
     fontSize: 20,

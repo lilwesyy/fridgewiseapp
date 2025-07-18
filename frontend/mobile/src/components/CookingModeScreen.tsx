@@ -15,15 +15,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { NotificationModal, NotificationType } from './NotificationModal';
-import Animated,
-{
+import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withSpring,
   withSequence,
   Easing,
+  withDelay,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS } from '../constants/animations';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -150,14 +151,23 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   // Initialize animations
   useEffect(() => {
-    headerOpacity.value = withTiming(1, { duration: 800 });
-    phaseTransition.value = withTiming(1, { duration: 800 }); // Initialize phase transition
+    headerOpacity.value = withTiming(1, { 
+      duration: ANIMATION_DURATIONS.CONTENT,
+      easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+    });
+    phaseTransition.value = withTiming(1, { 
+      duration: ANIMATION_DURATIONS.CONTENT,
+      easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+    });
   }, []);
 
   // Initialize step animation when entering cooking phase
   useEffect(() => {
     if (currentPhase === 'cooking') {
-      stepTransition.value = withTiming(1, { duration: 500 });
+      stepTransition.value = withTiming(1, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+      });
     }
   }, [currentPhase]);
 
@@ -203,8 +213,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         message: safeT('cookingMode.timerCompleteMessage', "Time's up! Check your recipe."),
       });
       timerPulse.value = withSequence(
-        withTiming(1.3, { duration: 200 }),
-        withTiming(1, { duration: 200 })
+        withTiming(1.3, { 
+          duration: ANIMATION_DURATIONS.QUICK,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+        }),
+        withTiming(1, { 
+          duration: ANIMATION_DURATIONS.QUICK,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+        })
       );
     }
 
@@ -243,7 +259,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       return;
     }
 
-    phaseTransition.value = withTiming(1, { duration: 500 });
+    phaseTransition.value = withTiming(1, { 
+      duration: ANIMATION_DURATIONS.MODAL,
+      easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+    });
     setCurrentPhase('cooking');
   };
 
@@ -251,8 +270,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     const instructionsLength = recipe?.instructions?.length || 0;
     if (currentStep < instructionsLength - 1) {
       stepTransition.value = withSequence(
-        withTiming(0.8, { duration: 200 }),
-        withTiming(1, { duration: 200 })
+        withTiming(0.8, { 
+          duration: ANIMATION_DURATIONS.QUICK,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+        }),
+        withTiming(1, { 
+          duration: ANIMATION_DURATIONS.QUICK,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+        })
       );
       setHasAutoStartedTimer(false); // Reset auto-timer flag
       setCurrentStep(currentStep + 1);
@@ -264,8 +289,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const prevStep = () => {
     if (currentStep > 0) {
       stepTransition.value = withSequence(
-        withTiming(0.8, { duration: 200 }),
-        withTiming(1, { duration: 200 })
+        withTiming(0.8, { 
+          duration: ANIMATION_DURATIONS.QUICK,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+        }),
+        withTiming(1, { 
+          duration: ANIMATION_DURATIONS.QUICK,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+        })
       );
       setHasAutoStartedTimer(false); // Reset auto-timer flag
       setCurrentStep(currentStep - 1);
@@ -298,7 +329,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         (recipe as any).isSaved = true;
 
         // Show completed phase
-        phaseTransition.value = withTiming(1, { duration: 500 });
+        phaseTransition.value = withTiming(1, { 
+      duration: ANIMATION_DURATIONS.MODAL,
+      easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+    });
         setCurrentPhase('completed');
         setShowFinishModal(false);
 
@@ -331,7 +365,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const startTimer = (minutes: number) => {
     setTimerSeconds(minutes * 60);
     setIsTimerRunning(true);
-    timerPulse.value = withTiming(1.1, { duration: 300 });
+    timerPulse.value = withTiming(1.1, { 
+      duration: ANIMATION_DURATIONS.STANDARD,
+      easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+    });
   };
 
   const stopTimer = () => {

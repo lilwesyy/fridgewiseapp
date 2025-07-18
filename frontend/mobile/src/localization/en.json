@@ -7,6 +7,7 @@
     "cancel": "Cancel",
     "ok": "OK",
     "retry": "Retry",
+    "tryAgain": "Try Again",
     "back": "Back",
     "next": "Next",
     "save": "Save",
@@ -41,7 +42,26 @@
     "privacyPolicy": "Privacy Policy",
     "and": "and",
     "alreadyHaveAccount": "Already have an account?",
-    "dontHaveAccount": "Don't have an account?"
+    "dontHaveAccount": "Don't have an account?",
+    "resetPassword": "Reset Password",
+    "sendResetEmail": "Send Reset Email",
+    "resetPasswordInstructions": "Enter your email address and we'll send you a code to reset your password.",
+    "resetPasswordSuccess": "Password reset code sent successfully!",
+    "resetPasswordError": "Failed to send reset code. Please try again.",
+    "enterNewPassword": "Enter New Password",
+    "enterNewPasswordInstructions": "Enter your new password below.",
+    "enterCodeInstructions": "Enter the 6-digit code sent to your email and your new password.",
+    "resetToken": "Reset Token",
+    "resetCode": "Reset Code",
+    "enterCode": "Enter 6-digit code",
+    "verifyCode": "Verify Code",
+    "verifyCodeInstructions": "Enter the 6-digit code sent to your email address.",
+    "resendCode": "Resend Code",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordResetSuccess": "Password reset successfully! You can now log in with your new password.",
+    "invalidResetToken": "Invalid or expired reset token. Please request a new password reset.",
+    "backToLogin": "Back to Login"
   },
   "validation": {
     "nameRequired": "Name is required",
@@ -58,7 +78,9 @@
     "passwordSecurity": "Password Security",
     "weak": "Weak",
     "medium": "Medium",
-    "strong": "Strong"
+    "strong": "Strong",
+    "tokenRequired": "Reset token is required",
+    "codeRequired": "Please enter the 6-digit code"
   },
   "camera": {
     "loading": "Loading camera...",
@@ -87,7 +109,14 @@
     "galleryError": "Failed to select image from gallery",
     "webCameraNotAvailable": "Camera not available on web",
     "selectImageFromDevice": "Please select an image from your device",
-    "selectImage": "Gallery"
+    "selectImage": "Gallery",
+    "permissionTitle": "Camera Permission Required",
+    "permissionMessage": "We need camera access to scan your ingredients and analyze your fridge contents",
+    "manualInput": "Manual Input",
+    "manualInputInstead": "Manual Input Instead",
+    "initializing": "Initializing camera...",
+    "starting": "Starting camera...",
+    "error": "Camera Error"
   },
   "home": {
     "welcome": "Welcome to FridgeWise",

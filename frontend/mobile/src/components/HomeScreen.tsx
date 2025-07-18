@@ -28,6 +28,7 @@ import Animated, {
   interpolate,
   Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS, SCALE_VALUES } from '../constants/animations';
 
 const { width } = Dimensions.get('window');
 
@@ -91,7 +92,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   // Calculate safe area top offset for pull-to-refresh
   const getStatusBarHeight = () => {
     if (Platform.OS === 'ios') {
-      return Constants.statusBarHeight || 44; // Default to 44 for notch devices
+      // Use Constants.statusBarHeight for iOS, fallback to 44 for devices with notch
+      const statusBarHeight = Constants.statusBarHeight;
+      // For devices without notch (like iPhone 8), statusBarHeight is 20
+      // For devices with notch (like iPhone X and newer), it's around 44-50
+      return statusBarHeight > 20 ? statusBarHeight : 44;
     }
     return StatusBar.currentHeight || 0;
   };
@@ -109,53 +114,56 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   const statsOpacity = useSharedValue(0);
 
   useEffect(() => {
-    fadeIn.value = withTiming(1, { duration: 800, easing: Easing.ease });
-    slideIn.value = withTiming(0, { duration: 800, easing: Easing.out(Easing.quad) });
-    scale.value = withSpring(1, { damping: 15, stiffness: 100 });
+    const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
     
-    // Logo pulse effect - smoother animation
+    // Main content entrance - iOS standard timing
+    fadeIn.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+    slideIn.value = withTiming(0, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+    scale.value = withSpring(1, SPRING_CONFIGS.GENTLE);
+    
+    // Logo pulse effect - more subtle, iOS-like
     logoScale.value = withRepeat(
       withSequence(
-        withTiming(1.08, { duration: 2000, easing: Easing.bezier(0.4, 0.0, 0.6, 1.0) }),
-        withTiming(1, { duration: 2000, easing: Easing.bezier(0.4, 0.0, 0.6, 1.0) })
+        withTiming(1.02, { duration: ANIMATION_DURATIONS.STANDARD * 3, easing }),
+        withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD * 3, easing })
       ),
       -1,
       false
     );
     
-    // Stagger card animations
+    // Stagger card animations - iOS standard timing
     cardScales.forEach((cardScale, index) => {
       cardScale.value = withDelay(
-        800 + index * 100,
-        withSpring(1, { damping: 15, stiffness: 100 })
+        ANIMATION_DELAYS.LIST_BASE + index * ANIMATION_DELAYS.LIST_ITEM,
+        withSpring(1, SPRING_CONFIGS.LIST)
       );
     });
     
     cardOpacities.forEach((cardOpacity, index) => {
       cardOpacity.value = withDelay(
-        800 + index * 100,
-        withTiming(1, { duration: 600 })
+        ANIMATION_DELAYS.LIST_BASE + index * ANIMATION_DELAYS.LIST_ITEM,
+        withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing })
       );
     });
     
-    // Animate tip card
+    // Animate tip card - iOS delay pattern
     tipCardScale.value = withDelay(
-      1000,
-      withSpring(1, { damping: 15, stiffness: 100 })
+      ANIMATION_DELAYS.LIST_BASE + ANIMATION_DELAYS.STAGGER_3,
+      withSpring(1, SPRING_CONFIGS.LIST)
     );
     tipCardOpacity.value = withDelay(
-      1000,
-      withTiming(1, { duration: 600 })
+      ANIMATION_DELAYS.LIST_BASE + ANIMATION_DELAYS.STAGGER_3,
+      withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing })
     );
     
-    // Animate stats section
+    // Animate stats section - earlier entry for better UX
     statsScale.value = withDelay(
-      300,
-      withSpring(1, { damping: 15, stiffness: 100 })
+      ANIMATION_DELAYS.STAGGER_1,
+      withSpring(1, SPRING_CONFIGS.LIST)
     );
     statsOpacity.value = withDelay(
-      300,
-      withTiming(1, { duration: 600 })
+      ANIMATION_DELAYS.STAGGER_1,
+      withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing })
     );
   }, []);
 
@@ -194,16 +202,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   }));
 
   const bannerStyle = useAnimatedStyle(() => ({
-    opacity: withDelay(200, withTiming(1, { duration: 600 })),
+    opacity: withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD })),
     transform: [
-      { translateY: withDelay(200, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) })) },
+      { translateY: withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(0, { 
+        duration: ANIMATION_DURATIONS.STANDARD, 
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+      })) },
     ],
   }));
 
   const actionStyle = useAnimatedStyle(() => ({
-    opacity: withDelay(400, withTiming(1, { duration: 600 })),
+    opacity: withDelay(ANIMATION_DELAYS.STAGGER_2, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD })),
     transform: [
-      { scale: withDelay(400, withSpring(1, { damping: 12, stiffness: 80 })) },
+      { scale: withDelay(ANIMATION_DELAYS.STAGGER_2, withSpring(1, SPRING_CONFIGS.GENTLE)) },
     ],
   }));
   
@@ -234,9 +245,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   }));
 
   const featuresStyle = useAnimatedStyle(() => ({
-    opacity: withDelay(600, withTiming(1, { duration: 600 })),
+    opacity: withDelay(ANIMATION_DELAYS.STAGGER_3, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD })),
     transform: [
-      { translateY: withDelay(600, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) })) },
+      { translateY: withDelay(ANIMATION_DELAYS.STAGGER_3, withTiming(0, { 
+        duration: ANIMATION_DURATIONS.STANDARD, 
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+      })) },
     ],
   }));
   
@@ -277,11 +291,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   };
   
   const handlePressIn = () => {
-    buttonScale.value = withSpring(0.95, { damping: 20, stiffness: 300 });
+    buttonScale.value = withSpring(SCALE_VALUES.BUTTON_PRESS, SPRING_CONFIGS.BUTTON);
   };
   
   const handlePressOut = () => {
-    buttonScale.value = withSpring(1, { damping: 20, stiffness: 300 });
+    buttonScale.value = withSpring(1, SPRING_CONFIGS.BUTTON);
   };
 
   const handleRefresh = async () => {
@@ -379,7 +393,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       <Animated.View style={[styles.section, actionStyle]}>
         <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
         <Animated.View style={buttonAnimatedStyle}>
-          <TouchableOpacity 
+          <TouchableOpacity activeOpacity={0.7} 
             style={styles.primaryAction} 
             onPress={handleCameraPress}
             onPressIn={handlePressIn}
@@ -431,7 +445,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
               ))
             ) : (
               recentRecipes.map((recipe, index) => (
-                <TouchableOpacity key={recipe._id} style={styles.recipeCard} onPress={() => handleRecipePress(recipe, index)}>
+                <TouchableOpacity activeOpacity={0.7} key={recipe._id} style={styles.recipeCard} onPress={() => handleRecipePress(recipe, index)}>
                   <View style={styles.recipeImagePlaceholder}>
                     <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
                       <Path
@@ -453,7 +467,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                   <View style={styles.recipeInfo}>
                     <View style={styles.recipeHeader}>
                       <Text style={styles.recipeTitle} numberOfLines={2}>{recipe.title}</Text>
-                      <TouchableOpacity 
+                      <TouchableOpacity activeOpacity={0.7} 
                         style={styles.recipeShareButton}
                         onPress={(event) => handleShareRecipe(recipe, event)}
                       >

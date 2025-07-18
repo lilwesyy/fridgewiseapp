@@ -27,6 +27,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { useTheme } from '../contexts/ThemeContext';
+import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -102,21 +103,21 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   // Entrance animations
   useEffect(() => {
     // Header animation
-    headerOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+    headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
     headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
-    headerTranslateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+    headerTranslateY.value = withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
     
     // Search bar animation
-    searchOpacity.value = withDelay(150, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    searchTranslateY.value = withDelay(150, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    searchOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    searchTranslateY.value = withDelay(150, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     
     // Filters animation
-    filtersOpacity.value = withDelay(300, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    filtersTranslateX.value = withDelay(300, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    filtersOpacity.value = withDelay(300, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    filtersTranslateX.value = withDelay(300, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     
     // List animation
-    listOpacity.value = withDelay(450, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
-    listTranslateY.value = withDelay(450, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
+    listOpacity.value = withDelay(450, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    listTranslateY.value = withDelay(450, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
   }, []);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -309,11 +310,15 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={colors.textSecondary}
+            textContentType="none"
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
         </Animated.View>
         <Animated.View style={filtersAnimatedStyle}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={{
                 backgroundColor: !difficultyFilter ? colors.primary : colors.card,
                 borderColor: !difficultyFilter ? colors.primary : colors.border,
@@ -332,7 +337,7 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
               }}>{t('common.all')}</Text>
             </TouchableOpacity>
             {['easy','medium','hard'].map(diff => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 key={diff}
                 style={{
                   backgroundColor: difficultyFilter === diff ? colors.primary : colors.card,
@@ -353,7 +358,7 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
               </TouchableOpacity>
             ))}
             {dietaryTags.map(tag => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 key={tag}
                 style={{
                   backgroundColor: tagFilter === tag ? colors.primary : colors.card,
@@ -736,9 +741,9 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
 
   React.useEffect(() => {
     const delay = 600 + (index * 100);
-    cardOpacity.value = withDelay(delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }));
+    cardOpacity.value = withDelay(delay, withTiming(1, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     cardScale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 100 }));
-    cardTranslateY.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) }));
+    cardTranslateY.value = withDelay(delay, withTiming(0, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
   }, [index]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
@@ -751,7 +756,7 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
 
   return (
     <Animated.View style={cardAnimatedStyle}>
-      <TouchableOpacity
+      <TouchableOpacity activeOpacity={0.7}
         style={{
           backgroundColor: colors.card,
           borderRadius: 12,
@@ -778,7 +783,7 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
                 {t(`recipes.difficulty.${item.difficulty}`)}
               </Text>
             </View>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={{ backgroundColor: colors.error, borderRadius: 12, width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}
               onPress={onDelete}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}

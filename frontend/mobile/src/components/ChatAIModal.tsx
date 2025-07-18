@@ -12,6 +12,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
 
 // Modern typing indicator component
 const TypingIndicator = () => {
@@ -24,8 +25,8 @@ const TypingIndicator = () => {
       dotScale.value = withRepeat(
         withSequence(
           withTiming(1, { duration: 0 }),
-          withTiming(1.4, { duration: 600, easing: Easing.ease }),
-          withTiming(1, { duration: 600, easing: Easing.ease })
+          withTiming(1.4, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.ease }),
+          withTiming(1, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.ease })
         ),
         -1,
         false
@@ -213,7 +214,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                     <Text style={styles.subtitle}>Assistente Culinario</Text>
                   </View>
                 </View>
-                <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <TouchableOpacity activeOpacity={0.7} onPress={handleClose} style={styles.closeButton}>
                   <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                     <Path 
                       d="M18 6L6 18M6 6L18 18" 
@@ -252,7 +253,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                     </Text>
                     
                     {msg.hasModifications && msg.updatedRecipe && (
-                      <TouchableOpacity 
+                      <TouchableOpacity activeOpacity={0.7} 
                         style={styles.modificationButton}
                         onPress={() => handleApplyModifications(msg.updatedRecipe)}
                       >
@@ -295,7 +296,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                   returnKeyType="send"
                   onSubmitEditing={handleSend}
                 />
-                <TouchableOpacity 
+                <TouchableOpacity activeOpacity={0.7} 
                   style={[styles.sendButton, (!input.trim() || isSending) && styles.sendButtonDisabled]} 
                   onPress={handleSend} 
                   disabled={isSending || !input.trim()}

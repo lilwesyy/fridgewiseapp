@@ -22,6 +22,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
 
 interface AccountInfoModalProps {
   visible: boolean;
@@ -30,7 +31,7 @@ interface AccountInfoModalProps {
 
 export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onClose }) => {
   const { t, i18n } = useTranslation();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, token } = useAuth();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -53,36 +54,6 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
     message: '',
   });
 
-  // Animation values
-  const headerOpacity = useSharedValue(0);
-  const avatarScale = useSharedValue(0.8);
-  const sectionsOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    if (visible) {
-      // Reset animations when modal opens
-      headerOpacity.value = 0;
-      avatarScale.value = 0.8;
-      sectionsOpacity.value = 0;
-      
-      // Entrance animations
-      headerOpacity.value = withTiming(1, { duration: 600 });
-      avatarScale.value = withDelay(200, withSpring(1, { damping: 15, stiffness: 100 }));
-      sectionsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
-    }
-  }, [visible]);
-
-  const headerStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
-  }));
-
-  const avatarStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: avatarScale.value }],
-  }));
-
-  const sectionsStyle = useAnimatedStyle(() => ({
-    opacity: sectionsOpacity.value,
-  }));
 
   const safeT = (key: string, fallback?: string) => {
     try {
@@ -171,7 +142,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           currentPassword: passwordForm.currentPassword,
@@ -232,8 +203,8 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.container}>
-        <Animated.View style={[styles.header, headerStyle]}>
-          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+        <View style={styles.header}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
           <Text style={styles.title}>
@@ -244,9 +215,9 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
               <ActivityIndicator size="small" color={colors.primary} />
             )}
           </View>
-        </Animated.View>
+        </View>
 
-        <Animated.View style={[styles.content, sectionsStyle]}>
+        <View style={styles.content}>
           <ScrollView 
             style={styles.scrollContainer} 
             contentContainerStyle={styles.scrollContent}
@@ -256,11 +227,11 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
           >
             {/* Profile Avatar */}
             <View style={styles.avatarSection}>
-              <Animated.View style={[styles.avatar, avatarStyle]}>
+              <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
                   {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
                 </Text>
-              </Animated.View>
+              </View>
             </View>
 
             {/* Account Details */}
@@ -389,7 +360,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                   </View>
 
                   <View style={styles.passwordButtons}>
-                    <TouchableOpacity 
+                    <TouchableOpacity activeOpacity={0.7} 
                       style={[styles.button, styles.cancelButton]} 
                       onPress={() => {
                         setPasswordForm({
@@ -404,7 +375,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                       </Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
+                    <TouchableOpacity activeOpacity={0.7} 
                       style={[styles.button, styles.saveButton]} 
                       onPress={handlePasswordChange}
                       disabled={isChangingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
@@ -421,7 +392,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
               </View>
             </View>
           </ScrollView>
-        </Animated.View>
+        </View>
       </SafeAreaView>
 
       <NotificationModal

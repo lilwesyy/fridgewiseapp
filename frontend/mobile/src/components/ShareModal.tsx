@@ -17,8 +17,10 @@ import Animated, {
   withSpring,
   withTiming,
   runOnJS,
+  Easing,
 } from 'react-native-reanimated';
 import { shareRecipeQuick, shareRecipeFull } from '../utils/shareUtils';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -53,11 +55,23 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
 
   React.useEffect(() => {
     if (visible) {
-      opacity.value = withTiming(1, { duration: 200 });
-      slideY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      // iOS sheet presentation timing
+      opacity.value = withTiming(1, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      });
+      slideY.value = withSpring(0, SPRING_CONFIGS.MODAL);
     } else {
-      opacity.value = withTiming(0, { duration: 200 });
-      slideY.value = withTiming(screenHeight, { duration: 200 });
+      // iOS sheet dismissal - faster opacity, slower slide for natural feel
+      opacity.value = withTiming(0, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+      });
+      slideY.value = withSpring(screenHeight, {
+        damping: 35,
+        stiffness: 400,
+        mass: 1
+      });
     }
   }, [visible]);
 
@@ -93,7 +107,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
     <Modal
       transparent
       visible={visible}
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
@@ -108,7 +122,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
               </View>
 
               <View style={styles.options}>
-                <TouchableOpacity style={styles.option} onPress={handleQuickShare}>
+                <TouchableOpacity activeOpacity={0.7} style={styles.option} onPress={handleQuickShare}>
                   <View style={styles.optionIcon}>
                     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                       <Path
@@ -130,7 +144,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
                   <Text style={styles.optionArrow}>→</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.option} onPress={handleFullShare}>
+                <TouchableOpacity activeOpacity={0.7} style={styles.option} onPress={handleFullShare}>
                   <View style={styles.optionIcon}>
                     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                       <Path
@@ -160,7 +174,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
                 <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </Animated.View>

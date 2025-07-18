@@ -8,14 +8,27 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { NoIngredientsModal } from './NoIngredientsModal';
 import { NotificationModal, NotificationType } from './NotificationModal';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  withRepeat,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, EASING_CURVES, SPRING_CONFIGS } from '../constants/animations';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,6 +41,7 @@ interface CameraScreenProps {
 export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onGoBack, onGoToManualInput }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
+  const { colors } = useTheme();
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -45,6 +59,16 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
     buttons: undefined as any,
   });
 
+  // Animation values with initial states
+  const permissionOpacity = useSharedValue(1); // Start visible as fallback
+  const permissionScale = useSharedValue(1);
+  const permissionTranslateY = useSharedValue(0);
+  const iconScale = useSharedValue(1);
+  const buttonOpacity = useSharedValue(1); // Start visible as fallback
+  const buttonTranslateY = useSharedValue(0);
+  const loadingOpacity = useSharedValue(0);
+  const spinnerRotation = useSharedValue(0);
+
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
   useEffect(() => {
@@ -54,23 +78,133 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
     }
   }, [permission]);
 
+  // Animation effects for permission screen
+  useEffect(() => {
+    if (!permission || !permission.granted || cameraError) {
+      // Reset values
+      permissionOpacity.value = 0;
+      permissionScale.value = 0.8;
+      permissionTranslateY.value = 30;
+      iconScale.value = 0.8;
+      buttonOpacity.value = 0;
+      buttonTranslateY.value = 20;
+
+      // Entrance animations with iOS timing
+      permissionOpacity.value = withTiming(1, { 
+        duration: ANIMATION_DURATIONS.MODAL, 
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      });
+      permissionScale.value = withSpring(1, SPRING_CONFIGS.GENTLE);
+      permissionTranslateY.value = withTiming(0, { 
+        duration: ANIMATION_DURATIONS.MODAL, 
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      });
+      
+      // Icon animation with slight delay
+      iconScale.value = withDelay(150, withSpring(1, SPRING_CONFIGS.BOUNCY));
+      
+      // Buttons animation
+      buttonOpacity.value = withDelay(300, withTiming(1, { 
+        duration: ANIMATION_DURATIONS.FAST, 
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      }));
+      buttonTranslateY.value = withDelay(300, withTiming(0, { 
+        duration: ANIMATION_DURATIONS.FAST, 
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      }));
+    }
+  }, [permission, cameraError]);
+
+  // Loading animation effect
+  useEffect(() => {
+    if ((!permission || (permission && permission.granted && !isCameraReady)) && !cameraError) {
+      // Reset and animate loading state
+      loadingOpacity.value = 0;
+      spinnerRotation.value = 0;
+      
+      setTimeout(() => {
+        // Animate loading state
+        loadingOpacity.value = withTiming(1, { 
+          duration: ANIMATION_DURATIONS.FAST, 
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+        });
+        
+        // Continuous spinner rotation
+        spinnerRotation.value = withRepeat(
+          withTiming(360, { 
+            duration: ANIMATION_DURATIONS.LONG, 
+            easing: Easing.linear 
+          }),
+          -1,
+          false
+        );
+      }, 50);
+    } else {
+      loadingOpacity.value = withTiming(0, { 
+        duration: ANIMATION_DURATIONS.FAST, 
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2) 
+      });
+    }
+  }, [permission, isCameraReady, cameraError]);
+
+  // Animated styles
+  const permissionContainerStyle = useAnimatedStyle(() => ({
+    opacity: permissionOpacity.value,
+    transform: [
+      { scale: permissionScale.value },
+      { translateY: permissionTranslateY.value }
+    ],
+  }));
+
+  const iconAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: iconScale.value }],
+  }));
+
+  const buttonAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: 1, // Always visible for now
+    transform: [{ translateY: 0 }], // No transform for now
+  }));
+
+  const loadingAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: loadingOpacity.value,
+  }));
+
+  const spinnerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spinnerRotation.value}deg` }],
+  }));
+
   if (cameraError) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.errorMessage}>Camera Error</Text>
-        <Text style={styles.message}>{cameraError}</Text>
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => {
-            setCameraError(null);
-            setIsCameraReady(false);
-          }}
-        >
-          <Text style={styles.buttonText}>Try Again</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onGoToManualInput}>
-          <Text style={[styles.buttonText, styles.secondaryButtonText]}>Manual Input</Text>
-        </TouchableOpacity>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
+        <Animated.View style={[styles.permissionContent, permissionContainerStyle]}>
+          <Animated.View style={[{ marginBottom: 24 }, iconAnimatedStyle]}>
+            <Svg width={80} height={80} viewBox="0 0 48 48" fill="none">
+              <Rect x={8} y={12} width={32} height={24} rx={4} stroke={colors.error} strokeWidth={2.5} fill={colors.card}/>
+              <Rect x={22} y={18} width={4} height={8} rx={2} fill={colors.error}/>
+              <Rect x={22} y={28} width={4} height={4} rx={2} fill={colors.error}/>
+              <Path d="M16 12V8a8 8 0 0116 0v4" stroke={colors.error} strokeWidth={2.5} strokeLinecap="round"/>
+            </Svg>
+          </Animated.View>
+          <Text style={[styles.permissionTitle, { color: colors.text }]}>{t('camera.error')}</Text>
+          <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>{cameraError}</Text>
+          <Animated.View style={buttonAnimatedStyle}>
+            <TouchableOpacity activeOpacity={0.7} 
+              style={[styles.permissionButton, { backgroundColor: colors.primary }]} 
+              onPress={() => {
+                setCameraError(null);
+                setIsCameraReady(false);
+              }}
+            >
+              <Text style={[styles.permissionButtonText, { color: colors.buttonText }]}>{t('common.tryAgain')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} 
+              style={[styles.permissionButtonSecondary, { borderColor: colors.primary }]} 
+              onPress={onGoToManualInput}
+            >
+              <Text style={[styles.permissionButtonSecondaryText, { color: colors.primary }]}>{t('camera.manualInput')}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
       </View>
     );
   }
@@ -78,9 +212,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   // Permessi non ancora ottenuti
   if (!permission) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.message}>Initializing camera...</Text>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
+        <Animated.View style={[styles.permissionContent, loadingAnimatedStyle]}>
+          <Animated.View style={spinnerAnimatedStyle}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </Animated.View>
+          <Text style={[styles.permissionMessage, { color: colors.textSecondary, marginTop: 16 }]}>{t('camera.initializing')}</Text>
+        </Animated.View>
       </View>
     );
   }
@@ -88,14 +226,42 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   // Permessi negati
   if (!permission.granted) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.message}>Camera access is required to scan ingredients</Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Enable Camera</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onGoToManualInput}>
-          <Text style={[styles.buttonText, styles.secondaryButtonText]}>Manual Input Instead</Text>
-        </TouchableOpacity>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
+        <Animated.View style={[styles.permissionContent, permissionContainerStyle]}>
+          <Animated.View style={[{ marginBottom: 24 }, iconAnimatedStyle]}>
+            <Svg width={80} height={80} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+                stroke={colors.primary}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d="M16 13C16 15.2091 14.2091 17 12 17C9.79086 17 8 15.2091 8 13C8 10.7909 9.79086 9 12 9C14.2091 9 16 10.7909 16 13Z"
+                stroke={colors.primary}
+                strokeWidth="2"
+                fill="none"
+              />
+            </Svg>
+          </Animated.View>
+          <Text style={[styles.permissionTitle, { color: colors.text }]}>{t('camera.permissionTitle')}</Text>
+          <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>{t('camera.permissionMessage')}</Text>
+          <Animated.View style={buttonAnimatedStyle}>
+            <TouchableOpacity activeOpacity={0.7} 
+              style={[styles.permissionButton, { backgroundColor: colors.primary }]} 
+              onPress={requestPermission}
+            >
+              <Text style={[styles.permissionButtonText, { color: colors.buttonText }]}>{t('camera.enableCamera')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} 
+              style={[styles.permissionButtonSecondary, { borderColor: colors.primary }]} 
+              onPress={onGoToManualInput}
+            >
+              <Text style={[styles.permissionButtonSecondaryText, { color: colors.primary }]}>{t('camera.manualInputInstead')}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
       </View>
     );
   }
@@ -103,9 +269,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   // Loading screen se i permessi sono ok ma camera non pronta
   if (permission && permission.granted && !isCameraReady) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.message}>Starting camera...</Text>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
+        <Animated.View style={[styles.permissionContent, loadingAnimatedStyle]}>
+          <Animated.View style={spinnerAnimatedStyle}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </Animated.View>
+          <Text style={[styles.permissionMessage, { color: colors.textSecondary, marginTop: 16 }]}>{t('camera.starting')}</Text>
+        </Animated.View>
       </View>
     );
   }
@@ -473,7 +643,8 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
 
   return (
     <>
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.cameraWrapper}>
         <CameraView
           ref={cameraRef}
           style={styles.camera}
@@ -490,11 +661,11 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         
         <View style={styles.overlay}>
           <View style={styles.topBar}>
-            <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.backButton} onPress={onGoBack}>
               <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
             <Text style={styles.title}>Camera</Text>
-            <TouchableOpacity style={styles.manualButton} onPress={onGoToManualInput}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.manualButton} onPress={onGoToManualInput}>
               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
@@ -506,7 +677,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
           
           {!isCapturing && (
             <View style={styles.bottomBar}>
-              <TouchableOpacity style={styles.galleryButton} onPress={pickImageFromGallery}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.galleryButton} onPress={pickImageFromGallery}>
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
@@ -528,11 +699,11 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
                 </Svg>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.captureButton} onPress={takePicture}>
                 <View style={styles.captureButtonInner} />
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.flipButton} onPress={toggleCameraFacing}>
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M17 2L20 5L17 8"
@@ -571,7 +742,8 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
             </View>
           )}
         </View>
-      </View>
+        </View>
+      </SafeAreaView>
       
       <NoIngredientsModal
         visible={showNoIngredientsModal}
@@ -599,9 +771,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'black',
   },
-  centered: {
+  cameraWrapper: {
+    flex: 1,
+  },
+  permissionContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  permissionContent: {
+    alignItems: 'center',
+    maxWidth: 300,
+  },
+  permissionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  permissionMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  permissionButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginBottom: 12,
+    minWidth: 200,
+  },
+  permissionButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  permissionButtonSecondary: {
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 25,
+    alignItems: 'center',
+    borderWidth: 2,
+    backgroundColor: 'transparent',
+    minWidth: 200,
+  },
+  permissionButtonSecondaryText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   camera: {
     flex: 1,
@@ -706,41 +924,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 10,
-  },
-  message: {
-    color: 'white',
-    fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 20,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 25,
-    alignItems: 'center',
-    marginVertical: 5,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  errorMessage: {
-    color: '#FF3B30',
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#007AFF',
-    marginTop: 10,
-  },
-  secondaryButtonText: {
-    color: '#007AFF',
   },
 });

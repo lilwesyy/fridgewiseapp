@@ -1,6 +1,15 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
 
 interface LoadingAnimationProps {
   size?: number;
@@ -13,46 +22,45 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
 }) => {
   const { colors } = useTheme();
   const defaultColor = color || colors.primary;
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const scaleValue = useRef(new Animated.Value(1)).current;
+  
+  // iOS-style loading animation values
+  const rotation = useSharedValue(0);
+  const scale = useSharedValue(1);
 
   useEffect(() => {
-    const spinAnimation = Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      })
+    // iOS spinner - smooth continuous rotation
+    rotation.value = withRepeat(
+      withTiming(360, {
+        duration: ANIMATION_DURATIONS.LOADING * 2.5, // 1500ms for smooth rotation
+        easing: Easing.linear,
+      }),
+      -1,
+      false
     );
 
-    const scaleAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleValue, {
-          toValue: 1.2,
-          duration: 800,
-          useNativeDriver: true,
+    // Subtle scale pulsing - more iOS-like
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.05, {
+          duration: ANIMATION_DURATIONS.LOADING * 2,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN_OUT.x1, EASING_CURVES.IOS_EASE_IN_OUT.y1, EASING_CURVES.IOS_EASE_IN_OUT.x2, EASING_CURVES.IOS_EASE_IN_OUT.y2),
         }),
-        Animated.timing(scaleValue, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ])
+        withTiming(1, {
+          duration: ANIMATION_DURATIONS.LOADING * 2,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN_OUT.x1, EASING_CURVES.IOS_EASE_IN_OUT.y1, EASING_CURVES.IOS_EASE_IN_OUT.x2, EASING_CURVES.IOS_EASE_IN_OUT.y2),
+        })
+      ),
+      -1,
+      false
     );
-
-    spinAnimation.start();
-    scaleAnimation.start();
-
-    return () => {
-      spinAnimation.stop();
-      scaleAnimation.stop();
-    };
   }, []);
 
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${rotation.value}deg` },
+      { scale: scale.value },
+    ],
+  }));
 
   return (
     <View style={styles.container}>
@@ -64,8 +72,9 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
             height: size,
             borderColor: defaultColor,
             borderTopColor: 'transparent',
-            transform: [{ rotate: spin }, { scale: scaleValue }],
+            borderRightColor: 'transparent',
           },
+          animatedStyle
         ]}
       />
     </View>
@@ -79,6 +88,7 @@ const styles = StyleSheet.create({
   },
   spinner: {
     borderWidth: 3,
-    borderRadius: 50,
+    borderRadius: 999,
+    borderStyle: 'solid',
   },
 });

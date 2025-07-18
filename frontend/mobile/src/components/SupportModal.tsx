@@ -20,7 +20,9 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
 import Svg, { Path } from 'react-native-svg';
 
 // Send Icon Component
@@ -75,10 +77,13 @@ export const SupportModal: React.FC<SupportModalProps> = ({ visible, onClose }) 
       contentOpacity.value = 0;
       sectionsOpacity.value = 0;
       
+      // iOS easing curve
+      const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+      
       // Entrance animations
-      headerOpacity.value = withTiming(1, { duration: 600 });
-      contentOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-      sectionsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
+      headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+      contentOpacity.value = withDelay(100, withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing }));
+      sectionsOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing }));
     }
   }, [visible]);
 
@@ -176,11 +181,11 @@ User Information:
     >
       <SafeAreaView style={styles.container}>
         <Animated.View style={[styles.header, headerAnimatedStyle]}>
-          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
           <Text style={styles.title}>{t('support.title')}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity activeOpacity={0.7} 
             style={[styles.sendButton, (!subject.trim() || !message.trim() || isLoading) && styles.sendButtonDisabled]} 
             onPress={handleSendEmail}
             disabled={!subject.trim() || !message.trim() || isLoading}
@@ -219,7 +224,7 @@ User Information:
             <Text style={styles.sectionText}>{t('support.quickTopicsDescription')}</Text>
             <View style={styles.topicsContainer}>
               {predefinedTopics.map((topic, index) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.7}
                   key={index}
                   style={[
                     styles.topicButton,

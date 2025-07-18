@@ -23,6 +23,8 @@ interface AuthContextType {
   updateProfile: (updates: Partial<User>) => Promise<void>;
   uploadAvatar: (imageUri: string) => Promise<User>;
   deleteAvatar: () => Promise<User>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -250,6 +252,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      console.log('🔄 Sending forgot password request to:', `${API_URL}/api/auth/forgot-password`);
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      console.log('📡 Response status:', response.status);
+      const data = await response.json();
+      console.log('📋 Response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Password reset failed');
+      }
+
+      return data.data; // Return the token for testing
+    } catch (error) {
+      console.error('🚨 Forgot password error:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (token: string, newPassword: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Password reset failed');
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -259,6 +308,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateProfile,
     uploadAvatar,
     deleteAvatar,
+    forgotPassword,
+    resetPassword,
     isLoading,
   };
 

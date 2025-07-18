@@ -20,7 +20,9 @@ import Animated, {
   withTiming,
   withSpring,
   withDelay,
+  Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
 
 interface DietaryPreferencesModalProps {
   visible: boolean;
@@ -54,10 +56,13 @@ export const DietaryPreferencesModal: React.FC<DietaryPreferencesModalProps> = (
       summaryOpacity.value = 0;
       sectionsOpacity.value = 0;
       
+      // iOS easing curve
+      const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+      
       // Entrance animations
-      headerOpacity.value = withTiming(1, { duration: 600 });
-      summaryOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-      sectionsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
+      headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+      summaryOpacity.value = withDelay(100, withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing }));
+      sectionsOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing }));
     }
   }, [visible]);
 
@@ -182,7 +187,7 @@ export const DietaryPreferencesModal: React.FC<DietaryPreferencesModalProps> = (
     isSelected: boolean;
     onToggle: () => void;
   }> = ({ option, isSelected, onToggle }) => (
-    <TouchableOpacity style={styles.dietaryOption} onPress={onToggle}>
+    <TouchableOpacity activeOpacity={0.7} style={styles.dietaryOption} onPress={onToggle}>
       <View style={styles.optionLeft}>
         <Text style={styles.optionEmoji}>{option.emoji}</Text>
         <View style={styles.optionTextContainer}>
@@ -212,7 +217,7 @@ export const DietaryPreferencesModal: React.FC<DietaryPreferencesModalProps> = (
     >
       <SafeAreaView style={styles.container}>
         <Animated.View style={[styles.header, headerAnimatedStyle]}>
-          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
           <Text style={styles.title}>
@@ -240,7 +245,7 @@ export const DietaryPreferencesModal: React.FC<DietaryPreferencesModalProps> = (
               {dietaryRestrictions.length} {safeT('profile.of', 'of')} {dietaryOptions.length} {safeT('profile.selected', 'selected')}
             </Text>
             {dietaryRestrictions.length > 0 && (
-              <TouchableOpacity style={styles.clearButton} onPress={clearAllRestrictions}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.clearButton} onPress={clearAllRestrictions}>
                 <Text style={styles.clearButtonText}>
                   {safeT('profile.clearAll', 'Clear All')}
                 </Text>

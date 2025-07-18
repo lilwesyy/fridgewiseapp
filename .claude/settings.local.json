@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(for file in DietaryPreferencesModal PrivacyPolicyModal SupportModal TermsOfServiceModal)",
+      "Bash(do sed -i '' 's/animationType=\"\"slide\"\"/animationType=\"\"none\"\"/g' /Users/mirco/Documents/fridgewiseapp/frontend/mobile/src/components/$file.tsx)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(for file in NoIngredientsModal.tsx AvatarEditModal.tsx NotificationModal.tsx ChatAIModal.tsx)",
+      "Bash(do echo \"Processing $file...\")",
+      "Bash(for:*)",
+      "Bash(do if grep -q \"TextInput\" \"$file\")",
+      "Bash(! grep -q \"textContentType\" \"$file\")",
+      "Bash(then echo \"$file\")",
+      "Bash(fi)"
     ],
     "deny": []
   }

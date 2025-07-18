@@ -20,6 +20,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
 
 const { width, height } = Dimensions.get('window');
 
@@ -85,8 +86,8 @@ export const MaintenanceScreen: React.FC<MaintenanceScreenProps> = ({
 
   useEffect(() => {
     // Entrance animations
-    fadeIn.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) });
-    slideUp.value = withTiming(0, { duration: 800, easing: Easing.out(Easing.quad) });
+    fadeIn.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
+    slideUp.value = withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
     iconScale.value = withSpring(1, { damping: 15, stiffness: 100 });
   }, []);
 
@@ -108,8 +109,8 @@ export const MaintenanceScreen: React.FC<MaintenanceScreenProps> = ({
     
     // Button press animation
     buttonScale.value = withSequence(
-      withTiming(0.95, { duration: 100 }),
-      withTiming(1, { duration: 100 })
+      withTiming(0.95, { duration: ANIMATION_DURATIONS.INSTANT }),
+      withTiming(1, { duration: ANIMATION_DURATIONS.INSTANT })
     );
     
     setTimeout(() => {

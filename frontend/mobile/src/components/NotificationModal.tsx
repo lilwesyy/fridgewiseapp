@@ -2,6 +2,14 @@ import React, { useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
 
 export type NotificationType = 'success' | 'warning' | 'error';
 
@@ -58,6 +66,43 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const icons = getIcons(colors);
+
+  // iOS-style alert animations
+  const scale = useSharedValue(0.8);
+  const opacity = useSharedValue(0);
+
+  React.useEffect(() => {
+    if (visible) {
+      opacity.value = withTiming(1, {
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2),
+      });
+      scale.value = withSpring(1, {
+        damping: 25,
+        stiffness: 300,
+        mass: 1,
+      });
+    } else {
+      opacity.value = withTiming(0, {
+        duration: ANIMATION_DURATIONS.QUICK,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
+      });
+      scale.value = withSpring(0.9, {
+        damping: 30,
+        stiffness: 400,
+        mass: 0.8,
+      });
+    }
+  }, [visible]);
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  const modalStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
   
   // Safety check for props
   const safeTitle = typeof title === 'string' ? title : '';
@@ -103,17 +148,14 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   };
   
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
-        onPress={handleOverlayPress}
-      >
-        <TouchableOpacity 
-          style={styles.modalBox} 
+    <Modal visible={visible} transparent animationType="slide">
+      <Animated.View style={[styles.overlay, backdropStyle]}>
+        <TouchableOpacity activeOpacity={0.7} 
+          style={styles.overlayTouchable} 
           activeOpacity={1} 
-          onPress={() => {}}
-        >
+          onPress={handleOverlayPress}
+        />
+        <Animated.View style={[styles.modalBox, modalStyle]}>
           <View style={styles.icon}>{icons[safeType]}</View>
           <Text style={[styles.title, { color: colors[safeType] }]}>{safeTitle}</Text>
           <Text style={styles.message}>{safeMessage}</Text>
@@ -121,7 +163,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           {buttons && buttons.length > 0 && (
             <View style={styles.buttonsContainer}>
               {buttons.map((button, index) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.7}
                   key={index}
                   style={getButtonStyle(button.style)}
                   onPress={() => {
@@ -136,8 +178,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               ))}
             </View>
           )}
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -148,6 +190,13 @@ const getStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  overlayTouchable: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   modalBox: {
     width: 320,

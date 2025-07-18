@@ -15,7 +15,9 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
 
 interface TermsOfServiceModalProps {
   visible: boolean;
@@ -40,9 +42,9 @@ export const TermsOfServiceModal: React.FC<TermsOfServiceModalProps> = ({ visibl
       sectionsOpacity.value = 0;
       
       // Entrance animations
-      headerOpacity.value = withTiming(1, { duration: 600 });
-      contentOpacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-      sectionsOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
+      headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
+      contentOpacity.value = withDelay(200, withTiming(1, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+      sectionsOpacity.value = withDelay(400, withTiming(1, { duration: ANIMATION_DURATIONS.MODAL, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     }
   }, [visible]);
 
@@ -67,7 +69,7 @@ export const TermsOfServiceModal: React.FC<TermsOfServiceModalProps> = ({ visibl
     >
       <SafeAreaView style={styles.container}>
         <Animated.View style={[styles.header, headerAnimatedStyle]}>
-          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
           <Text style={styles.title}>{t('terms.title')}</Text>

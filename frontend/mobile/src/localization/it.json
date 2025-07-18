@@ -7,6 +7,7 @@
     "cancel": "Annulla",
     "ok": "OK",
     "retry": "Riprova",
+    "tryAgain": "Riprova",
     "back": "Indietro",
     "next": "Avanti",
     "save": "Salva",
@@ -41,7 +42,26 @@
     "privacyPolicy": "Privacy Policy",
     "and": "e la",
     "alreadyHaveAccount": "Hai già un account?",
-    "dontHaveAccount": "Non hai un account?"
+    "dontHaveAccount": "Non hai un account?",
+    "resetPassword": "Reimposta Password",
+    "sendResetEmail": "Invia Email di Reset",
+    "resetPasswordInstructions": "Inserisci il tuo indirizzo email e ti invieremo un codice per reimpostare la password.",
+    "resetPasswordSuccess": "Codice di reset password inviato con successo!",
+    "resetPasswordError": "Impossibile inviare il codice di reset. Riprova.",
+    "enterNewPassword": "Inserisci Nuova Password",
+    "enterNewPasswordInstructions": "Inserisci la tua nuova password qui sotto.",
+    "enterCodeInstructions": "Inserisci il codice a 6 cifre inviato alla tua email e la tua nuova password.",
+    "resetToken": "Token di Reset",
+    "resetCode": "Codice di Reset",
+    "enterCode": "Inserisci codice a 6 cifre",
+    "verifyCode": "Verifica Codice",
+    "verifyCodeInstructions": "Inserisci il codice a 6 cifre inviato alla tua email.",
+    "resendCode": "Reinvia Codice",
+    "newPassword": "Nuova Password",
+    "confirmNewPassword": "Conferma Nuova Password",
+    "passwordResetSuccess": "Password reimpostata con successo! Ora puoi accedere con la tua nuova password.",
+    "invalidResetToken": "Token di reset non valido o scaduto. Richiedi un nuovo reset password.",
+    "backToLogin": "Torna al Login"
   },
   "validation": {
     "nameRequired": "Il nome è obbligatorio",
@@ -58,7 +78,9 @@
     "passwordSecurity": "Sicurezza password",
     "weak": "Debole",
     "medium": "Media",
-    "strong": "Forte"
+    "strong": "Forte",
+    "tokenRequired": "Il token di reset è obbligatorio",
+    "codeRequired": "Inserisci il codice a 6 cifre"
   },
   "camera": {
     "loading": "Caricamento fotocamera...",
@@ -87,7 +109,14 @@
     "galleryError": "Errore nella selezione dell'immagine dalla galleria",
     "webCameraNotAvailable": "Fotocamera non disponibile sul web",
     "selectImageFromDevice": "Seleziona un'immagine dal tuo dispositivo",
-    "selectImage": "Galleria"
+    "selectImage": "Galleria",
+    "permissionTitle": "Permesso Fotocamera Richiesto",
+    "permissionMessage": "Abbiamo bisogno dell'accesso alla fotocamera per scansionare i tuoi ingredienti e analizzare il contenuto del frigorifero",
+    "manualInput": "Inserimento Manuale",
+    "manualInputInstead": "Inserimento Manuale",
+    "initializing": "Inizializzazione fotocamera...",
+    "starting": "Avvio fotocamera...",
+    "error": "Errore Fotocamera"
   },
   "home": {
     "welcome": "Benvenuto in FridgeWise",

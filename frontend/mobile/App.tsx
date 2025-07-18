@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, TextInput, ScrollView, SafeAreaView, StatusBar as RNStatusBar } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, TextInput, ScrollView, SafeAreaView, StatusBar as RNStatusBar, Animated, Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useTranslation } from 'react-i18next';
 import i18n from './src/i18n';
@@ -20,6 +20,8 @@ import { CookingModeScreen } from './src/components/CookingModeScreen';
 import { BottomNavigation, TabName } from './src/components/BottomNavigation';
 import { NotificationModal, NotificationType } from './src/components/NotificationModal';
 import { MaintenanceScreen } from './src/components/MaintenanceScreen';
+import { OTPInput } from './src/components/OTPInput';
+import { AnimatedContainer } from './src/components/AnimatedContainer';
 import { checkBackendAvailability, BackendHealthMonitor } from './src/utils/healthCheck';
 import Svg, { Path, G, Circle } from 'react-native-svg';
 import './src/i18n';
@@ -148,7 +150,7 @@ const PasswordStrengthIndicator: React.FC<{ strength: number; colors: any; t: an
 
 const AppContent: React.FC = () => {
   const { t, i18n: i18nInstance } = useTranslation();
-  const { user, token, isLoading, login, register, logout } = useAuth();
+  const { user, token, isLoading, login, register, logout, forgotPassword, resetPassword } = useAuth();
   const { isDarkMode, themeMode, colors } = useTheme();
   
   // Handle splash screen
@@ -191,7 +193,7 @@ const AppContent: React.FC = () => {
     currentRecipeIndex: 0,
   });
 
-  const [authMode, setAuthMode] = useState<'welcome' | 'login' | 'register'>('welcome');
+  const [authMode, setAuthMode] = useState<'welcome' | 'login' | 'register' | 'forgot-password' | 'verify-code' | 'reset-password'>('welcome');
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',
@@ -202,6 +204,20 @@ const AppContent: React.FC = () => {
     password: '',
     confirmPassword: '',
     acceptTerms: false,
+  });
+  
+  const [forgotPasswordForm, setForgotPasswordForm] = useState({
+    email: '',
+  });
+  
+  const [verifyCodeForm, setVerifyCodeForm] = useState({
+    email: '',
+    code: '',
+  });
+
+  const [resetPasswordForm, setResetPasswordForm] = useState({
+    newPassword: '',
+    confirmNewPassword: '',
   });
 
   const [validation, setValidation] = useState({
@@ -408,6 +424,97 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const emailValidation = validateEmail(forgotPasswordForm.email);
+    
+    if (!emailValidation.isValid) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: emailValidation.message,
+      });
+      return;
+    }
+
+    try {
+      console.log('Sending forgot password request for:', forgotPasswordForm.email);
+      const response = await forgotPassword(forgotPasswordForm.email);
+      console.log('Forgot password response:', response);
+      
+      // Salva l'email per la schermata successiva
+      setVerifyCodeForm({ ...verifyCodeForm, email: forgotPasswordForm.email });
+      
+      setNotification({
+        visible: true,
+        type: 'success',
+        title: safeT('common.success'),
+        message: safeT('auth.resetPasswordSuccess'),
+      });
+      
+      // Vai alla schermata di verifica codice
+      setAuthMode('verify-code');
+    } catch (error: any) {
+      console.error('Error in handleForgotPassword:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: error.message || 'Unknown error occurred',
+      });
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!verifyCodeForm.code || verifyCodeForm.code.length !== 6) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: safeT('validation.codeRequired'),
+      });
+      return;
+    }
+
+    // Vai alla schermata reset password se il codice è inserito
+    setAuthMode('reset-password');
+  };
+
+  const handleResetPassword = async () => {
+    const passwordValidation = validatePassword(resetPasswordForm.newPassword);
+    const confirmPasswordValidation = validateConfirmPassword(resetPasswordForm.newPassword, resetPasswordForm.confirmNewPassword);
+    
+    if (!passwordValidation.isValid || !confirmPasswordValidation.isValid) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: passwordValidation.message || confirmPasswordValidation.message,
+      });
+      return;
+    }
+
+    try {
+      await resetPassword(verifyCodeForm.code, resetPasswordForm.newPassword);
+      setNotification({
+        visible: true,
+        type: 'success',
+        title: safeT('common.success'),
+        message: safeT('auth.passwordResetSuccess'),
+      });
+      setAuthMode('login');
+      setVerifyCodeForm({ email: '', code: '' });
+      setResetPasswordForm({ newPassword: '', confirmNewPassword: '' });
+    } catch (error: any) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: error.message,
+      });
+    }
+  };
+
   const handleImageAnalyzed = (ingredients: any[]) => {
     // Only navigate if there are actual ingredients
     if (ingredients && ingredients.length > 0) {
@@ -556,11 +663,24 @@ const AppContent: React.FC = () => {
     );
   }
 
+  // Render the notification modal at the top level
+  const renderNotificationModal = () => (
+    <NotificationModal
+      visible={notification.visible}
+      type={notification.type}
+      title={notification.title}
+      message={notification.message}
+      onClose={() => setNotification({ ...notification, visible: false })}
+    />
+  );
+
   if (!user) {
     if (authMode === 'welcome') {
       return (
-        <SafeAreaView style={styles.welcomeContainer}>
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <>
+          <SafeAreaView style={styles.welcomeContainer}>
+            <AnimatedContainer animationType="staggered">
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <View style={styles.welcomeHeader}>
               <View style={styles.logoSection}>
                 <LogoComponent width={120} height={108} />
@@ -613,10 +733,12 @@ const AppContent: React.FC = () => {
 
           </ScrollView>
           
+          <AnimatedContainer animationType="slideUp" delay={150}>
           <View style={styles.fixedBottomButtons}>
             <TouchableOpacity 
               style={styles.primaryButton} 
               onPress={() => setAuthMode('register')}
+              activeOpacity={0.8}
             >
               <Text style={styles.primaryButtonText}>{safeT('auth.register')}</Text>
             </TouchableOpacity>
@@ -628,16 +750,22 @@ const AppContent: React.FC = () => {
               <Text style={styles.secondaryButtonText}>{safeT('auth.login')}</Text>
             </TouchableOpacity>
           </View>
+          </AnimatedContainer>
           
           <StatusBar style={isDarkMode ? "light" : "dark"} />
-        </SafeAreaView>
+          </AnimatedContainer>
+          </SafeAreaView>
+          {renderNotificationModal()}
+        </>
       );
     }
     
     if (authMode === 'login') {
       return (
-        <SafeAreaView style={styles.authContainer}>
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <>
+          <SafeAreaView style={styles.authContainer}>
+            <AnimatedContainer animationType="slideLeft">
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <View style={styles.authHeader}>
               <TouchableOpacity 
                 style={styles.backButton} 
@@ -659,6 +787,8 @@ const AppContent: React.FC = () => {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  textContentType="emailAddress"
+                  autoComplete="email"
                   placeholderTextColor={colors.textSecondary}
                 />
               </View>
@@ -673,12 +803,23 @@ const AppContent: React.FC = () => {
                   secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
+                  textContentType="password"
+                  autoComplete="current-password"
                   placeholderTextColor={colors.textSecondary}
                 />
               </View>
               
               <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
                 <Text style={styles.primaryButtonText}>{safeT('auth.signIn')}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.linkButton} 
+                onPress={() => setAuthMode('forgot-password')}
+              >
+                <Text style={styles.linkButtonText}>
+                  {safeT('auth.forgotPassword')}
+                </Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -692,14 +833,19 @@ const AppContent: React.FC = () => {
             </View>
           </ScrollView>
           <StatusBar style={isDarkMode ? "light" : "dark"} />
-        </SafeAreaView>
+          </AnimatedContainer>
+          </SafeAreaView>
+          {renderNotificationModal()}
+        </>
       );
     }
     
     if (authMode === 'register') {
       return (
-        <SafeAreaView style={styles.authContainer}>
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <>
+          <SafeAreaView style={styles.authContainer}>
+            <AnimatedContainer animationType="slideRight">
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <View style={styles.authHeader}>
               <TouchableOpacity 
                 style={styles.backButton} 
@@ -725,6 +871,8 @@ const AppContent: React.FC = () => {
                     placeholder={safeT('auth.name')}
                     autoCapitalize="words"
                     autoCorrect={false}
+                    textContentType="name"
+                    autoComplete="name"
                     placeholderTextColor={colors.textSecondary}
                   />
                   {registerForm.name.length > 0 && (
@@ -751,6 +899,8 @@ const AppContent: React.FC = () => {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    textContentType="emailAddress"
+                    autoComplete="email"
                     placeholderTextColor={colors.textSecondary}
                   />
                   {registerForm.email.length > 0 && (
@@ -777,6 +927,8 @@ const AppContent: React.FC = () => {
                     secureTextEntry
                     autoCapitalize="none"
                     autoCorrect={false}
+                    textContentType="newPassword"
+                    autoComplete="new-password"
                     placeholderTextColor={colors.textSecondary}
                   />
                   {registerForm.password.length > 0 && (
@@ -806,6 +958,8 @@ const AppContent: React.FC = () => {
                     secureTextEntry
                     autoCapitalize="none"
                     autoCorrect={false}
+                    textContentType="newPassword"
+                    autoComplete="new-password"
                     placeholderTextColor={colors.textSecondary}
                   />
                   {registerForm.confirmPassword.length > 0 && (
@@ -856,7 +1010,204 @@ const AppContent: React.FC = () => {
             </View>
           </ScrollView>
           <StatusBar style={isDarkMode ? "light" : "dark"} />
-        </SafeAreaView>
+          </AnimatedContainer>
+          </SafeAreaView>
+          {renderNotificationModal()}
+        </>
+      );
+    }
+    
+    if (authMode === 'forgot-password') {
+      return (
+        <>
+          <SafeAreaView style={styles.authContainer}>
+            <AnimatedContainer animationType="slideUp">
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.authHeader}>
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => setAuthMode('login')}
+              >
+                <Text style={styles.backButtonText}>{String(`← ${safeT('auth.backToLogin')}`)}</Text>
+              </TouchableOpacity>
+              <Text style={styles.authTitle}>{safeT('auth.resetPassword')}</Text>
+            </View>
+            
+            <View style={styles.authForm}>
+              <Text style={styles.instructionText}>
+                {safeT('auth.resetPasswordInstructions')}
+              </Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{safeT('auth.email')}</Text>
+                <TextInput
+                  style={styles.input}
+                  value={forgotPasswordForm.email}
+                  onChangeText={(text) => setForgotPasswordForm({ ...forgotPasswordForm, email: text })}
+                  placeholder={safeT('auth.email')}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="emailAddress"
+                  autoComplete="email"
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+              
+              <TouchableOpacity style={styles.primaryButton} onPress={handleForgotPassword}>
+                <Text style={styles.primaryButtonText}>{safeT('auth.sendResetEmail')}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.linkButton} 
+                onPress={() => setAuthMode('login')}
+              >
+                <Text style={styles.linkButtonText}>
+                  {safeT('auth.backToLogin')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+          <StatusBar style={isDarkMode ? "light" : "dark"} />
+          </AnimatedContainer>
+          </SafeAreaView>
+          {renderNotificationModal()}
+        </>
+      );
+    }
+    
+    if (authMode === 'verify-code') {
+      return (
+        <>
+          <SafeAreaView style={styles.authContainer}>
+            <AnimatedContainer animationType="scale">
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.authHeader}>
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => setAuthMode('forgot-password')}
+              >
+                <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
+              </TouchableOpacity>
+              <Text style={styles.authTitle}>{safeT('auth.verifyCode')}</Text>
+            </View>
+            
+            <View style={styles.authForm}>
+              <Text style={styles.instructionText}>
+                {safeT('auth.verifyCodeInstructions')}
+              </Text>
+              
+              <View style={styles.otpContainer}>
+                <Text style={styles.label}>{safeT('auth.resetCode')}</Text>
+                <OTPInput
+                  length={6}
+                  value={verifyCodeForm.code}
+                  onChange={(code) => setVerifyCodeForm({ ...verifyCodeForm, code })}
+                  autoFocus={true}
+                />
+              </View>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.primaryButton,
+                  verifyCodeForm.code.length !== 6 && styles.primaryButtonDisabled
+                ]} 
+                onPress={handleVerifyCode}
+                disabled={verifyCodeForm.code.length !== 6}
+              >
+                <Text style={styles.primaryButtonText}>{safeT('auth.verifyCode')}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.linkButton} 
+                onPress={() => setAuthMode('forgot-password')}
+              >
+                <Text style={styles.linkButtonText}>
+                  {safeT('auth.resendCode')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+          <StatusBar style={isDarkMode ? "light" : "dark"} />
+          </AnimatedContainer>
+          </SafeAreaView>
+          {renderNotificationModal()}
+        </>
+      );
+    }
+    
+    if (authMode === 'reset-password') {
+      return (
+        <>
+          <SafeAreaView style={styles.authContainer}>
+            <AnimatedContainer animationType="slideDown">
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.authHeader}>
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => setAuthMode('login')}
+              >
+                <Text style={styles.backButtonText}>{String(`← ${safeT('auth.backToLogin')}`)}</Text>
+              </TouchableOpacity>
+              <Text style={styles.authTitle}>{safeT('auth.enterNewPassword')}</Text>
+            </View>
+            
+            <View style={styles.authForm}>
+              <Text style={styles.instructionText}>
+                {safeT('auth.enterNewPasswordInstructions')}
+              </Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{safeT('auth.newPassword')}</Text>
+                <TextInput
+                  style={styles.input}
+                  value={resetPasswordForm.newPassword}
+                  onChangeText={(text) => setResetPasswordForm({ ...resetPasswordForm, newPassword: text })}
+                  placeholder={safeT('auth.newPassword')}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="newPassword"
+                  autoComplete="new-password"
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{safeT('auth.confirmNewPassword')}</Text>
+                <TextInput
+                  style={styles.input}
+                  value={resetPasswordForm.confirmNewPassword}
+                  onChangeText={(text) => setResetPasswordForm({ ...resetPasswordForm, confirmNewPassword: text })}
+                  placeholder={safeT('auth.confirmNewPassword')}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="newPassword"
+                  autoComplete="new-password"
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+              
+              <TouchableOpacity style={styles.primaryButton} onPress={handleResetPassword}>
+                <Text style={styles.primaryButtonText}>{safeT('auth.resetPassword')}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.linkButton} 
+                onPress={() => setAuthMode('login')}
+              >
+                <Text style={styles.linkButtonText}>
+                  {safeT('auth.backToLogin')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+          <StatusBar style={isDarkMode ? "light" : "dark"} />
+          </AnimatedContainer>
+          </SafeAreaView>
+          {renderNotificationModal()}
+        </>
       );
     }
   }
@@ -1024,20 +1375,16 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <View style={styles.appContainer}>
-      {renderMainContent()}
-      <BottomNavigation
-        activeTab={appState.activeTab}
-        onTabPress={handleTabPress}
-      />
-      <NotificationModal
-        visible={notification.visible}
-        type={notification.type}
-        title={notification.title}
-        message={notification.message}
-        onClose={() => setNotification({ ...notification, visible: false })}
-      />
-    </View>
+    <>
+      <View style={styles.appContainer}>
+        {renderMainContent()}
+        <BottomNavigation
+          activeTab={appState.activeTab}
+          onTabPress={handleTabPress}
+        />
+      </View>
+      {renderNotificationModal()}
+    </>
   );
 };
 
@@ -1059,6 +1406,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   appContainer: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: Platform.OS === 'ios' ? 0 : 0, // SafeAreaView handles iOS automatically
   },
   
   // Loading Screen
@@ -1067,6 +1415,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.surface,
+    paddingTop: Platform.OS === 'ios' ? 44 : 0, // Handle status bar on iOS
   },
   loadingText: {
     marginTop: 16,
@@ -1379,6 +1728,17 @@ const getStyles = (colors: any) => StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
     fontFamily: 'System',
+  },
+  instructionText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+    fontFamily: 'System',
+  },
+  otpContainer: {
+    marginBottom: 24,
   },
 
   // Home Screen (legacy)
