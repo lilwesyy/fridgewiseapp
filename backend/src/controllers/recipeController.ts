@@ -607,6 +607,60 @@ export const deleteRecipe = async (req: AuthRequest, res: Response<APIResponse<a
   }
 };
 
+export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+    const { cookedAt } = req.body;
+
+    // Validate cookedAt timestamp if provided
+    if (cookedAt) {
+      const cookedDate = new Date(cookedAt);
+      if (isNaN(cookedDate.getTime()) || cookedDate > new Date()) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid cooked date - must be a valid date not in the future'
+        });
+        return;
+      }
+    }
+
+    const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+
+    if (!recipe) {
+      res.status(404).json({
+        success: false,
+        error: 'Recipe not found'
+      });
+      return;
+    }
+
+    // Mark recipe as saved and completed
+    recipe.isSaved = true;
+    
+    if (cookedAt) {
+      recipe.cookedAt = new Date(cookedAt);
+    }
+    
+    // Update completion count
+    recipe.completionCount = (recipe.completionCount || 0) + 1;
+    
+    await recipe.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Recipe completed successfully',
+      data: recipe
+    });
+  } catch (error: any) {
+    console.error('Error completing recipe:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to complete recipe'
+    });
+  }
+};
+
 export const deleteRecipePhoto = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
   try {
     const user = req.user!;

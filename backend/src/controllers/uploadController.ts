@@ -368,19 +368,13 @@ export const uploadDishPhoto = async (req: Request, res: Response<APIResponse<Di
     // Update recipe with dish photo URL if recipeId is provided
     if (recipeId) {
       try {
-        // Check current number of photos
-        const currentRecipe = await Recipe.findOne({ _id: recipeId, userId: user._id });
-        if (!currentRecipe) {
-          throw new Error('Recipe not found');
-        }
-
-        if (currentRecipe.dishPhotos.length >= 3) {
-          throw new Error('Maximum 3 photos allowed per recipe');
-        }
-
-        // Add new photo to the array
-        await Recipe.findOneAndUpdate(
-          { _id: recipeId, userId: user._id },
+        // Check current number of photos and update atomically
+        const updatedRecipe = await Recipe.findOneAndUpdate(
+          { 
+            _id: recipeId, 
+            userId: user._id,
+            $expr: { $lt: [{ $size: "$dishPhotos" }, 3] } // Only update if less than 3 photos
+          },
           { 
             $push: {
               dishPhotos: {
@@ -392,10 +386,53 @@ export const uploadDishPhoto = async (req: Request, res: Response<APIResponse<Di
           },
           { new: true }
         );
+
+        if (!updatedRecipe) {
+          // Either recipe not found or already has 3 photos
+          const existingRecipe = await Recipe.findOne({ _id: recipeId, userId: user._id });
+          if (!existingRecipe) {
+            // Delete uploaded image since we can't use it
+            try {
+              await cloudinaryService.deleteImage(uploadResult.public_id);
+            } catch (deleteError) {
+              console.error('Failed to cleanup uploaded image:', deleteError);
+            }
+            
+            res.status(404).json({
+              success: false,
+              error: 'Recipe not found'
+            });
+            return;
+          } else if (existingRecipe.dishPhotos.length >= 3) {
+            // Delete uploaded image since we can't use it
+            try {
+              await cloudinaryService.deleteImage(uploadResult.public_id);
+            } catch (deleteError) {
+              console.error('Failed to cleanup uploaded image:', deleteError);
+            }
+            
+            res.status(400).json({
+              success: false,
+              error: 'Maximum 3 photos allowed per recipe',
+              code: 'PHOTO_LIMIT_EXCEEDED',
+              currentCount: existingRecipe.dishPhotos.length,
+              maxAllowed: 3
+            });
+            return;
+          }
+        }
+        
         console.log(`Added dish photo to recipe ${recipeId}: ${uploadResult.secure_url}`);
       } catch (error) {
         console.error('Failed to update recipe with dish photo:', error);
-        // Don't fail the upload if recipe update fails
+        
+        // Delete uploaded image since we can't use it
+        try {
+          await cloudinaryService.deleteImage(uploadResult.public_id);
+        } catch (deleteError) {
+          console.error('Failed to cleanup uploaded image:', deleteError);
+        }
+        
         res.status(400).json({
           success: false,
           error: error instanceof Error ? error.message : 'Failed to add photo to recipe'

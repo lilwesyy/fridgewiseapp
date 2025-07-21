@@ -306,7 +306,14 @@ class UploadService {
               reject(new Error(response.error || 'Upload failed'));
             }
           } else {
-            reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            // Try to parse error response for better error messages
+            try {
+              const errorResponse = JSON.parse(xhr.responseText);
+              const errorMessage = errorResponse.error || `HTTP ${xhr.status}: ${xhr.statusText}`;
+              reject(new Error(errorMessage));
+            } catch {
+              reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            }
           }
         } catch (error) {
           reject(new Error(`Failed to parse response: ${error instanceof Error ? error.message : String(error)}`));
@@ -350,6 +357,15 @@ class UploadService {
    */
   private createUploadError(error: any): UploadError {
     const uploadError = new Error(error.message || 'Upload failed') as UploadError;
+    
+    // Check for specific photo limit error
+    if (error.message?.includes('Maximum 3 photos allowed') || 
+        error.message?.includes('PHOTO_LIMIT_EXCEEDED')) {
+      uploadError.type = 'validation';
+      uploadError.retryable = false;
+      uploadError.statusCode = 400;
+      return uploadError;
+    }
     
     // Determine error type and retryability
     if (error.message?.includes('Network') || error.message?.includes('timeout')) {

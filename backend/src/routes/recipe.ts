@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe, deleteRecipePhoto } from '../controllers/recipeController';
+import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe, deleteRecipePhoto, completeRecipe } from '../controllers/recipeController';
 import { protect } from '../middleware/auth';
 
 const router = Router();
@@ -13,6 +13,7 @@ router.get('/', getRecipes);
 router.get('/saved', getSavedRecipes);
 router.post('/save/:id', saveRecipe);
 router.post('/save', saveRecipe); // For temporary recipes without ID
+router.post('/complete/:id', completeRecipe); // Complete recipe without photo
 router.delete('/saved/:id', unsaveRecipe);
 router.get('/:id', getRecipe);
 router.put('/:id', updateRecipe);

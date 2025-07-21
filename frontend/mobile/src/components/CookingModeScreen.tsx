@@ -463,8 +463,59 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const finishCooking = async () => {
     setShowFinishModal(false);
-    // Show photo upload modal after completing all steps
-    setShowPhotoModal(true);
+    
+    try {
+      // Get current recipe data from backend to check photo count
+      const recipeId = recipe?.id || recipe?._id || '';
+      if (!recipeId) {
+        throw new Error('Recipe ID not found');
+      }
+
+      const response = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const recipeData = await response.json();
+        const currentPhotoCount = recipeData.data?.dishPhotos?.length || 0;
+        
+        if (currentPhotoCount >= 3) {
+          // Skip photo upload if already at limit
+          setNotification({
+            visible: true,
+            type: 'warning',
+            title: safeT('cookingMode.photoLimit.title', 'Limite foto raggiunto'),
+            message: safeT('cookingMode.photoLimit.message', 'Questa ricetta ha già il massimo di 3 foto. Completamento ricetta senza aggiungere nuove foto.'),
+          });
+          
+          // Save recipe completion without photo and complete cooking
+          await saveRecipeCompletionOnly();
+          return;
+        }
+        
+        // Show remaining photo slots info
+        const remainingSlots = 3 - currentPhotoCount;
+        if (remainingSlots <= 2) {
+          setNotification({
+            visible: true,
+            type: 'info',
+            title: safeT('cookingMode.photoSlots.title', 'Spazio foto'),
+            message: safeT('cookingMode.photoSlots.message', `Puoi aggiungere ancora {{count}} foto per questa ricetta.`).replace('{{count}}', remainingSlots.toString()),
+          });
+        }
+      }
+      
+      // Show photo upload modal if under limit or if we couldn't check
+      setShowPhotoModal(true);
+    } catch (error) {
+      console.error('Error checking recipe photo count:', error);
+      // If we can't check, still allow photo upload (backend will validate)
+      setShowPhotoModal(true);
+    }
   };
 
   const uploadDishPhoto = async (imageUri: string) => {
@@ -486,7 +537,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         type: `image/${fileType}`,
         name: filename,
       } as any);
-      console.log('📎 File appended to FormData');
+      
+      // Add recipe ID to the form data
+      const recipeId = recipe?.id || recipe?._id || '';
+      if (recipeId) {
+        formData.append('recipeId', recipeId);
+      }
+      
+      console.log('📎 File and recipe ID appended to FormData');
 
       console.log('🌐 Uploading to backend...');
 
@@ -510,13 +568,88 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           publicId: result.data.publicId
         };
       } else {
-        const errorData = await response.text();
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('❌ Backend response error:', errorData);
-        throw new Error(`Dish photo upload failed: ${response.status} - ${errorData}`);
+        
+        // Check for photo limit error
+        if (errorData.code === 'PHOTO_LIMIT_EXCEEDED' || errorData.error?.includes('Maximum 3 photos')) {
+          const error = new Error('PHOTO_LIMIT_EXCEEDED');
+          (error as any).code = 'PHOTO_LIMIT_EXCEEDED';
+          (error as any).currentCount = errorData.currentCount;
+          (error as any).maxAllowed = errorData.maxAllowed;
+          throw error;
+        }
+        
+        throw new Error(`Dish photo upload failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('❌ Error uploading dish photo:', error);
       throw error;
+    }
+  };
+
+  const saveRecipeCompletionOnly = async () => {
+    try {
+      const recipeId = recipe?.id || recipe?._id || '';
+      
+      if (!recipeId) {
+        throw new Error('Recipe ID not found');
+      }
+
+      // Mark recipe as completed without adding photo
+      const completeResponse = await fetch(`${API_URL}/api/recipe/complete/${recipeId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cookedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (completeResponse.ok) {
+        // Update recipe state
+        (recipe as any).isSaved = true;
+        (recipe as any).cookedAt = new Date().toISOString();
+
+        // Show success notification
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: safeT('cookingMode.recipeSaved', 'Ricetta Completata!'),
+          message: safeT('cookingMode.recipeCompleted', 'Ricetta completata con successo'),
+        });
+
+        // Animate to completed phase
+        phaseTransition.value = withSequence(
+          withTiming(0.95, { 
+            duration: ANIMATION_DURATIONS.QUICK,
+            easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+          }),
+          withTiming(1, { 
+            duration: ANIMATION_DURATIONS.MODAL,
+            easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+          })
+        );
+        setCurrentPhase('completed');
+
+        // After showing completion screen, go back
+        setTimeout(() => {
+          onFinishCooking();
+        }, 2500);
+      } else {
+        const errorData = await completeResponse.text();
+        throw new Error(`Failed to complete recipe: ${errorData}`);
+      }
+    } catch (error) {
+      console.error('Error completing recipe:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error', 'Errore'),
+        message: safeT('recipe.cookingError', 'Errore nel completare la ricetta. Riprova.'),
+      });
     }
   };
 
@@ -547,6 +680,20 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (uploadError) {
           console.error('Photo upload failed:', uploadError);
+          
+          // Check if it's a photo limit error
+          if (uploadError instanceof Error && (uploadError.message.includes('PHOTO_LIMIT_EXCEEDED') || uploadError.message.includes('Maximum 3 photos'))) {
+            setNotification({
+              visible: true,
+              type: 'warning',
+              title: safeT('cookingMode.photoLimit.title', 'Limite foto raggiunto'),
+              message: safeT('cookingMode.photoLimit.message', 'Questa ricetta ha già il massimo di 3 foto.'),
+            });
+            
+            // Complete without photo
+            await saveRecipeCompletionOnly();
+            return;
+          }
           
           // Continue without photo if upload fails - graceful degradation
           setNotification({

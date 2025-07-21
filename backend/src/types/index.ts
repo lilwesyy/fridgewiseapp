@@ -3,6 +3,9 @@ export interface APIResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+  code?: string;
+  currentCount?: number;
+  maxAllowed?: number;
 }
 
 export interface PaginatedResponse<T> {

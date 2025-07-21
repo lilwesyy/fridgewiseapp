@@ -68,6 +68,57 @@ describe('uploadDishPhoto', () => {
       });
     });
 
+    it('should return 400 if recipe already has 3 photos', async () => {
+      mockReq.body = { recipeId: 'recipe123' };
+      mockReq.file = {
+        buffer: Buffer.from('fake-image-data'),
+        mimetype: 'image/jpeg',
+        size: 1024
+      } as Express.Multer.File;
+
+      // Mock recipe with 3 photos already
+      const mockRecipeWithMaxPhotos = {
+        _id: 'recipe123',
+        userId: 'user123',
+        dishPhotos: [
+          { url: 'photo1.jpg', publicId: 'id1' },
+          { url: 'photo2.jpg', publicId: 'id2' },
+          { url: 'photo3.jpg', publicId: 'id3' }
+        ]
+      };
+
+      mockRecipe.findOne.mockResolvedValue(mockRecipeWithMaxPhotos);
+
+      // Mock sharp operations
+      const mockSharpInstance = {
+        metadata: jest.fn().mockResolvedValue({ width: 800, height: 600 }),
+        resize: jest.fn().mockReturnThis(),
+        jpeg: jest.fn().mockReturnThis(),
+        toBuffer: jest.fn().mockResolvedValue(Buffer.from('compressed-data'))
+      };
+      mockSharp.mockReturnValue(mockSharpInstance as any);
+
+      // Mock Cloudinary upload
+      mockCloudinaryService.uploadBuffer.mockResolvedValue({
+        secure_url: 'https://cloudinary.com/image.jpg',
+        public_id: 'dish_123'
+      } as any);
+
+      // Mock findOneAndUpdate to return null (indicating photo limit reached)
+      mockRecipe.findOneAndUpdate.mockResolvedValue(null);
+
+      await uploadDishPhoto(mockReq as Request, mockRes as Response);
+
+      expect(mockStatus).toHaveBeenCalledWith(400);
+      expect(mockJson).toHaveBeenCalledWith({
+        success: false,
+        error: 'Maximum 3 photos allowed per recipe'
+      });
+
+      // Verify that Cloudinary cleanup was called
+      expect(mockCloudinaryService.deleteImage).toHaveBeenCalledWith('dish_123');
+    });
+
     it('should validate file format - reject non-JPEG/PNG', async () => {
       mockReq.file = {
         buffer: Buffer.from('fake-image-data'),

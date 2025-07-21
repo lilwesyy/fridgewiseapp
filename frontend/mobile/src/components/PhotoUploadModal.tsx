@@ -186,6 +186,11 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
 
   // Error handling utilities
   const getErrorMessage = (error: UploadError): string => {
+    // Check for specific photo limit error
+    if (error.message?.includes('Maximum 3 photos allowed') || error.message?.includes('PHOTO_LIMIT_EXCEEDED')) {
+      return t('cookingMode.photoLimit.message', 'Questa ricetta ha già il massimo di 3 foto.');
+    }
+    
     const errorKey = `cookingMode.photoUpload.errors.${error.type}`;
     return t(errorKey, { defaultValue: t('cookingMode.photoUpload.errors.unknown') });
   };
