@@ -16,6 +16,11 @@ export interface Ingredient {
   confidence: number;
 }
 
+export interface DishPhoto {
+  url: string;
+  publicId: string;
+}
+
 export interface Recipe {
   id: string;
   title: string;
@@ -29,6 +34,9 @@ export interface Recipe {
   language: 'en' | 'it';
   userId: string;
   imageUrl?: string;
+  dishPhotos: DishPhoto[];
+  cookedAt?: Date;
+  completionCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

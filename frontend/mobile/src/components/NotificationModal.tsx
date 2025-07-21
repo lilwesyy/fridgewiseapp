@@ -148,7 +148,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   };
   
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="none">
       <Animated.View style={[styles.overlay, backdropStyle]}>
         <TouchableOpacity activeOpacity={0.7} 
           style={styles.overlayTouchable} 

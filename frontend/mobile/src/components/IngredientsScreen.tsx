@@ -459,7 +459,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       {/* Recipe Preferences Modal */}
       <Modal
         visible={showPreferencesModal}
-        animationType="slide"
+        animationType="none"
         presentationStyle="pageSheet"
         onRequestClose={() => setShowPreferencesModal(false)}
       >

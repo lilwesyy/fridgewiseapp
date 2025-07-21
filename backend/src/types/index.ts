@@ -72,3 +72,14 @@ export interface AnalysisData {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   errorMessage?: string;
 }
+
+export interface DishPhotoUploadResponse {
+  url: string;
+  publicId: string;
+  originalSize: number;
+  compressedSize: number;
+  dimensions: {
+    width: number;
+    height: number;
+  };
+}

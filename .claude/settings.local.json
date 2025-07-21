@@ -14,7 +14,8 @@
       "Bash(! grep -q \"textContentType\" \"$file\")",
       "Bash(then echo \"$file\")",
       "Bash(fi)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npx expo start:*)"
     ],
     "deny": []
   }

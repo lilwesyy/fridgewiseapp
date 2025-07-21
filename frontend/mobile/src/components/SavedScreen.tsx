@@ -49,8 +49,9 @@ interface SavedRecipe {
   dietaryTags: string[];
   language: 'en' | 'it';
   savedAt: string;
-  dishPhoto?: string; // Cloudinary URL della foto del piatto
+  dishPhotos: { url: string; publicId: string }[]; // Cloudinary dish photos array
   cookedAt?: string; // Data e ora in cui è stato cucinato
+  completionCount?: number; // Numero di volte che la ricetta è stata cucinata
 }
 
 interface SavedScreenProps {
@@ -500,7 +501,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    color: '#6B7280',
     marginBottom: 10,
     textAlign: 'left',
   },
@@ -777,22 +777,6 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
         activeOpacity={0.7}
       >
         <View style={{ flexDirection: 'row', marginBottom: 12 }}>
-          {/* Foto del piatto se disponibile */}
-          {item.dishPhoto && (
-            <View style={{ marginRight: 12 }}>
-              <Image 
-                source={{ uri: item.dishPhoto }} 
-                style={{ 
-                  width: 80, 
-                  height: 80, 
-                  borderRadius: 8, 
-                  backgroundColor: colors.border 
-                }} 
-                resizeMode="cover"
-              />
-            </View>
-          )}
-          
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, flex: 1, marginRight: 12 }} numberOfLines={2}>
@@ -829,13 +813,13 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
                 alignSelf: 'flex-start'
               }}>
                 <Text style={{ fontSize: 12, marginRight: 4 }}>👨‍🍳</Text>
-                <Text style={{ fontSize: 11, color: colors.success, fontWeight: '600' }}>
+                <Text style={{ fontSize: 11, color: 'white', fontWeight: '600' }}>
                   {t('saved.alreadyCooked')} {formatDate(item.cookedAt)}
                 </Text>
               </View>
             )}
 
-            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 12 }} numberOfLines={item.dishPhoto ? 2 : 3}>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 12 }} numberOfLines={3}>
               {item.description}
             </Text>
           </View>
@@ -851,6 +835,13 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
           <View style={{ marginRight: 16 }}>
             <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
           </View>
+          {!!(item.completionCount && item.completionCount > 0) && (
+            <View style={{ marginRight: 16 }}>
+              <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>
+                🍽️ {item.completionCount}x {t('recipes.cooked')}
+              </Text>
+            </View>
+          )}
         </View>
         {item.dietaryTags.length > 0 && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}>
@@ -866,7 +857,7 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
             )}
           </View>
         )}
-        <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'right' }}>{t('saved.savedOn')} {formatDate(item.savedAt)}</Text>
+        {/* <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'right' }}>{t('saved.savedOn')} {formatDate(item.savedAt)}</Text> */}
       </TouchableOpacity>
     </Animated.View>
   );

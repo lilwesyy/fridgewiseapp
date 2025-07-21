@@ -107,7 +107,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
     <Modal
       transparent
       visible={visible}
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={handleBackdropPress}>

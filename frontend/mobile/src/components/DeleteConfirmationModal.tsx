@@ -52,18 +52,20 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
         -1,
         true
       );
-      opacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.QUICK, easing });
+      // Backdrop should appear immediately
+      opacity.value = 1;
       slideY.value = withSpring(0, SPRING_CONFIGS.MODAL);
     } else {
       const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
       
+      // Backdrop should disappear only when modal slides down
       opacity.value = withTiming(0, { duration: ANIMATION_DURATIONS.QUICK, easing });
       slideY.value = withTiming(screenHeight, { duration: ANIMATION_DURATIONS.QUICK, easing });
     }
   }, [visible]);
 
   const backdropStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: 1,
   }));
 
   const modalStyle = useAnimatedStyle(() => ({
@@ -81,7 +83,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
     right: -12,
     bottom: -12,
     borderRadius: 48,
-    backgroundColor: colors.card,
+    backgroundColor: 'transparent',
     opacity: 0.6,
     transform: [{ scale: pulseScale.value }],
   }), [pulseScale]);
@@ -92,7 +94,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
     <Modal
       transparent
       visible={visible}
-      animationType="slide"
+      animationType="none"
       onRequestClose={onCancel}
     >
       <TouchableWithoutFeedback onPress={onCancel}>

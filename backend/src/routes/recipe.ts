@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe } from '../controllers/recipeController';
+import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe, deleteRecipePhoto } from '../controllers/recipeController';
 import { protect } from '../middleware/auth';
 
 const router = Router();
@@ -17,5 +17,6 @@ router.delete('/saved/:id', unsaveRecipe);
 router.get('/:id', getRecipe);
 router.put('/:id', updateRecipe);
 router.delete('/:id', deleteRecipe);
+router.delete('/:id/photo', deleteRecipePhoto);
 
 export { router as recipeRoutes };

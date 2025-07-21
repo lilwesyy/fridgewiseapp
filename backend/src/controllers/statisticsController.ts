@@ -187,7 +187,7 @@ export const getRecentRecipes = async (req: AuthenticatedRequest, res: Response)
     const recentRecipes = await Recipe.find(query)
       .sort({ updatedAt: -1 })
       .limit(limit)
-      .select('title description ingredients instructions cookingTime servings difficulty dietaryTags imageUrl language originalIngredients createdAt updatedAt isSaved')
+      .select('title description ingredients instructions cookingTime servings difficulty dietaryTags imageUrl dishPhotos language originalIngredients createdAt updatedAt isSaved')
       .lean();
 
     res.json(recentRecipes);

@@ -18,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { NotificationModal, NotificationType } from './NotificationModal';
+import { PhotoUploadModal } from './PhotoUploadModal';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   useSharedValue,
@@ -131,11 +132,11 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const [customTimerMinutes, setCustomTimerMinutes] = useState(10);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [dishPhoto, setDishPhoto] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [hasAutoStartedTimer, setHasAutoStartedTimer] = useState(false);
   const [showAutoTimerModal, setShowAutoTimerModal] = useState(false);
   const [autoTimerMinutes, setAutoTimerMinutes] = useState<number | null>(null);
@@ -177,11 +178,73 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     }
   }, [currentPhase]);
 
+  // Auto-generate timers from instructions if not provided
+  const generateTimerFromInstruction = (instruction: string): number => {
+    if (typeof instruction !== 'string') return 0;
+    
+    const lowerInstruction = instruction.toLowerCase();
+    
+    // Look for explicit time mentions
+    const timePatterns = [
+      /(\d+)\s*minut[oi]/g, // Italian minutes
+      /(\d+)\s*minute?s?/g, // English minutes
+      /(\d+)\s*min/g, // min abbreviation
+      /(\d+)\s*ore?/g, // Italian hours (convert to minutes)
+      /(\d+)\s*hours?/g, // English hours (convert to minutes)
+    ];
+    
+    for (const pattern of timePatterns) {
+      const match = pattern.exec(lowerInstruction);
+      if (match) {
+        const time = parseInt(match[1]);
+        // If it's hours, convert to minutes, otherwise use as minutes
+        if (lowerInstruction.includes('ore') || lowerInstruction.includes('hour')) {
+          return time * 60;
+        }
+        return time;
+      }
+    }
+    
+    // Fallback logic based on cooking keywords
+    if (lowerInstruction.includes('cuocere') || lowerInstruction.includes('cook')) {
+      return 10; // Default cooking time
+    }
+    if (lowerInstruction.includes('friggere') || lowerInstruction.includes('fry')) {
+      return 5;
+    }
+    if (lowerInstruction.includes('bollire') || lowerInstruction.includes('boil')) {
+      return 8;
+    }
+    if (lowerInstruction.includes('rosolare') || lowerInstruction.includes('sauté')) {
+      return 3;
+    }
+    if (lowerInstruction.includes('riposare') || lowerInstruction.includes('rest')) {
+      return 5;
+    }
+    
+    return 0; // No timer for this step
+  };
+
   // Auto-start timer when step changes
   useEffect(() => {
-    if (currentPhase === 'cooking' && recipe?.stepTimers && Array.isArray(recipe.stepTimers) && currentStep < recipe.stepTimers.length) {
-      const stepTimer = recipe.stepTimers[currentStep];
-      if (typeof stepTimer === 'number' && stepTimer > 0) {
+    if (currentPhase === 'cooking' && recipe?.instructions && currentStep < recipe.instructions.length) {
+      let stepTimer: number | null = null;
+      
+      // First try to get timer from recipe.stepTimers
+      if (recipe?.stepTimers && Array.isArray(recipe.stepTimers) && currentStep < recipe.stepTimers.length) {
+        stepTimer = recipe.stepTimers[currentStep];
+      } else {
+        // Generate timer from instruction text
+        const instruction = recipe.instructions[currentStep];
+        stepTimer = generateTimerFromInstruction(instruction);
+      }
+      
+      if (typeof stepTimer === 'number' && stepTimer > 0 && !hasAutoStartedTimer) {
+        // Stop any existing timer first
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
         // Auto-start timer for this step
         setTimerSeconds(stepTimer * 60);
         setIsTimerRunning(true);
@@ -190,7 +253,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         setShowAutoTimerModal(true);
       }
     }
-  }, [currentStep, currentPhase, recipe?.stepTimers]);
+  }, [currentStep, currentPhase, recipe?.stepTimers, recipe?.instructions, hasAutoStartedTimer]);
 
   // Auto-close NotificationModal after 2.5s
   useEffect(() => {
@@ -275,6 +338,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const nextStep = () => {
     const instructionsLength = recipe?.instructions?.length || 0;
     if (currentStep < instructionsLength - 1) {
+      // Stop current timer and reset states
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      setIsTimerRunning(false);
+      setHasAutoStartedTimer(false); // Reset auto-timer flag BEFORE changing step
+      
       stepTransition.value = withSequence(
         withTiming(0.8, { 
           duration: ANIMATION_DURATIONS.QUICK,
@@ -285,7 +356,6 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
         })
       );
-      setHasAutoStartedTimer(false); // Reset auto-timer flag
       setCurrentStep(currentStep + 1);
     } else {
       completeCooking();
@@ -294,6 +364,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const prevStep = () => {
     if (currentStep > 0) {
+      // Stop current timer and reset states
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      setIsTimerRunning(false);
+      setHasAutoStartedTimer(false); // Reset auto-timer flag BEFORE changing step
+      
       stepTransition.value = withSequence(
         withTiming(0.8, { 
           duration: ANIMATION_DURATIONS.QUICK,
@@ -304,7 +382,6 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
         })
       );
-      setHasAutoStartedTimer(false); // Reset auto-timer flag
       setCurrentStep(currentStep - 1);
     }
   };
@@ -313,86 +390,80 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     setShowFinishModal(true);
   };
 
-  const requestCameraPermission = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    return status === 'granted';
+
+
+  const handlePhotoSelected = async (uri: string) => {
+    // This is called when user selects a photo but we're not handling upload here
+    // The PhotoUploadModal will handle the upload directly
+    setDishPhoto(uri);
   };
 
-  const requestMediaLibraryPermission = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    return status === 'granted';
-  };
-
-  const takePhoto = async () => {
+  const handlePhotoUploadComplete = async (result: { url: string; publicId: string }) => {
     try {
-      const hasPermission = await requestCameraPermission();
-      if (!hasPermission) {
-        Alert.alert(
-          safeT('camera.permissionTitle', 'Camera Permission Required'),
-          safeT('camera.permissionMessage', 'We need camera access to capture your dish photo')
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: 'images',
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
+      // Save recipe with photo URL
+      setDishPhoto(result.url);
+      await saveDishToCollection();
+      
+      setNotification({
+        visible: true,
+        type: 'success',
+        title: safeT('cookingMode.photoUpload.success.title', 'Photo Uploaded'),
+        message: safeT('cookingMode.photoUpload.success.message', 'Your dish photo has been saved successfully!'),
       });
-
-      if (!result.canceled && result.assets[0]) {
-        setDishPhoto(result.assets[0].uri);
-        setShowPhotoModal(false);
-      }
     } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert(
-        safeT('common.error', 'Error'),
-        safeT('camera.cameraError', 'Camera error')
-      );
+      console.error('Error saving recipe with photo:', error);
+      // Still try to save without photo
+      setDishPhoto(null);
+      await saveDishToCollection();
+      
+      setNotification({
+        visible: true,
+        type: 'warning',
+        title: safeT('cookingMode.photoUploadFailed', 'Photo upload failed'),
+        message: safeT('cookingMode.photoUploadFailed', 'Photo upload failed, saving without photo'),
+      });
+    } finally {
+      setShowPhotoModal(false);
     }
   };
 
-  const pickFromGallery = async () => {
-    try {
-      const hasPermission = await requestMediaLibraryPermission();
-      if (!hasPermission) {
-        Alert.alert(
-          safeT('camera.permissionTitle', 'Gallery Permission Required'),
-          safeT('camera.permissionMessage', 'We need gallery access to select your dish photo')
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setDishPhoto(result.assets[0].uri);
-        setShowPhotoModal(false);
-      }
-    } catch (error) {
-      console.error('Error picking photo:', error);
-      Alert.alert(
-        safeT('common.error', 'Error'),
-        safeT('camera.galleryError', 'Gallery error')
-      );
+  const handlePhotoUploadError = async (error: any) => {
+    console.error('Photo upload error:', error);
+    
+    // Track the error for analytics
+    if (__DEV__) {
+      console.log('[CookingMode] Photo upload failed:', error.type, error.message);
     }
+    
+    // The PhotoUploadModal will handle showing the error UI
+    // We don't need to show additional notifications here
   };
 
-  const skipPhoto = () => {
-    setShowPhotoModal(false);
+  const handleSkipPhoto = async () => {
     setDishPhoto(null);
+    setShowPhotoModal(false);
+    
+    try {
+      await saveDishToCollection();
+    } catch (error) {
+      console.error('Error saving dish without photo:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error', 'Error'),
+        message: safeT('recipe.cookingError', 'Failed to save recipe'),
+      });
+    }
+  };
+
+  const handlePhotoModalClose = () => {
+    // Allow closing even during upload since PhotoUploadModal handles its own state
+    setShowPhotoModal(false);
   };
 
   const finishCooking = async () => {
     setShowFinishModal(false);
-    // Show photo capture option
+    // Show photo upload modal after completing all steps
     setShowPhotoModal(true);
   };
 
@@ -400,18 +471,22 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     try {
       console.log('🔄 Starting dish photo upload...');
       console.log('📸 Image URI:', imageUri);
+      console.log('🔧 Will create FormData...');
       
       const formData = new FormData();
+      console.log('✅ FormData created');
       
       // Handle file URI - React Native specific handling (same as avatar)
       const filename = imageUri.split('/').pop() || 'dish-photo.jpg';
       const fileType = filename.split('.').pop() || 'jpg';
+      console.log('📝 File info:', { filename, fileType });
       
       formData.append('dishPhoto', {
         uri: imageUri,
         type: `image/${fileType}`,
         name: filename,
       } as any);
+      console.log('📎 File appended to FormData');
 
       console.log('🌐 Uploading to backend...');
 
@@ -428,9 +503,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       console.log('📡 Response status text:', response.statusText);
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Dish photo upload successful:', data.url);
-        return data.url;
+        const result = await response.json();
+        console.log('✅ Dish photo upload successful:', result.data.url);
+        return {
+          url: result.data.url,
+          publicId: result.data.publicId
+        };
       } else {
         const errorData = await response.text();
         console.error('❌ Backend response error:', errorData);
@@ -450,42 +528,46 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         throw new Error('Recipe ID not found');
       }
 
-      let dishPhotoUrl = null;
+      let dishPhotoData = null;
 
       // Upload photo to backend if available
       if (dishPhoto) {
-        setNotification({
-          visible: true,
-          type: 'success',
-          title: safeT('common.loading', 'Loading'),
-          message: safeT('cookingMode.uploadingPhoto', 'Uploading photo...'),
-        });
-
         try {
-          dishPhotoUrl = await uploadDishPhoto(dishPhoto);
+          dishPhotoData = await uploadDishPhoto(dishPhoto);
+          
+          // Show success notification for photo upload
+          setNotification({
+            visible: true,
+            type: 'success',
+            title: safeT('common.success', 'Success'),
+            message: safeT('cookingMode.photoUploaded', 'Photo uploaded successfully'),
+          });
+          
+          // Brief delay to show success message
+          await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (uploadError) {
           console.error('Photo upload failed:', uploadError);
           
-          // Continue without photo if upload fails
+          // Continue without photo if upload fails - graceful degradation
           setNotification({
             visible: true,
             type: 'warning',
             title: safeT('common.warning', 'Warning'),
-            message: safeT('cookingMode.photoUploadFailed', 'Photo upload failed, saving without photo'),
+            message: safeT('cookingMode.photoUploadFailed', 'Photo upload failed, saving recipe without photo'),
           });
           
-          // Aspetta un po' prima di continuare
+          // Wait a bit before continuing
           await new Promise(resolve => setTimeout(resolve, 1500));
         }
       }
 
       // Prepare request body
       const requestBody = {
-        dishPhoto: dishPhotoUrl,
+        dishPhoto: dishPhotoData,
         cookedAt: new Date().toISOString(),
       };
 
-      // Add recipe to user's "I miei piatti" collection
+      // Add recipe to user's collection with photo metadata
       const addToDishesResponse = await fetch(`${API_URL}/api/recipe/save/${recipeId}`, {
         method: 'POST',
         headers: {
@@ -498,22 +580,37 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       if (addToDishesResponse.ok) {
         // Update recipe state to reflect it's now in user's collection
         (recipe as any).isSaved = true;
-        (recipe as any).dishPhoto = dishPhotoUrl;
+        (recipe as any).dishPhoto = dishPhotoData;
         (recipe as any).cookedAt = new Date().toISOString();
 
-        // Show completed phase
-        phaseTransition.value = withTiming(1, { 
-          duration: ANIMATION_DURATIONS.MODAL,
-          easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+        // Show success notification
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: safeT('cookingMode.recipeSaved', 'Recipe Saved!'),
+          message: safeT('cookingMode.recipeAddedToCollection', 'Recipe added to your collection'),
         });
+
+        // Animate to completed phase with enhanced transition
+        phaseTransition.value = withSequence(
+          withTiming(0.95, { 
+            duration: ANIMATION_DURATIONS.QUICK,
+            easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+          }),
+          withTiming(1, { 
+            duration: ANIMATION_DURATIONS.MODAL,
+            easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+          })
+        );
         setCurrentPhase('completed');
 
-        // After a short delay, go back to saved recipes
+        // After showing completion screen, go back to saved recipes
         setTimeout(() => {
           onFinishCooking();
-        }, 2000);
+        }, 2500);
       } else {
-        throw new Error('Failed to add recipe to your dishes');
+        const errorData = await addToDishesResponse.text();
+        throw new Error(`Failed to add recipe to your dishes: ${errorData}`);
       }
     } catch (error) {
       console.error('Error saving recipe to collection:', error);
@@ -521,8 +618,11 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         visible: true,
         type: 'error',
         title: safeT('common.error', 'Error'),
-        message: safeT('recipe.cookingError', 'Failed to save recipe'),
+        message: safeT('recipe.cookingError', 'Failed to save recipe. Please try again.'),
       });
+      
+      // Reset upload state on error
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -671,7 +771,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     const stepTimer = (recipe?.stepTimers && Array.isArray(recipe.stepTimers) && typeof recipe.stepTimers[currentStep] === 'number') 
       ? recipe.stepTimers[currentStep] 
       : null;
-    const presetMinutes = [5, 10, 15];
+    const presetMinutes = [5, 10, 15, 20];
     // Do not show extra auto-timer button, just show preset and custom buttons
 
     return (
@@ -719,12 +819,6 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                 <Text style={styles.timerButtonText}>{String(min)}m</Text>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity
-              style={[styles.timerButton, styles.timerButtonSmall]}
-              onPress={() => startTimer(customTimerMinutes)}
-            >
-              <Text style={styles.timerButtonText}>{String(customTimerMinutes)}m</Text>
-            </TouchableOpacity>
           </View>
           <View style={styles.timerMainControls}>
             {isTimerRunning ? (
@@ -901,7 +995,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       <Modal
         visible={showExitModal}
         transparent
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setShowExitModal(false)}
       >
         <View style={styles.modalOverlay}>
@@ -933,7 +1027,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       <Modal
         visible={showFinishModal}
         transparent
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setShowFinishModal(false)}
       >
         <View style={styles.modalOverlay}>
@@ -958,92 +1052,16 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         </View>
       </Modal>
 
-      {/* Photo Capture Modal */}
-      <Modal
+      {/* Photo Upload Modal */}
+      <PhotoUploadModal
         visible={showPhotoModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowPhotoModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.photoModalContent}>
-            <View style={styles.photoModalHeader}>
-              <Text style={styles.photoModalTitle}>{safeT('cookingMode.dishPhoto', 'Dish Photo')}</Text>
-              <Text style={styles.photoModalSubtitle}>{safeT('cookingMode.dishPhotoDesc', 'Capture a photo of your completed dish to save with your recipe!')}</Text>
-            </View>
-            
-            {dishPhoto && (
-              <View style={styles.photoPreviewContainer}>
-                <Image source={{ uri: dishPhoto }} style={styles.photoPreview} />
-              </View>
-            )}
-            
-            <View style={styles.photoButtonsContainer}>
-              <TouchableOpacity
-                style={[styles.photoButton, styles.photoButtonCamera]}
-                onPress={takePhoto}
-              >
-                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 4H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z"
-                    stroke={colors.primary}
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <Circle cx={12} cy={13} r={4} stroke={colors.primary} strokeWidth={2} />
-                </Svg>
-                <Text style={styles.photoButtonText}>{safeT('camera.takePicture', 'Take Photo')}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.photoButton, styles.photoButtonGallery]}
-                onPress={pickFromGallery}
-              >
-                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M21 19V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19Z"
-                    stroke={colors.primary}
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <Path
-                    d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z"
-                    stroke={colors.primary}
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <Path
-                    d="M21 15L16 10L5 21"
-                    stroke={colors.primary}
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-                <Text style={styles.photoButtonText}>{safeT('camera.selectImage', 'Gallery')}</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.photoModalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSecondary]}
-                onPress={skipPhoto}
-              >
-                <Text style={styles.modalButtonTextSecondary}>{safeT('cookingMode.skipPhoto', 'Skip Photo')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
-                onPress={saveDishToCollection}
-              >
-                <Text style={styles.modalButtonTextPrimary}>{safeT('cookingMode.saveToCollection', 'Save to Collection')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={handlePhotoModalClose}
+        onPhotoSelected={handlePhotoSelected}
+        onSkip={handleSkipPhoto}
+        recipeId={recipe?.id || recipe?._id}
+        onUploadComplete={handlePhotoUploadComplete}
+        onUploadError={handlePhotoUploadError}
+      />
       {/* Auto Timer Notification Modal */}
       <NotificationModal
         visible={showAutoTimerModal}
@@ -1536,83 +1554,5 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontWeight: '600',
     color: colors.buttonText,
   },
-  
-  // Photo Modal styles
-  photoModalContent: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 12,
-  },
-  photoModalHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  photoModalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  photoModalSubtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  photoPreviewContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  photoPreview: {
-    width: 280,
-    height: 180,
-    borderRadius: 12,
-  },
-  photoButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 24,
-  },
-  photoButton: {
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: colors.card,
-    minWidth: 120,
-  },
-  photoButtonCamera: {
-    marginRight: 8,
-  },
-  photoButtonGallery: {
-    marginLeft: 8,
-  },
-  photoButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-    marginTop: 8,
-  },
-  photoModalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
+
 });

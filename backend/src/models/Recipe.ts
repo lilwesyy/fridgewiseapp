@@ -6,6 +6,11 @@ export interface IRecipeIngredient {
   unit: string;
 }
 
+export interface IDishPhoto {
+  url: string;
+  publicId: string;
+}
+
 export interface IRecipe extends Document {
   title: string;
   description: string;
@@ -21,6 +26,9 @@ export interface IRecipe extends Document {
   imageUrl?: string;
   originalIngredients: string[];
   isSaved: boolean;
+  dishPhotos: IDishPhoto[];
+  cookedAt?: Date;
+  completionCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -141,6 +149,53 @@ const recipeSchema = new Schema<IRecipe>({
   isSaved: {
     type: Boolean,
     default: false
+  },
+  dishPhotos: {
+    type: [{
+      url: {
+        type: String,
+        required: true,
+        trim: true,
+        validate: {
+          validator: function(v: string) {
+            return /^https?:\/\/.+/.test(v);
+          },
+          message: 'Dish photo URL must be a valid HTTP/HTTPS URL'
+        }
+      },
+      publicId: {
+        type: String,
+        required: true,
+        trim: true
+      }
+    }],
+    default: [],
+    validate: {
+      validator: function(v: IDishPhoto[]) {
+        return v.length <= 3;
+      },
+      message: 'Maximum 3 dish photos allowed'
+    }
+  },
+  cookedAt: {
+    type: Date,
+    validate: {
+      validator: function(v: Date) {
+        return !v || v <= new Date();
+      },
+      message: 'Cooked date cannot be in the future'
+    }
+  },
+  completionCount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Completion count cannot be negative'],
+    validate: {
+      validator: function(v: number) {
+        return Number.isInteger(v);
+      },
+      message: 'Completion count must be an integer'
+    }
   }
 }, {
   timestamps: true

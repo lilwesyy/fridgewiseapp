@@ -32,6 +32,7 @@ interface RecentRecipe {
   difficulty: 'easy' | 'medium' | 'hard';
   dietaryTags: string[];
   imageUrl?: string;
+  dishPhotos: { url: string; publicId: string }[];
   language: 'en' | 'it';
   originalIngredients: string[];
   createdAt: string;

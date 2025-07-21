@@ -9,6 +9,7 @@ import {
   ScrollView,
   StatusBar,
   Platform,
+  Image,
 } from 'react-native';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
@@ -444,25 +445,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                 </View>
               ))
             ) : (
-              recentRecipes.map((recipe, index) => (
+              recentRecipes.map((recipe, index) => {
+                // Debug log to check dish photo data
+                const firstPhoto = recipe.dishPhotos?.[0];
+                if (firstPhoto?.url) {
+                  console.log(`[HomeScreen] Recipe "${recipe.title}" has dish photo:`, firstPhoto.url);
+                } else {
+                  console.log(`[HomeScreen] Recipe "${recipe.title}" has no dish photo`);
+                }
+                
+                return (
                 <TouchableOpacity activeOpacity={0.7} key={recipe._id} style={styles.recipeCard} onPress={() => handleRecipePress(recipe, index)}>
                   <View style={styles.recipeImagePlaceholder}>
-                    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-                        stroke={colors.success}
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                    {firstPhoto?.url ? (
+                      <Image 
+                        source={{ uri: firstPhoto.url }} 
+                        style={styles.recipeImage}
+                        resizeMode="cover"
                       />
-                      <Path
-                        d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-                        stroke={colors.success}
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    ) : (
+                      <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+                        <Path
+                          d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
+                          stroke={colors.success}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <Path
+                          d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
+                          stroke={colors.success}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </Svg>
+                    )}
                   </View>
                   <View style={styles.recipeInfo}>
                     <View style={styles.recipeHeader}>
@@ -493,7 +511,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                     </View>
                   </View>
                 </TouchableOpacity>
-              ))
+                );
+              })
             )}
           </ScrollView>
         </Animated.View>
@@ -853,6 +872,12 @@ const getStyles = (colors: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
+    overflow: 'hidden', // Ensure image respects border radius
+  },
+  recipeImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
   recipeInfo: {
     flex: 1,

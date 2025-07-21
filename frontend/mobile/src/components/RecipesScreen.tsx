@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   PanResponder,
   Dimensions,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect } from 'react-native-svg';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { NotificationModal, NotificationType } from './NotificationModal';
+import { ImageViewerModal } from './ImageViewerModal';
 import Animated,
 {
   useSharedValue,
@@ -29,28 +31,31 @@ import Animated,
 } from 'react-native-reanimated';
 import { useTheme } from '../contexts/ThemeContext';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
+import { imageCacheService } from '../services/imageCacheService';
 
 const { width: screenWidth } = Dimensions.get('window');
+
+const DEFAULT_DELETE_TEXT = 'Delete';
 
 interface SwipeableRowProps {
   children: React.ReactNode;
   onDelete: () => void;
-  deleteText: string;
   resetTrigger?: number; // Add reset trigger prop
 }
 
-const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteText, resetTrigger }) => {
-  const translateX = useSharedValue(0);
+const SwipeableRow: React.FC<SwipeableRowProps> = (props) => {
+  const initialValue = 0;
+  const translateX = useSharedValue(initialValue);
   const [isRevealed, setIsRevealed] = useState(false);
   const deleteButtonWidth = 100;
 
-  // Reset when resetTrigger changes
+  // Reset when props.resetTrigger changes
   useEffect(() => {
-    if (resetTrigger !== undefined) {
+    if (props.resetTrigger !== undefined) {
       translateX.value = withSpring(0, SPRING_CONFIGS.STANDARD);
       setIsRevealed(false);
     }
-  }, [resetTrigger]);
+  }, [props.resetTrigger]);
 
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_, gestureState) => {
@@ -91,7 +96,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteT
     // Animate the deletion
     translateX.value = withTiming(-screenWidth, { duration: ANIMATION_DURATIONS.STANDARD }, (finished) => {
       if (finished) {
-        runOnJS(onDelete)();
+        runOnJS(props.onDelete)();
       }
     });
   };
@@ -102,27 +107,34 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onDelete, deleteT
 
   return (
     <View style={styles.swipeContainer}>
-      <TouchableOpacity activeOpacity={0.7}
+      <TouchableOpacity
         style={styles.deleteBackground}
         onPress={handleDelete}
         activeOpacity={0.7}
       >
         <Ionicons name="trash" size={24} color="white" />
-        <Text style={styles.deleteText}>{deleteText}</Text>
+        <Text style={styles.deleteText}>
+          {DEFAULT_DELETE_TEXT}
+        </Text>
       </TouchableOpacity>
       <Animated.View
         style={[
-          styles.swipeRow, 
+          styles.swipeRow,
           animatedStyle
         ]}
         pointerEvents='auto'
         {...panResponder.panHandlers}
       >
-        {children}
+        {props.children}
       </Animated.View>
     </View>
   );
 };
+
+interface DishPhoto {
+  url: string;
+  publicId: string;
+}
 
 interface Recipe {
   id: string;
@@ -139,6 +151,9 @@ interface Recipe {
   difficulty: 'easy' | 'medium' | 'hard';
   dietaryTags: string[];
   language: 'en' | 'it';
+  dishPhoto?: DishPhoto;
+  cookedAt?: string;
+  completionCount?: number;
   createdAt: string;
 }
 
@@ -152,34 +167,43 @@ interface RecipeItemProps {
   index: number;
   onPress: () => void;
   onDelete: () => void;
+  onPhotoPress: (imageUrl: string, title: string) => void;
   resetTrigger: number;
   t: (key: string) => string;
   formatDate: (date: string) => string;
   getDifficultyColor: (difficulty: string) => string;
 }
 
-const RecipeItem: React.FC<RecipeItemProps> = ({ 
-  item, 
-  index, 
-  onPress, 
-  onDelete, 
-  resetTrigger, 
-  t, 
-  formatDate, 
-  getDifficultyColor 
-}) => {
+const RecipeItem: React.FC<RecipeItemProps> = (props) => {
   const { colors } = useTheme();
   const cardOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.8);
   const cardTranslateY = useSharedValue(30);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [cachedImageUri, setCachedImageUri] = useState<string | null>(null);
 
   React.useEffect(() => {
     const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-    const delay = ANIMATION_DURATIONS.CONTENT + (index * 50); // Start after list container animation, reduced delay
+    const delay = ANIMATION_DURATIONS.CONTENT + (props.index * 50); // Start after list container animation, reduced delay
     cardOpacity.value = withDelay(delay, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
     cardScale.value = withDelay(delay, withSpring(1, SPRING_CONFIGS.STANDARD));
     cardTranslateY.value = withDelay(delay, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
-  }, [index]);
+  }, [props.index]);
+
+  // Preload and cache dish photo
+  React.useEffect(() => {
+    if (props.item.dishPhoto?.url) {
+      imageCacheService.getCachedImage(props.item.dishPhoto.url)
+        .then(cachedUri => {
+          setCachedImageUri(cachedUri);
+        })
+        .catch(error => {
+          console.warn('Failed to cache image:', error);
+          setCachedImageUri(props.item.dishPhoto!.url); // Fallback to original URL
+        });
+    }
+  }, [props.item.dishPhoto?.url]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
     opacity: cardOpacity.value,
@@ -189,59 +213,85 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
     ],
   }));
 
+  const handlePhotoPress = () => {
+    if (props.item.dishPhoto?.url) {
+      props.onPhotoPress(props.item.dishPhoto.url, props.item.title);
+    }
+  };
+
   return (
     <Animated.View style={cardAnimatedStyle}>
-      <SwipeableRow
-        onDelete={onDelete}
-        deleteText={t('common.delete')}
-        resetTrigger={resetTrigger}
-      >
-        <TouchableOpacity activeOpacity={0.7}
+      {/* <SwipeableRow
+        onDelete={props.onDelete}
+        resetTrigger={props.resetTrigger}
+      > */}
+      <TouchableOpacity
           style={[styles.recipeCard, { backgroundColor: colors.surface }]}
-          onPress={onPress}
+          onPress={props.onPress}
           activeOpacity={0.7}
         >
+
           <View style={styles.recipeHeader}>
             <Text style={[styles.recipeTitle, { color: colors.text }]} numberOfLines={2}>
-              {item.title}
+              {props.item.title}
             </Text>
-            <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(item.difficulty) }]}> 
+            <View style={[styles.difficultyBadge, { backgroundColor: props.getDifficultyColor(props.item.difficulty) }]}>
               <Text style={[styles.difficultyText, { color: colors.buttonText }]}>
-                {t(`recipes.difficulty.${item.difficulty}`)}
+                {props.t(`recipes.difficulty.${props.item.difficulty}`)}
               </Text>
             </View>
           </View>
           <Text style={[styles.recipeDescription, { color: colors.textSecondary }]} numberOfLines={3}>
-            {item.description}
+            {props.item.description}
           </Text>
           <View style={styles.recipeMetadata}>
             <View style={styles.metadataItem}>
-              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>⏱️ {item.cookingTime} min</Text>
+              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
+                {'⏱️'} {props.item.cookingTime} min
+              </Text>
             </View>
             <View style={styles.metadataItem}>
-              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>👥 {item.servings}</Text>
+              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
+                {'👥'} {props.item.servings}
+              </Text>
             </View>
             <View style={styles.metadataItem}>
-              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>🥘 {item.ingredients.length} {t('recipe.ingredients')}</Text>
+              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
+                {'🥘'} {props.item.ingredients.length} {props.t('recipe.ingredients')}
+              </Text>
             </View>
+            {!!(props.item.completionCount && props.item.completionCount > 0) && (
+              <View style={styles.metadataItem}>
+                <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
+                  {'🍽️'} {props.item.completionCount}x {props.t('recipes.cooked')}
+                </Text>
+              </View>
+            )}
           </View>
-          {item.dietaryTags.length > 0 && (
+          {!!(props.item.dietaryTags.length > 0) && (
             <View style={styles.dietaryTags}>
-              {item.dietaryTags.slice(0, 3).map((tag) => (
-                <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }]}> 
+              {props.item.dietaryTags.slice(0, 3).map((tag) => (
+                <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }]}>
                   <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
-                    {t(`recipes.dietary.${tag.replace('-', '')}`)}
+                    {props.t(`recipes.dietary.${tag.replace('-', '')}`)}
                   </Text>
                 </View>
               ))}
-              {item.dietaryTags.length > 3 && (
-                <Text style={[styles.moreTagsText, { color: colors.textSecondary }]}>+{item.dietaryTags.length - 3}</Text>
+              {!!(props.item.dietaryTags.length > 3) && (
+                <Text style={[styles.moreTagsText, { color: colors.textSecondary }]}>+{props.item.dietaryTags.length - 3}</Text>
               )}
             </View>
           )}
-          <Text style={[styles.recipeDate, { color: colors.textSecondary }]}>{formatDate(item.createdAt)}</Text>
-        </TouchableOpacity>
-      </SwipeableRow>
+          <View style={styles.recipeFooter}>
+            <Text style={[styles.recipeDate, { color: colors.textSecondary }]}>{props.formatDate(props.item.createdAt)}</Text>
+            {!!props.item.cookedAt && (
+              <Text style={[styles.cookedDate, { color: colors.primary }]}>
+                {props.t('recipes.lastCooked')}: {props.formatDate(props.item.cookedAt)}
+              </Text>
+            )}
+          </View>
+      </TouchableOpacity>
+      {/* </SwipeableRow> */}
     </Animated.View>
   );
 };
@@ -265,6 +315,9 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
     title: '',
     message: '',
   });
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>([]);
+  const [selectedImageTitle, setSelectedImageTitle] = useState('');
   const dietaryTags = [
     'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'
   ];
@@ -273,33 +326,33 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   const headerOpacity = useSharedValue(0);
   const headerScale = useSharedValue(0.8);
   const headerTranslateY = useSharedValue(-30);
-  
+
   const searchOpacity = useSharedValue(0);
   const searchTranslateY = useSharedValue(20);
-  
+
   const filtersOpacity = useSharedValue(0);
   const filtersTranslateX = useSharedValue(-50);
-  
+
   const listOpacity = useSharedValue(0);
   const listTranslateY = useSharedValue(40);
 
   // Entrance animations with iOS standards
   useEffect(() => {
     const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-    
+
     // Header animation - immediate
     headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
     headerScale.value = withSpring(1, SPRING_CONFIGS.GENTLE);
     headerTranslateY.value = withTiming(0, { duration: ANIMATION_DURATIONS.CONTENT, easing });
-    
+
     // Search bar animation - quick delay
     searchOpacity.value = withDelay(100, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
     searchTranslateY.value = withDelay(100, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
-    
+
     // Filters animation - quick stagger
     filtersOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
     filtersTranslateX.value = withDelay(150, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
-    
+
     // List animation - final stagger
     listOpacity.value = withDelay(200, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
     listTranslateY.value = withDelay(200, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
@@ -349,7 +402,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
       setIsLoading(true);
       // Reset all swipe states when refreshing
       setResetTrigger(prev => prev + 1);
-      
+
       const response = await fetch(`${API_URL}/api/recipe`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -360,12 +413,26 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
 
       // FIX: controlla se data.data.recipes esiste (nuova struttura paginata)
       if (response.ok) {
+        let fetchedRecipes: Recipe[] = [];
+
         if (data.data && Array.isArray(data.data.recipes)) {
-          setRecipes(data.data.recipes);
+          fetchedRecipes = data.data.recipes;
         } else if (Array.isArray(data.data)) {
-          setRecipes(data.data);
-        } else {
-          setRecipes([]);
+          fetchedRecipes = data.data;
+        }
+
+        setRecipes(fetchedRecipes);
+
+        // Preload dish photos for better UX
+        const dishPhotoUrls = fetchedRecipes
+          .filter(recipe => recipe.dishPhoto?.url)
+          .map(recipe => recipe.dishPhoto!.url);
+
+        if (dishPhotoUrls.length > 0) {
+          // Preload images in background (don't await to avoid blocking UI)
+          imageCacheService.preloadImages(dishPhotoUrls).catch(error => {
+            console.warn('Failed to preload some images:', error);
+          });
         }
       } else {
         throw new Error(data.error || 'Failed to fetch recipes');
@@ -461,11 +528,11 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             return currentRecipeId !== recipeId;
           }));
           setNotification({
-          visible: true,
-          type: 'success',
-          title: t('common.success'),
-          message: t('recipe.deleteSuccess'),
-        });
+            visible: true,
+            type: 'success',
+            title: t('common.success'),
+            message: t('recipe.deleteSuccess'),
+          });
         } else {
           throw new Error('Failed to delete recipe');
         }
@@ -483,6 +550,12 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
     }
   };
 
+  const handlePhotoPress = (imageUrl: string, title: string) => {
+    setSelectedImageUrls([imageUrl]);
+    setSelectedImageTitle(title);
+    setImageViewerVisible(true);
+  };
+
   const renderRecipe = ({ item, index }: { item: Recipe; index: number }) => {
     return (
       <RecipeItem
@@ -497,6 +570,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
           onSelectRecipe(item, filteredRecipes, idx);
         }}
         onDelete={() => handleDeleteRequest(item)}
+        onPhotoPress={handlePhotoPress}
         resetTrigger={resetTrigger}
         t={t}
         formatDate={formatDate}
@@ -506,11 +580,11 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
-      <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>{t('recipes.title') || 'Le tue ricette'}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('recipes.subtitle') || 'Ricette deliziose basate sui tuoi ingredienti'}</Text>
-        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
@@ -533,7 +607,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             >
               <Text style={[styles.filterBadgeText, { color: !difficultyFilter ? colors.buttonText : colors.text }]}>{t('common.all')}</Text>
             </TouchableOpacity>
-            {['easy','medium','hard'].map(diff => (
+            {['easy', 'medium', 'hard'].map(diff => (
               <TouchableOpacity activeOpacity={0.7}
                 key={diff}
                 style={[styles.filterBadge, { backgroundColor: difficultyFilter === diff ? colors.primary : colors.card, borderColor: difficultyFilter === diff ? colors.primary : 'transparent' }]}
@@ -560,11 +634,11 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
           <View style={{ marginBottom: 16 }}>
             <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
-              <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card}/>
-              <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary}/>
-              <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.primary}/>
-              <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.primary}/>
-              <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.primary}/>
+              <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card} />
+              <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary} />
+              <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.primary} />
+              <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.primary} />
+              <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.primary} />
             </Svg>
           </View>
           {recipes.length === 0 ? (
@@ -612,13 +686,20 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={confirmDeleteRecipe}
       />
-      
+
       <NotificationModal
         visible={notification.visible}
         type={notification.type}
         title={notification.title}
         message={notification.message}
         onClose={() => setNotification({ ...notification, visible: false })}
+      />
+
+      <ImageViewerModal
+        visible={imageViewerVisible}
+        imageUrls={selectedImageUrls}
+        title={selectedImageTitle}
+        onClose={() => setImageViewerVisible(false)}
       />
     </View>
   );
@@ -765,6 +846,69 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
+  },
+  // Dish Photo Styles
+  dishPhotoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  dishPhotoTouchable: {
+    position: 'relative',
+  },
+  dishPhotoThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  dishPhotoPlaceholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dishPhotoOverlay: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  completionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  completionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  recipeFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  cookedDate: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   emptyTitle: {
     fontSize: 20,

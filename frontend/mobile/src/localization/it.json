@@ -14,13 +14,18 @@
     "delete": "Elimina",
     "edit": "Modifica",
     "share": "Condividi",
+    "view": "Visualizza",
     "welcome": "Benvenuto",
     "done": "Fatto",
     "startOver": "Ricomincia",
     "remove": "Rimuovi",
     "allTags": "Tutti i tag",
     "all": "Tutti",
-    "warning": "Attenzione"
+    "warning": "Attenzione",
+    "imageLoadError": "Impossibile caricare l'immagine",
+    "shareError": "Impossibile condividere",
+    "pullToRefresh": "Trascina per aggiornare",
+    "refreshError": "Impossibile aggiornare i dati"
   },
   "auth": {
     "login": "Accedi",
@@ -110,6 +115,7 @@
     "webCameraNotAvailable": "Fotocamera non disponibile sul web",
     "selectImageFromDevice": "Seleziona un'immagine dal tuo dispositivo",
     "selectImage": "Galleria",
+    "selectImageAgain": "Scegli di nuovo",
     "permissionTitle": "Permesso Fotocamera Richiesto",
     "permissionMessage": "Abbiamo bisogno dell'accesso alla fotocamera per scansionare i tuoi ingredienti e analizzare il contenuto del frigorifero",
     "manualInput": "Inserimento Manuale",
@@ -204,7 +210,19 @@
       "low-carb": "Low carb",
       "keto": "Keto",
       "paleo": "Paleo"
-    }
+    },
+    "completed": "Completato",
+    "cooked": "cucinato",
+    "lastCooked": "Ultima cottura",
+    "dishPhoto": "Foto del Piatto",
+    "noPhoto": "Nessuna foto aggiunta",
+    "addPhoto": "Aggiungi Foto",
+    "viewPhoto": "Visualizza Foto",
+    "sharePhoto": "Condividi Foto",
+    "imageViewInstructions": "Pizzica per ingrandire • Doppio tap per resettare • Scorri per spostare",
+    "photoDeleted": "Foto eliminata con successo",
+    "photoDeleteError": "Impossibile eliminare la foto",
+    "photoDeleteConfirm": "Sei sicuro di voler eliminare questa foto?"
   },
   "recipe": {
     "title": "Ricetta",
@@ -298,7 +316,55 @@
     "skipPhoto": "Salta Foto",
     "saveToCollection": "Salva nella Collezione",
     "uploadingPhoto": "Caricamento foto...",
-    "photoUploadFailed": "Caricamento foto fallito, salvataggio senza foto"
+    "photoUploadFailed": "Caricamento foto fallito, salvataggio senza foto",
+    "photoUploaded": "Foto caricata con successo",
+    "photoUpload": {
+      "title": "Aggiungi Foto",
+      "description": "Scatta una foto del tuo piatto finito",
+      "takePhoto": "Scatta Foto",
+      "selectFromGallery": "Scegli dalla Galleria",
+      "retakePhoto": "Scatta di Nuovo",
+      "confirmPhoto": "Usa Questa Foto",
+      "skip": "Salta Foto",
+      "compressing": "Elaborazione immagine...",
+      "uploading": "Caricamento foto...",
+      "uploadFailed": "Caricamento fallito",
+      "permissionDenied": "Permesso fotocamera richiesto",
+      "permissionMessage": "Abbiamo bisogno dell'accesso alla fotocamera per scattare foto dei tuoi piatti",
+      "permissionTitle": "Permesso Fotocamera Richiesto",
+      "permissionRequest": "Abbiamo bisogno del permesso per la fotocamera per scattare foto dei tuoi piatti",
+      "grantPermission": "Concedi Permesso",
+      "errors": {
+        "network": "Errore di connessione di rete. Controlla la tua connessione internet e riprova.",
+        "server": "Si è verificato un errore del server. Riprova tra qualche momento.",
+        "validation": "Formato o dimensione immagine non validi. Seleziona una foto diversa.",
+        "permission": "Permesso negato. Controlla i permessi dell'app.",
+        "timeout": "Timeout del caricamento. Controlla la connessione e riprova.",
+        "compression": "Impossibile elaborare l'immagine. Prova con una foto diversa.",
+        "unknown": "Si è verificato un errore imprevisto. Riprova.",
+        "fileSize": "Il file immagine è troppo grande. Seleziona un'immagine più piccola.",
+        "fileFormat": "Formato immagine non supportato. Usa JPEG o PNG.",
+        "quota": "Quota di archiviazione superata. Riprova più tardi.",
+        "offline": "Sembra che tu sia offline. Controlla la tua connessione internet."
+      },
+      "retry": {
+        "title": "Caricamento Fallito",
+        "message": "Vuoi riprovare a caricare la foto?",
+        "retryButton": "Riprova",
+        "skipButton": "Salta Foto",
+        "changePhotoButton": "Scegli Foto Diversa"
+      },
+      "success": {
+        "title": "Foto Caricata",
+        "message": "La foto del tuo piatto è stata salvata con successo!"
+      },
+      "progress": {
+        "preparing": "Preparazione immagine...",
+        "uploading": "Caricamento... {{percentage}}%",
+        "processing": "Elaborazione...",
+        "finalizing": "Finalizzazione..."
+      }
+    }
   },
   "navigation": {
     "home": "Home",

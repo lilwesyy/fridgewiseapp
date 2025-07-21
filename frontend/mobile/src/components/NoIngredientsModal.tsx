@@ -112,7 +112,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
     <Modal
       transparent
       visible={visible}
-      animationType="slide"
+      animationType="none"
       onRequestClose={() => {}}
     >
       <TouchableWithoutFeedback>

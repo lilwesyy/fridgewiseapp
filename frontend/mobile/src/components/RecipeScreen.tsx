@@ -9,6 +9,7 @@ import {
   PanResponder,
   Dimensions,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +18,8 @@ import { ShareModal } from './ShareModal';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { ChatAIModal } from './ChatAIModal';
 import { NotificationModal, NotificationType } from './NotificationModal';
+import { ImageViewerModal } from './ImageViewerModal';
+import { PhotoUploadModal } from './PhotoUploadModal';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,6 +30,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../contexts/ThemeContext';
 import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
+import { uploadService } from '../services/uploadService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -67,7 +71,7 @@ interface RecipeScreenProps {
 }
 
 export const RecipeScreen: React.FC<RecipeScreenProps> = ({
-  recipe,
+  recipe: initialRecipe,
   onGoBack,
   onStartOver,
   onGoToSaved,
@@ -82,9 +86,19 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   const { t } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
+  const [recipe, setRecipe] = useState(initialRecipe);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeletePhotoModal, setShowDeletePhotoModal] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState<number | null>(null);
   const [showChatAIModal, setShowChatAIModal] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [photoViewIndex, setPhotoViewIndex] = useState(0);
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [forceUpdateCounter, setForceUpdateCounter] = useState(0);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [notification, setNotification] = useState<{
     visible: boolean;
     type: NotificationType;
@@ -151,8 +165,65 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
+  // Sync internal recipe state when initial recipe changes
+  React.useEffect(() => {
+    console.log('🔄 Recipe state sync:', initialRecipe);
+    setRecipe(initialRecipe);
+  }, [initialRecipe]);
+
+  // Debug log for recipe state changes
+  React.useEffect(() => {
+    console.log('📊 Current recipe state:', {
+      id: recipe.id || recipe._id,
+      photosCount: recipe.dishPhotos?.length || 0,
+      photos: recipe.dishPhotos,
+      forceUpdateCounter
+    });
+  }, [recipe, forceUpdateCounter]);
+
   const handleShare = () => {
     setShowShareModal(true);
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      const recipeId = recipe.id || recipe._id;
+      
+      if (!recipeId) {
+        throw new Error('Recipe ID not found');
+      }
+
+      // Fetch updated recipe data from backend
+      const response = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const updatedRecipeData = await response.json();
+        const updatedRecipe = updatedRecipeData.data;
+        
+        // Update both internal state and parent state
+        setRecipe(updatedRecipe);
+        if (onRecipeUpdate) {
+          onRecipeUpdate(updatedRecipe);
+        }
+      } else {
+        throw new Error('Failed to refresh recipe data');
+      }
+    } catch (error) {
+      console.error('Error refreshing recipe:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('common.refreshError') || 'Failed to refresh recipe data',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Swipe gestures for navigation
@@ -393,6 +464,216 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     </View>
   );
 
+  // Photo upload handlers
+  const handleAddPhoto = () => {
+    setShowPhotoUpload(true);
+  };
+
+  const handlePhotoSelected = async (imageUri: string) => {
+    try {
+      setIsUploadingPhoto(true);
+      setShowPhotoUpload(false);
+
+      const recipeId = recipe.id || recipe._id;
+      if (!recipeId) {
+        throw new Error('Recipe ID not found');
+      }
+
+      // Check if we already have 3 photos
+      if (recipe.dishPhotos && recipe.dishPhotos.length >= 3) {
+        Alert.alert(
+          t('common.error'),
+          'Maximum 3 photos allowed per recipe',
+          [{ text: t('common.ok') }]
+        );
+        return;
+      }
+
+      // Upload photo (this already updates the recipe in the backend)
+      const result = await uploadService.uploadDishPhoto(imageUri, recipeId);
+      
+      console.log('📸 Photo upload result:', result);
+
+      // Fetch updated recipe data from backend to get the latest state
+      const updatedRecipeResponse = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (updatedRecipeResponse.ok) {
+        const updatedRecipeData = await updatedRecipeResponse.json();
+        const updatedRecipe = updatedRecipeData.data;
+        
+        console.log('🔄 Updated recipe data:', updatedRecipe);
+        
+        // Update both internal state and parent state
+        setRecipe(updatedRecipe);
+        if (onRecipeUpdate) {
+          onRecipeUpdate(updatedRecipe);
+        }
+        
+        // Force component re-render and update photo index
+        setForceUpdateCounter(prev => prev + 1);
+        setCurrentPhotoIndex(0); // Reset to first photo
+      } else {
+        console.error('❌ Failed to fetch updated recipe data');
+        
+        // Fallback: add the new photo to local state manually
+        const newPhoto = {
+          url: result.url,
+          publicId: result.publicId || ''
+        };
+        
+        const updatedRecipe = {
+          ...recipe,
+          dishPhotos: [...(recipe.dishPhotos || []), newPhoto],
+          cookedAt: recipe.cookedAt || new Date().toISOString(),
+        };
+        
+        console.log('🔧 Fallback updated recipe:', updatedRecipe);
+        
+        setRecipe(updatedRecipe);
+        if (onRecipeUpdate) {
+          onRecipeUpdate(updatedRecipe);
+        }
+        
+        // Force component re-render and update photo index
+        setForceUpdateCounter(prev => prev + 1);
+        setCurrentPhotoIndex(0); // Reset to first photo
+      }
+
+      setNotification({
+        visible: true,
+        type: 'success',
+        title: t('common.success'),
+        message: t('recipes.addPhoto') + ' ' + t('common.success').toLowerCase(),
+      });
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('cookingMode.photoUploadFailed'),
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleSkipPhoto = () => {
+    setShowPhotoUpload(false);
+  };
+
+  const handleViewPhoto = (photoUrl?: string, photoIndex?: number) => {
+    if (recipe.dishPhotos?.length > 0) {
+      setPhotoViewIndex(photoIndex || 0);
+      setShowImageViewer(true);
+    }
+  };
+
+  const handleSharePhoto = async () => {
+    if (!recipe.dishPhotos?.length) return;
+    
+    try {
+      const { Share } = await import('react-native');
+      await Share.share({
+        url: recipe.dishPhotos[0].url,
+        message: `${t('recipes.dishPhoto')} - ${recipe.title}`,
+      });
+    } catch (error) {
+      console.error('Error sharing photo:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('common.shareError'),
+      });
+    }
+  };
+
+  const handleDeletePhotoConfirmation = (photoIndex: number) => {
+    setPhotoToDelete(photoIndex);
+    setShowDeletePhotoModal(true);
+  };
+
+  const confirmDeletePhoto = async () => {
+    if (photoToDelete === null) return;
+    
+    try {
+      const recipeId = recipe.id || recipe._id;
+      if (!recipeId) {
+        throw new Error('Recipe ID not found');
+      }
+
+      const photoData = recipe.dishPhotos[photoToDelete];
+      if (!photoData) {
+        throw new Error('Photo not found');
+      }
+
+      console.log('🗑️ Deleting photo:', photoData);
+
+      // Call backend to delete the photo
+      const response = await fetch(`${API_URL}/api/recipe/${recipeId}/photo`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          publicId: photoData.publicId,
+          photoIndex: photoToDelete
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state by removing the photo
+        const updatedPhotos = recipe.dishPhotos.filter((_, index) => index !== photoToDelete);
+        const updatedRecipe = {
+          ...recipe,
+          dishPhotos: updatedPhotos,
+        };
+        
+        console.log('✅ Photo deleted successfully');
+        
+        setRecipe(updatedRecipe);
+        if (onRecipeUpdate) {
+          onRecipeUpdate(updatedRecipe);
+        }
+        
+        // Adjust current photo index if necessary
+        if (currentPhotoIndex >= updatedPhotos.length && updatedPhotos.length > 0) {
+          setCurrentPhotoIndex(updatedPhotos.length - 1);
+        } else if (updatedPhotos.length === 0) {
+          setCurrentPhotoIndex(0);
+        }
+        
+        setForceUpdateCounter(prev => prev + 1);
+
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: t('common.success'),
+          message: t('recipes.photoDeleted') || 'Photo deleted successfully',
+        });
+      } else {
+        throw new Error('Failed to delete photo');
+      }
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: t('common.error'),
+        message: t('recipes.photoDeleteError') || 'Failed to delete photo',
+      });
+    } finally {
+      setShowDeletePhotoModal(false);
+      setPhotoToDelete(null);
+    }
+  };
+
   // Auto-close notification after 1.3s
   useEffect(() => {
     if (notification.visible) {
@@ -405,6 +686,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
   return (
     <View 
+      key={`recipe-${recipe.id || recipe._id}-${forceUpdateCounter}`}
       style={[
         styles.container, 
         { 
@@ -439,9 +721,206 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           </TouchableOpacity>
         </View>
       </Animated.View>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <Animated.View style={[styles.recipeHeader, titleAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
+          {/* Dish Photos Section */}
+          {(recipe.cookedAt || recipe.dishPhotos?.length > 0) && (
+            <View 
+              key={`photos-section-${recipe.dishPhotos?.length || 0}-${forceUpdateCounter}`}
+              style={[styles.section, { backgroundColor: 'transparent', marginBottom: 8, paddingTop: 0 }]}
+            >
+              {recipe.dishPhotos?.length > 0 ? (
+                <View style={styles.photoSliderContainer}>
+                  {/* Photo Slider */}
+                  <ScrollView
+                    horizontal
+                    pagingEnabled={false}
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.photoSlider}
+                    onScroll={(event) => {
+                      const slideWidth = Dimensions.get('window').width - 32; // Considera solo il padding del container interno
+                      const slideIndex = Math.round(
+                        event.nativeEvent.contentOffset.x / slideWidth
+                      );
+                      setCurrentPhotoIndex(slideIndex);
+                    }}
+                    scrollEventThrottle={16}
+                    decelerationRate="fast"
+                    snapToInterval={Dimensions.get('window').width - 32}
+                    snapToAlignment="start"
+                    bounces={false}
+                  >
+                    {recipe.dishPhotos.map((photo, index) => (
+                      <View key={`${photo.url}-${index}`} style={styles.photoSlide}>
+                        <View style={styles.photoSlideWrapper}>
+                          <Image 
+                            source={{ uri: photo.url }} 
+                            style={[styles.photoSlideImage, { borderColor: colors.border }]} 
+                            resizeMode="cover"
+                            testID={`dish-photo-image-${index}`}
+                          />
+                          {/* View Photo Overlay */}
+                          <TouchableOpacity 
+                            style={[styles.photoViewOverlay, { backgroundColor: colors.overlay }]}
+                            onPress={() => handleViewPhoto(photo.url, index)}
+                            activeOpacity={0.8}
+                          >
+                            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                              <Path
+                                d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
+                                stroke="white"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </Svg>
+                          </TouchableOpacity>
+                          
+                          {/* Delete Photo Overlay */}
+                          <TouchableOpacity 
+                            style={[styles.photoDeleteOverlay, { backgroundColor: colors.error }]}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleDeletePhotoConfirmation(index);
+                            }}
+                            activeOpacity={0.8}
+                          >
+                            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                              <Path
+                                d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2"
+                                stroke="white"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <Path
+                                d="M10 11v6M14 11v6"
+                                stroke="white"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </Svg>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                    
+                    {/* Add Photo Slide */}
+                    {recipe.dishPhotos.length < 3 && (
+                      <View style={styles.photoSlide}>
+                        <TouchableOpacity 
+                          style={styles.addPhotoSlide}
+                          onPress={handleAddPhoto}
+                          disabled={isUploadingPhoto}
+                          activeOpacity={0.8}
+                        >
+                          <View style={[styles.addPhotoSlideContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                            {isUploadingPhoto ? (
+                              <ActivityIndicator size="large" color={colors.primary} testID="loading-indicator" />
+                            ) : (
+                              <>
+                                <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
+                                  <Path
+                                    d="M12 5v14M5 12h14"
+                                    stroke={colors.primary}
+                                    strokeWidth={2}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </Svg>
+                                <Text style={[styles.addPhotoSlideText, { color: colors.primary }]}>
+                                  {t('recipes.addPhoto')}
+                                </Text>
+                              </>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </ScrollView>
+                  
+                  {/* Page Indicators */}
+                  {(recipe.dishPhotos.length > 1 || (recipe.dishPhotos.length < 3)) && (
+                    <View style={styles.photoIndicators}>
+                      {Array.from({ length: recipe.dishPhotos.length + (recipe.dishPhotos.length < 3 ? 1 : 0) }).map((_, index) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.photoIndicator,
+                            {
+                              backgroundColor: index === currentPhotoIndex ? colors.primary : colors.border,
+                              opacity: index === currentPhotoIndex ? 1 : 0.3
+                            }
+                          ]}
+                        />
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ) : recipe.cookedAt && (
+                <TouchableOpacity 
+                  style={styles.noPhotoContainer}
+                  onPress={handleAddPhoto}
+                  disabled={isUploadingPhoto}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.noPhotoPlaceholder, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    {isUploadingPhoto ? (
+                      <ActivityIndicator size="large" color={colors.primary} testID="loading-indicator" />
+                    ) : (
+                      <>
+                        <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
+                          <Path
+                            d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+                            stroke={colors.primary}
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <Path
+                            d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z"
+                            stroke={colors.primary}
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </Svg>
+                        <Text style={[styles.noPhotoText, { color: colors.primary }]}>
+                          {t('recipes.addPhoto')}
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+          
           <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.title}</Text>
+          
+          {/* Dietary Tags under title */}
+          {recipe.dietaryTags.length > 0 && (
+            <View style={styles.dietaryTags}>
+              {recipe.dietaryTags.map((tag) => (
+                <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }]}>
+                  <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
+                    {t(`recipes.dietary.${tag.replace('-', '')}`)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+          
           <Text style={[styles.recipeDescription, { color: colors.textSecondary }]}>{recipe.description}</Text>
           
           {/* AI-Generated Content Disclaimer */}
@@ -462,25 +941,19 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             <View style={[styles.cookedIndicator, { backgroundColor: colors.success + '15', borderColor: colors.success }]}>
               <View style={styles.cookedIndicatorHeader}>
                 <View style={styles.cookedIndicatorInfo}>
-                  <Text style={styles.cookedIndicatorEmoji}>👨‍🍳</Text>
-                  <View>
-                    <Text style={[styles.cookedIndicatorTitle, { color: colors.success }]}>{t('recipe.alreadyCooked')}</Text>
-                    <Text style={[styles.cookedIndicatorDate, { color: colors.textSecondary }]}>
-                      {new Date(recipe.cookedAt).toLocaleDateString()}
-                    </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <Text style={styles.cookedIndicatorEmoji}>👨‍🍳</Text>
+                    <Text style={[styles.cookedIndicatorTitle, { color: 'white' }]}>{t('recipe.alreadyCooked')}</Text>
                   </View>
+                  <Text style={[styles.cookedIndicatorDate, { color: 'rgba(255, 255, 255, 0.8)' }]}>
+                    {new Date(recipe.cookedAt).toLocaleDateString()}
+                  </Text>
                 </View>
-                {recipe.dishPhoto && (
-                  <Image 
-                    source={{ uri: recipe.dishPhoto }} 
-                    style={[styles.cookedDishPhoto, { borderColor: colors.success }]} 
-                    resizeMode="cover"
-                  />
-                )}
               </View>
             </View>
           )}
         </Animated.View>
+
 
         <Animated.View style={[styles.recipeMetadata, contentAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
           <View style={styles.metadataItem}>
@@ -499,20 +972,6 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           </View>
         </Animated.View>
 
-        {recipe.dietaryTags.length > 0 && (
-          <Animated.View style={[styles.dietaryTagsContainer, contentAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.dietary')}</Text>
-              <View style={styles.dietaryTags}>
-                {recipe.dietaryTags.map((tag) => (
-                  <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }] }>
-                    <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
-                      {t(`recipes.dietary.${tag.replace('-', '')}`)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-          </Animated.View>
-        )}
 
         <Animated.View style={[styles.section, { backgroundColor: colors.surface }] }>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.ingredients')}</Text>
@@ -550,6 +1009,135 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             ))}
           </View>
         </Animated.View>
+
+        {/* Dish Photo Section - MOVED TO TOP */}
+        {false && (recipe.cookedAt || recipe.dishPhoto) && (
+          <Animated.View style={[styles.section, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipes.dishPhoto')}</Text>
+            
+            {recipe.dishPhoto ? (
+              <View style={styles.dishPhotoContainer}>
+                <TouchableOpacity 
+                  style={styles.dishPhotoWrapper}
+                  onPress={handleViewPhoto}
+                  activeOpacity={0.8}
+                >
+                  <Image 
+                    source={{ uri: recipe.dishPhoto.url }} 
+                    style={[styles.dishPhotoLarge, { borderColor: colors.border }]} 
+                    resizeMode="cover"
+                    testID="dish-photo-image"
+                  />
+                  <View style={[styles.photoOverlay, { backgroundColor: colors.overlay }]}>
+                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
+                        stroke="white"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
+                  </View>
+                </TouchableOpacity>
+                
+                <View style={styles.dishPhotoActions}>
+                  <TouchableOpacity 
+                    style={[styles.photoActionButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    onPress={handleViewPhoto}
+                  >
+                    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                        stroke={colors.primary}
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <Path
+                        d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
+                        stroke={colors.primary}
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
+                    <Text style={[styles.photoActionText, { color: colors.primary }]}>
+                      {t('common.view') || 'View'}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.photoActionButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    onPress={handleSharePhoto}
+                  >
+                    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
+                        stroke={colors.primary}
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
+                    <Text style={[styles.photoActionText, { color: colors.primary }]}>
+                      {t('common.share')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : recipe.cookedAt && (
+              <View style={styles.noPhotoContainer}>
+                <View style={[styles.noPhotoPlaceholder, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+                      stroke={colors.textSecondary}
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <Path
+                      d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z"
+                      stroke={colors.textSecondary}
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                  <Text style={[styles.noPhotoText, { color: colors.textSecondary }]}>
+                    {t('recipes.noPhoto') || 'No photo added'}
+                  </Text>
+                </View>
+                
+                <TouchableOpacity 
+                  style={[styles.addPhotoButton, { backgroundColor: colors.primary }]}
+                  onPress={handleAddPhoto}
+                  disabled={isUploadingPhoto}
+                >
+                  {isUploadingPhoto ? (
+                    <ActivityIndicator size="small" color={colors.buttonText} testID="loading-indicator" />
+                  ) : (
+                    <>
+                      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                        <Path
+                          d="M12 5v14M5 12h14"
+                          stroke={colors.buttonText}
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </Svg>
+                      <Text style={[styles.addPhotoText, { color: colors.buttonText }]}>
+                        {t('recipes.addPhoto')}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </Animated.View>
+        )}
 
         <View style={[styles.deleteSection, { backgroundColor: colors.surface }] }>
           <TouchableOpacity style={[styles.deleteButton, { backgroundColor: colors.error }]} onPress={() => setShowDeleteModal(true)}>
@@ -619,6 +1207,16 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={confirmDeleteRecipe}
       />
+      <DeleteConfirmationModal
+        visible={showDeletePhotoModal}
+        onCancel={() => {
+          setShowDeletePhotoModal(false);
+          setPhotoToDelete(null);
+        }}
+        onConfirm={confirmDeletePhoto}
+        title={t('common.delete')}
+        message={t('recipes.photoDeleteConfirm') || 'Are you sure you want to delete this photo?'}
+      />
       <ChatAIModal
         visible={showChatAIModal}
         recipe={recipe}
@@ -631,6 +1229,35 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         title={notification.title}
         message={notification.message}
         onClose={() => setNotification(n => ({ ...n, visible: false }))}
+      />
+      <ImageViewerModal
+        visible={showImageViewer}
+        imageUrls={(recipe.dishPhotos || []).map(photo => photo.url)}
+        initialIndex={photoViewIndex}
+        title={recipe.title}
+        onClose={() => setShowImageViewer(false)}
+      />
+      <PhotoUploadModal
+        visible={showPhotoUpload}
+        onClose={handleSkipPhoto}
+        onPhotoSelected={handlePhotoSelected}
+        onSkip={handleSkipPhoto}
+        recipeId={recipe.id || recipe._id}
+        showSkipButton={false}
+        onUploadComplete={(result) => {
+          // Update recipe with photo URL
+          const updatedRecipe = {
+            ...recipe,
+            dishPhoto: {
+              url: result.url,
+              publicId: result.publicId
+            },
+            cookedAt: recipe.cookedAt || new Date().toISOString(),
+          };
+          if (onRecipeUpdate) {
+            onRecipeUpdate(updatedRecipe);
+          }
+        }}
       />
     </View>
   );
@@ -967,5 +1594,190 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Dish Photos Styles
+  dishPhotosContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  dishPhotoContainer: {
+    width: '48%', // Two photos per row with some gap
+    alignItems: 'center',
+  },
+  dishPhotoWrapper: {
+    position: 'relative',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+    width: '100%',
+  },
+  addPhotoWrapper: {
+    borderStyle: 'dashed',
+    borderWidth: 2,
+  },
+  dishPhotoLarge: {
+    width: '100%',
+    aspectRatio: 1, // Square aspect ratio for better consistency
+    borderRadius: 12,
+    borderWidth: 2,
+    backgroundColor: '#f5f5f5', // Fallback background color
+  },
+  addPhotoPlaceholder: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  addPhotoText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  photoOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoViewOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoDeleteOverlay: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Photo Slider Styles
+  photoSliderContainer: {
+    marginBottom: 16,
+    marginHorizontal: -20, // Negative margin per uscire dal padding del parent
+  },
+  photoSlider: {
+    height: 280,
+  },
+  photoSlide: {
+    width: Dimensions.get('window').width - 32, // Screen width minus small padding
+    paddingHorizontal: 16, // Internal padding per le foto
+    marginHorizontal: 0,
+  },
+  photoSlideWrapper: {
+    width: '100%',
+    height: 280,
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  photoSlideImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    backgroundColor: '#f5f5f5',
+  },
+  addPhotoSlide: {
+    width: '100%',
+    height: 280,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16, // Same padding as photo slides
+  },
+  addPhotoSlideContent: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addPhotoSlideText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  photoIndicators: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  photoIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  dishPhotoActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  photoActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 8,
+  },
+  photoActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  noPhotoContainer: {
+    alignItems: 'center',
+    gap: 16,
+  },
+  noPhotoPlaceholder: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  noPhotoText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  addPhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    gap: 8,
+    minWidth: 160,
   },
 });

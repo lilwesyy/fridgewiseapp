@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { Recipe } from '../models/Recipe';
 import { GeminiService } from '../services/geminiService';
+import { cloudinaryService } from '../services/cloudinaryService';
 import { APIResponse } from '@/types';
 
 // Helper function to normalize dietary tags
@@ -220,6 +221,31 @@ export const saveRecipe = async (req: AuthRequest, res: Response<APIResponse<any
   try {
     const user = req.user!;
     const { id } = req.params;
+    const { dishPhoto, cookedAt, ...otherData } = req.body || {};
+
+    // Validate dishPhoto URL if provided
+    if (dishPhoto && dishPhoto.url) {
+      const urlPattern = /^https?:\/\/.+/;
+      if (!urlPattern.test(dishPhoto.url)) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid dish photo URL format'
+        });
+        return;
+      }
+    }
+
+    // Validate cookedAt timestamp if provided
+    if (cookedAt) {
+      const cookedDate = new Date(cookedAt);
+      if (isNaN(cookedDate.getTime()) || cookedDate > new Date()) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid cooked date - must be a valid date not in the future'
+        });
+        return;
+      }
+    }
 
     // If id is provided, try to find existing recipe
     if (id) {
@@ -228,6 +254,34 @@ export const saveRecipe = async (req: AuthRequest, res: Response<APIResponse<any
       if (recipe) {
         // Mark existing recipe as saved
         recipe.isSaved = true;
+        
+        // Handle dish photo and completion logic
+        if (dishPhoto && dishPhoto.url) {
+          // Check if we already have 3 photos
+          if (recipe.dishPhotos.length >= 3) {
+            res.status(400).json({
+              success: false,
+              error: 'Maximum 3 photos allowed per recipe'
+            });
+            return;
+          }
+          
+          // Add new photo to array
+          recipe.dishPhotos.push({
+            url: dishPhoto.url,
+            publicId: dishPhoto.publicId || ''
+          });
+        }
+        
+        if (cookedAt) {
+          recipe.cookedAt = new Date(cookedAt);
+        }
+        
+        // Update completion count when recipe is completed with cooking date
+        if (cookedAt) {
+          recipe.completionCount = (recipe.completionCount || 0) + 1;
+        }
+        
         await recipe.save();
 
         res.status(200).json({
@@ -240,9 +294,9 @@ export const saveRecipe = async (req: AuthRequest, res: Response<APIResponse<any
     }
 
     // If no id or recipe not found, create a new recipe from request body
-    const recipeData = req.body;
+    const recipeData = otherData;
     
-    if (!recipeData) {
+    if (!recipeData || Object.keys(recipeData).length === 0) {
       res.status(400).json({
         success: false,
         error: 'Recipe data is required'
@@ -260,14 +314,31 @@ export const saveRecipe = async (req: AuthRequest, res: Response<APIResponse<any
       cleanRecipeData.dietaryTags = normalizeDietaryTags(cleanRecipeData.dietaryTags);
     }
 
-    const newRecipe = new Recipe({
+    // Prepare new recipe data
+    const newRecipeData: any = {
       ...cleanRecipeData,
       userId: user._id,
       isSaved: false, // Don't add to collection yet - only when cooking is finished
       createdAt: new Date(),
       updatedAt: new Date()
-    });
+    };
 
+    // Add dish photo if provided
+    if (dishPhoto && dishPhoto.url) {
+      newRecipeData.dishPhotos = [{
+        url: dishPhoto.url,
+        publicId: dishPhoto.publicId || ''
+      }];
+    }
+
+    // Add cooked date if provided
+    if (cookedAt) {
+      newRecipeData.cookedAt = new Date(cookedAt);
+      // Set initial completion count to 1 if recipe is being completed
+      newRecipeData.completionCount = 1;
+    }
+
+    const newRecipe = new Recipe(newRecipeData);
     await newRecipe.save();
 
     res.status(201).json({
@@ -532,6 +603,78 @@ export const deleteRecipe = async (req: AuthRequest, res: Response<APIResponse<a
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete recipe'
+    });
+  }
+};
+
+export const deleteRecipePhoto = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+    const { publicId, photoIndex } = req.body;
+
+    if (typeof photoIndex !== 'number' || photoIndex < 0) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid photo index'
+      });
+      return;
+    }
+
+    const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+
+    if (!recipe) {
+      res.status(404).json({
+        success: false,
+        error: 'Recipe not found'
+      });
+      return;
+    }
+
+    if (!recipe.dishPhotos || recipe.dishPhotos.length === 0) {
+      res.status(404).json({
+        success: false,
+        error: 'No photos found for this recipe'
+      });
+      return;
+    }
+
+    if (photoIndex >= recipe.dishPhotos.length) {
+      res.status(400).json({
+        success: false,
+        error: 'Photo index out of range'
+      });
+      return;
+    }
+
+    // Get the photo to delete
+    const photoToDelete = recipe.dishPhotos[photoIndex];
+    
+    // Delete from Cloudinary if publicId exists
+    if (photoToDelete.publicId) {
+      try {
+        await cloudinaryService.deleteImage(photoToDelete.publicId);
+        console.log(`✅ Photo deleted from Cloudinary: ${photoToDelete.publicId}`);
+      } catch (cloudinaryError) {
+        console.error('Failed to delete from Cloudinary:', cloudinaryError);
+        // Continue with database deletion even if Cloudinary fails
+      }
+    }
+
+    // Remove photo from array
+    recipe.dishPhotos.splice(photoIndex, 1);
+    await recipe.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Photo deleted successfully',
+      data: recipe
+    });
+  } catch (error: any) {
+    console.error('Error deleting recipe photo:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to delete photo'
     });
   }
 };
