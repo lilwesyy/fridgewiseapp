@@ -17,6 +17,7 @@ import { ProfileScreen } from './src/components/ProfileScreen';
 import { AdminStatsScreen } from './src/components/AdminStatsScreen';
 import { HomeScreen } from './src/components/HomeScreen';
 import { CookingModeScreen } from './src/components/CookingModeScreen';
+import { OnboardingScreen } from './src/components/OnboardingScreen';
 import { BottomNavigation, TabName } from './src/components/BottomNavigation';
 import { NotificationModal, NotificationType } from './src/components/NotificationModal';
 import { MaintenanceScreen } from './src/components/MaintenanceScreen';
@@ -194,6 +195,7 @@ const AppContent: React.FC = () => {
   });
 
   const [authMode, setAuthMode] = useState<'welcome' | 'login' | 'register' | 'forgot-password' | 'verify-code' | 'reset-password'>('welcome');
+  const [showOnboarding, setShowOnboarding] = useState(true); // Per testare l'onboarding
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',

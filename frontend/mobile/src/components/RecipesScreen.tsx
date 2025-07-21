@@ -226,7 +226,17 @@ const RecipeItem: React.FC<RecipeItemProps> = (props) => {
         resetTrigger={props.resetTrigger}
       > */}
       <TouchableOpacity
-          style={[styles.recipeCard, { backgroundColor: colors.surface }]}
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 16,
+            shadowColor: colors.shadow || '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            elevation: 2,
+          }}
           onPress={props.onPress}
           activeOpacity={0.7}
         >
@@ -271,7 +281,7 @@ const RecipeItem: React.FC<RecipeItemProps> = (props) => {
           {!!(props.item.dietaryTags.length > 0) && (
             <View style={styles.dietaryTags}>
               {props.item.dietaryTags.slice(0, 3).map((tag) => (
-                <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }]}>
+                <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.badge || colors.card }]}>
                   <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
                     {props.t(`recipes.dietary.${tag.replace('-', '')}`)}
                   </Text>
@@ -819,7 +829,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dietaryTag: {
-    // backgroundColor: '#E7F3FF', // rimosso, ora gestito dal tema
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,

@@ -9,9 +9,14 @@ import { APIResponse } from '@/types';
 const normalizeDietaryTags = (tags: string[]): string[] => {
   if (!tags || !Array.isArray(tags)) return [];
   
-  const validTags = ['vegetarian', 'vegan', 'pescatarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'];
+  const validTags = [
+    'vegetarian', 'vegan', 'pescatarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo',
+    'quick', 'slow-cooking', 'no-cook', 'high-protein', 'high-fiber', 'low-sodium', 'sugar-free',
+    'mediterranean', 'asian', 'italian', 'mexican', 'spicy', 'mild', 'one-pot', 'grilled', 'baked', 'raw',
+    'whole30', 'fodmap-friendly', 'anti-inflammatory'
+  ];
   const tagMap: { [key: string]: string } = {
-    // Italian mappings
+    // Italian mappings - Dietetici
     'vegetariano': 'vegetarian',
     'vegano': 'vegan',
     'pescetariano': 'pescatarian',
@@ -25,6 +30,39 @@ const normalizeDietaryTags = (tags: string[]): string[] => {
     'basso contenuto di carboidrati': 'low-carb',
     'chetogenico': 'keto',
     'paleo': 'paleo',
+    // Tempo di preparazione
+    'veloce': 'quick',
+    'rapido': 'quick',
+    'cottura lenta': 'slow-cooking',
+    'lenta cottura': 'slow-cooking',
+    'senza cottura': 'no-cook',
+    // Contenuto nutrizionale
+    'ricco di proteine': 'high-protein',
+    'proteico': 'high-protein',
+    'ricco di fibre': 'high-fiber',
+    'poco sale': 'low-sodium',
+    'povero di sodio': 'low-sodium',
+    'senza zucchero': 'sugar-free',
+    'senza zuccheri': 'sugar-free',
+    // Stile culinario
+    'mediterraneo': 'mediterranean',
+    'asiatico': 'asian',
+    'italiano': 'italian',
+    'messicano': 'mexican',
+    // Intensità sapore
+    'piccante': 'spicy',
+    'delicato': 'mild',
+    // Modalità cottura
+    'una pentola': 'one-pot',
+    'pentola unica': 'one-pot',
+    'alla griglia': 'grilled',
+    'grigliato': 'grilled',
+    'al forno': 'baked',
+    'infornato': 'baked',
+    'crudo': 'raw',
+    // Diete specializzate
+    'antinfiammatorio': 'anti-inflammatory',
+    'anti-infiammatorio': 'anti-inflammatory',
     // Common variations
     'gluten-free': 'gluten-free',
     'dairy-free': 'dairy-free',

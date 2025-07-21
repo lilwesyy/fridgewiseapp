@@ -23,6 +23,7 @@ interface AuthContextType {
   updateProfile: (updates: Partial<User>) => Promise<void>;
   uploadAvatar: (imageUri: string) => Promise<User>;
   deleteAvatar: () => Promise<User>;
+  refreshProfile: (currentToken?: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   isLoading: boolean;
@@ -53,6 +54,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loadStoredAuth();
   }, []);
 
+  // Refresh user profile from server (for cross-device sync)
+  const refreshProfile = async (currentToken?: string) => {
+    try {
+      const authToken = currentToken || token;
+      if (!authToken) return;
+
+      const response = await fetch(`${API_URL}/api/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const refreshedUser = addCacheBustingToAvatar(data.data);
+        
+        // Update both state and storage
+        await AsyncStorage.setItem('auth_user', JSON.stringify(refreshedUser));
+        setUser(refreshedUser);
+      }
+    } catch (error) {
+      console.log('Profile refresh failed:', error);
+      // Non-critical error, don't throw
+    }
+  };
+
   const loadStoredAuth = async () => {
     try {
       const storedToken = await AsyncStorage.getItem('auth_token');
@@ -61,6 +90,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
+        
+        // Refresh profile in background to sync latest changes
+        refreshProfile(storedToken);
       }
     } catch (error) {
       console.error('Error loading stored auth:', error);
@@ -86,13 +118,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const { user, token } = data.data;
+      const userWithCacheBusting = addCacheBustingToAvatar(user);
       
       // Store in AsyncStorage
       await AsyncStorage.setItem('auth_token', token);
-      await AsyncStorage.setItem('auth_user', JSON.stringify(user));
+      await AsyncStorage.setItem('auth_user', JSON.stringify(userWithCacheBusting));
 
       setToken(token);
-      setUser(user);
+      setUser(userWithCacheBusting);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -121,13 +154,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const { user, token } = data.data;
+      const userWithCacheBusting = addCacheBustingToAvatar(user);
       
       // Store in AsyncStorage
       await AsyncStorage.setItem('auth_token', token);
-      await AsyncStorage.setItem('auth_user', JSON.stringify(user));
+      await AsyncStorage.setItem('auth_user', JSON.stringify(userWithCacheBusting));
 
       setToken(token);
-      setUser(user);
+      setUser(userWithCacheBusting);
     } catch (error) {
       // console.error('🚨 Registration error details:', error);
       // console.error('🚨 Error type:', typeof error);
@@ -176,6 +210,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Helper function to add cache busting to avatar URL
+  const addCacheBustingToAvatar = (user: any) => {
+    if (user?.avatar?.url) {
+      const timestamp = Date.now();
+      return {
+        ...user,
+        avatar: {
+          ...user.avatar,
+          url: `${user.avatar.url}?v=${timestamp}`
+        }
+      };
+    }
+    return user;
+  };
+
   const uploadAvatar = async (imageUri: string) => {
     try {
       const formData = new FormData();
@@ -211,7 +260,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(data.error || 'Avatar upload failed');
       }
 
-      const updatedUser = data.data;
+      const updatedUser = addCacheBustingToAvatar(data.data);
       
       // Update stored user
       await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
@@ -239,7 +288,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(data.error || 'Avatar deletion failed');
       }
 
-      const updatedUser = data.data;
+      const updatedUser = addCacheBustingToAvatar(data.data);
       
       // Update stored user
       await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
@@ -308,6 +357,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateProfile,
     uploadAvatar,
     deleteAvatar,
+    refreshProfile,
     forgotPassword,
     resetPassword,
     isLoading,

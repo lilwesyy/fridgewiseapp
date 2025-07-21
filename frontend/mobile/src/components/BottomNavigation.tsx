@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 
 export type TabName = 'home' | 'camera' | 'recipes' | 'saved' | 'profile';
 
@@ -109,17 +109,21 @@ const TabIcon: React.FC<{ name: TabName; isActive: boolean; colors: any }> = ({ 
     case 'profile':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Path
-            d="M17 8C17 10.7614 14.7614 13 12 13C9.23858 13 7 10.7614 7 8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8Z"
-            stroke={iconColor}
-            strokeWidth="2"
-            fill="none"
+          <Path 
+            d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" 
+            stroke={iconColor} 
+            strokeWidth={2} 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
           />
-          <Path
-            d="M20 21C20 16.0294 16.4183 12 12 12C7.58172 12 4 16.0294 4 21"
-            stroke={iconColor}
-            strokeWidth="2"
-            strokeLinecap="round"
+          <Circle 
+            cx={12} 
+            cy={7} 
+            r={4} 
+            stroke={iconColor} 
+            strokeWidth={2} 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
           />
         </Svg>
       );

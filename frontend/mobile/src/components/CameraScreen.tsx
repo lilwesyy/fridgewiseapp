@@ -627,6 +627,21 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
               </View>
             )}
           </View>
+          
+          {/* AI Recognition Disclaimer - Bottom Position */}
+          {isAnalyzing && (
+            <View style={styles.aiDisclaimerBottom}>
+              <View style={styles.aiDisclaimerHeader}>
+                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
+                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                  <Path d="M12 8V16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                  <Path d="M8 12H16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                </Svg>
+                <Text style={styles.aiDisclaimerTitle}>{t('camera.aiRecognition')}</Text>
+              </View>
+              <Text style={styles.aiDisclaimerText}>{t('camera.aiDisclaimerText')}</Text>
+            </View>
+          )}
         </View>
         
         <NoIngredientsModal
@@ -673,19 +688,6 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
                 />
               </Svg>
             </TouchableOpacity>
-          </View>
-          
-          {/* AI Recognition Disclaimer */}
-          <View style={styles.aiDisclaimer}>
-            <View style={styles.aiDisclaimerHeader}>
-              <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
-                <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-                <Path d="M12 8V16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-                <Path d="M8 12H16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-              </Svg>
-              <Text style={styles.aiDisclaimerTitle}>{t('camera.aiRecognition')}</Text>
-            </View>
-            <Text style={styles.aiDisclaimerText}>{t('camera.aiDisclaimerText')}</Text>
           </View>
           
           {!isCapturing && (
@@ -890,6 +892,26 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.8)',
     lineHeight: 14,
+  },
+  aiDisclaimerAnalysis: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 12,
+    marginTop: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    maxWidth: 280,
+  },
+  aiDisclaimerBottom: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   manualButton: {
     width: 44,

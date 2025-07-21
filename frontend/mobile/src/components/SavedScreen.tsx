@@ -761,15 +761,13 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
     <Animated.View style={cardAnimatedStyle}>
       <TouchableOpacity activeOpacity={0.7}
         style={{
-          backgroundColor: colors.card,
+          backgroundColor: colors.surface,
           borderRadius: 12,
           padding: 16,
-          marginBottom: 8,
-          borderWidth: 1,
-          borderColor: colors.border,
+          marginBottom: 16,
           shadowColor: colors.shadow || '#000',
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
+          shadowOpacity: 0.05,
           shadowRadius: 4,
           elevation: 2,
         }}

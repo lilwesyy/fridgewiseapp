@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,7 +19,9 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
+import { ANIMATION_DURATIONS, EASING_CURVES, SPRING_CONFIGS } from '../constants/animations';
+
+const { height: screenHeight } = Dimensions.get('window');
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -39,30 +43,27 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
   const { colors } = useTheme();
   const [isUploading, setIsUploading] = useState(false);
 
-  // iOS-style animations
-  const scale = useSharedValue(0.9);
+  // Bottom sheet style animations
+  const translateY = useSharedValue(screenHeight);
   const opacity = useSharedValue(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
+      // Bottom sheet entrance animation
       opacity.value = withTiming(1, {
         duration: ANIMATION_DURATIONS.MODAL,
         easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2),
       });
-      scale.value = withSpring(1, {
-        damping: 30,
-        stiffness: 300,
-        mass: 1.2,
-      });
+      translateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
     } else {
+      // Bottom sheet exit animation
       opacity.value = withTiming(0, {
         duration: ANIMATION_DURATIONS.QUICK,
         easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
       });
-      scale.value = withSpring(0.9, {
-        damping: 30,
-        stiffness: 300,
-        mass: 0.8,
+      translateY.value = withTiming(screenHeight, {
+        duration: ANIMATION_DURATIONS.QUICK,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
       });
     }
   }, [visible]);
@@ -72,8 +73,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
   }));
 
   const modalStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
   }));
 
   const styles = getStyles(colors);
@@ -173,16 +173,114 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
     );
   };
 
+  // Icon components
+  const getCameraIcon = (color: string) => (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+
+  const getGalleryIcon = (color: string) => (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M21 15L16 10L5 21"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+
+  const getTrashIcon = (color: string) => (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 6H5H21"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+
+  const getXIcon = (color: string) => (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18 6L6 18"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M6 6L18 18"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+
+  const handleOverlayPress = () => {
+    if (!isUploading) {
+      onClose();
+    }
+  };
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <Animated.View style={[styles.modalOverlay, backdropStyle]}>
-        <Animated.View style={[styles.modalContent, modalStyle]}>
-          <Text style={styles.modalTitle}>
+      <Animated.View style={[styles.overlay, backdropStyle]}>
+        <TouchableOpacity
+          style={styles.overlayTouchable}
+          activeOpacity={1}
+          onPress={handleOverlayPress}
+        />
+        <Animated.View style={[styles.modalBox, modalStyle]}>
+          {/* Bottom sheet handle */}
+          <View style={styles.handle} />
+          
+          <Text style={styles.title}>
             {t('profile.avatar.title', 'Change Avatar')}
           </Text>
           
@@ -198,45 +296,61 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
             )}
           </View>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity activeOpacity={0.7}
-              style={[styles.button, styles.cameraButton]}
+          {/* Main action buttons */}
+          <View style={styles.mainButtonsContainer}>
+            <TouchableOpacity
+              style={[styles.optionButton]}
               onPress={() => handleImagePick(true)}
               disabled={isUploading}
             >
-              <Text style={styles.buttonText}>
+              <View style={styles.optionIcon}>
+                {getCameraIcon(colors.primary)}
+              </View>
+              <Text style={styles.optionText}>
                 {t('profile.avatar.takePhoto', 'Take Photo')}
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity activeOpacity={0.7}
-              style={[styles.button, styles.galleryButton]}
+            <TouchableOpacity
+              style={[styles.optionButton]}
               onPress={() => handleImagePick(false)}
               disabled={isUploading}
             >
-              <Text style={styles.buttonText}>
-                {t('profile.avatar.chooseFromLibrary', 'Choose from Library')}
+              <View style={styles.optionIcon}>
+                {getGalleryIcon(colors.primary)}
+              </View>
+              <Text style={styles.optionText}>
+                {t('profile.avatar.gallery', 'Galleria')}
               </Text>
             </TouchableOpacity>
+          </View>
 
+          {/* Secondary actions */}
+          <View style={styles.secondaryButtonsContainer}>
             {user?.avatar?.url && (
-              <TouchableOpacity activeOpacity={0.7}
+              <TouchableOpacity
                 style={[styles.button, styles.deleteButton]}
                 onPress={handleDeleteAvatar}
                 disabled={isUploading}
               >
-                <Text style={styles.deleteButtonText}>
+                <View style={styles.buttonIcon}>
+                  {getTrashIcon(colors.buttonText)}
+                </View>
+                <Text style={[styles.buttonText, styles.deleteButtonText]}>
                   {t('profile.avatar.removePhoto', 'Remove Photo')}
                 </Text>
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity activeOpacity={0.7}
-              style={[styles.button, styles.cancelButton]}
+            <TouchableOpacity
+              style={[styles.button, styles.secondaryButton]}
               onPress={onClose}
               disabled={isUploading}
             >
-              <Text style={styles.cancelButtonText}>
+              <View style={styles.buttonIcon}>
+                {getXIcon(colors.buttonText)}
+              </View>
+              <Text style={[styles.buttonText, styles.secondaryButtonText]}>
                 {t('common.cancel', 'Cancel')}
               </Text>
             </TouchableOpacity>
@@ -257,29 +371,46 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
 };
 
 const getStyles = (colors: any) => StyleSheet.create({
-  modalOverlay: {
+  overlay: {
     flex: 1,
     backgroundColor: colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    justifyContent: 'flex-end',
   },
-  modalContent: {
+  overlayTouchable: {
+    flex: 1,
+  },
+  modalBox: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 20,
-    width: '100%',
-    maxWidth: 300,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 34,
     alignItems: 'center',
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    minHeight: 200,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
     marginBottom: 20,
+    opacity: 0.6,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 24,
+    textAlign: 'center',
   },
   avatarPreview: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   avatarImage: {
     width: 100,
@@ -298,44 +429,72 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontWeight: '600',
     color: colors.buttonText,
   },
-  buttonContainer: {
+  mainButtonsContainer: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 24,
     width: '100%',
   },
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginBottom: 10,
-    alignItems: 'center',
+  secondaryButtonsContainer: {
+    width: '100%',
+    gap: 12,
   },
-  cameraButton: {
+  optionButton: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  optionIcon: {
+    marginBottom: 12,
+  },
+  optionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  button: {
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    marginBottom: 8,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  buttonIcon: {
+    marginRight: 4,
+  },
+  primaryButton: {
     backgroundColor: colors.primary,
   },
-  galleryButton: {
-    backgroundColor: colors.primaryDark,
+  secondaryButton: {
+    backgroundColor: colors.error,
+    borderWidth: 1,
+    borderColor: colors.error,
   },
   deleteButton: {
     backgroundColor: colors.error,
   },
-  cancelButton: {
-    backgroundColor: colors.surface === '#FFFFFF' ? colors.background : colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
   buttonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  primaryButtonText: {
+    color: colors.buttonText,
+  },
+  secondaryButtonText: {
     color: colors.buttonText,
   },
   deleteButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
     color: colors.buttonText,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.text,
   },
   loadingOverlay: {
     position: 'absolute',
@@ -343,14 +502,16 @@ const getStyles = (colors: any) => StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.surface,
-    opacity: 0.9,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 16,
-    color: colors.text,
+    color: colors.buttonText,
+    textAlign: 'center',
   },
 });

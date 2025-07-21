@@ -94,6 +94,32 @@ const EditIcon = () => (
   </Svg>
 );
 
+const LogoutIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path 
+      d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" 
+      stroke="white" 
+      strokeWidth={2} 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+    <Path 
+      d="M16 17L21 12L16 7" 
+      stroke="white" 
+      strokeWidth={2} 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+    <Path 
+      d="M21 12H9" 
+      stroke="white" 
+      strokeWidth={2} 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ 
   onLogout, 
   onShowAdminStats 
@@ -415,20 +441,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           )}
 
           {/* Account Actions */}
-          <Section>
-            <TouchableOpacity activeOpacity={0.7} style={styles.logoutButton} onPress={handleLogout}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.logoutButton} onPress={handleLogout}>
+            <View style={styles.logoutButtonContent}>
+              <LogoutIcon />
               <Text style={styles.logoutButtonText}>
                 {safeT('profile.logout', 'Logout')}
               </Text>
-            </TouchableOpacity>
-          </Section>
+            </View>
+          </TouchableOpacity>
 
           {/* App Information */}
-          <Section style={styles.footerSection}>
+          <View style={styles.footerSection}>
             <Text style={styles.appVersion}>
               FridgeWise v1.0.0
             </Text>
-          </Section>
+          </View>
         </Animated.View>
       </ScrollView>
 
@@ -486,7 +513,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.background === '#FFFFFF' ? '#F0F2F5' : 
+                     colors.background === '#000000' ? '#1A1A1A' : 
+                     colors.backgroundDark || colors.background,
     paddingTop: Platform.OS === 'ios' ? 0 : 24, // SafeAreaView handles iOS automatically
   },
   scrollView: {
@@ -578,6 +607,11 @@ const getStyles = (colors: any) => StyleSheet.create({
     marginBottom: 20,
     marginHorizontal: 16,
     borderRadius: 12,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
     overflow: 'hidden',
   },
   sectionHeader: {
@@ -642,6 +676,11 @@ const getStyles = (colors: any) => StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
+  logoutButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   logoutButtonText: {
     fontSize: 16,
     fontWeight: '600',
@@ -651,6 +690,9 @@ const getStyles = (colors: any) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'transparent',
     marginBottom: 40,
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   appVersion: {
     fontSize: 14,

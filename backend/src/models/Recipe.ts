@@ -116,7 +116,21 @@ const recipeSchema = new Schema<IRecipe>({
     default: [],
     validate: {
       validator: function(v: string[]) {
-        const validTags = ['vegetarian', 'vegan', 'pescatarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'];
+        const validTags = [
+          'vegetarian', 'vegan', 'pescatarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo',
+          // Tempo di preparazione
+          'quick', 'slow-cooking', 'no-cook',
+          // Contenuto nutrizionale  
+          'high-protein', 'high-fiber', 'low-sodium', 'sugar-free',
+          // Stile culinario
+          'mediterranean', 'asian', 'italian', 'mexican',
+          // Intensità sapore
+          'spicy', 'mild',
+          // Modalità cottura
+          'one-pot', 'grilled', 'baked', 'raw',
+          // Diete specializzate
+          'whole30', 'fodmap-friendly', 'anti-inflammatory'
+        ];
         return v.every(tag => validTags.includes(tag));
       },
       message: 'Invalid dietary tag'
