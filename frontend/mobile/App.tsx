@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, TextInput, ScrollView, SafeAreaView, StatusBar as RNStatusBar, Animated, Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import i18n from './src/i18n';
 import { Switch } from 'react-native';
@@ -195,7 +196,8 @@ const AppContent: React.FC = () => {
   });
 
   const [authMode, setAuthMode] = useState<'welcome' | 'login' | 'register' | 'forgot-password' | 'verify-code' | 'reset-password'>('welcome');
-  const [showOnboarding, setShowOnboarding] = useState(true); // Per testare l'onboarding
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null); // null = loading, true = show, false = don't show
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',
@@ -244,6 +246,25 @@ const AppContent: React.FC = () => {
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
+  // Check onboarding status on app startup
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('onboarding_completed');
+        const hasCompletedOnboarding = completed === 'true';
+        setOnboardingCompleted(hasCompletedOnboarding);
+        setShowOnboarding(!hasCompletedOnboarding);
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        // Default to showing onboarding if we can't check
+        setShowOnboarding(true);
+        setOnboardingCompleted(false);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, []);
+
   // Health check on app startup
   useEffect(() => {
     const performInitialHealthCheck = async () => {
@@ -284,6 +305,48 @@ const AppContent: React.FC = () => {
         isMaintenance: false,
         isCheckingHealth: false,
       });
+    }
+  };
+
+  const handleOnboardingComplete = async (preferences: { preferredLanguage: 'en' | 'it'; dietaryRestrictions: string[] }) => {
+    try {
+      // Save onboarding completion status
+      await AsyncStorage.setItem('onboarding_completed', 'true');
+      
+      // Save user preferences for when they register/login
+      await AsyncStorage.setItem('user_preferences', JSON.stringify(preferences));
+      
+      // Update language immediately
+      i18nInstance.changeLanguage(preferences.preferredLanguage);
+      
+      // Hide onboarding and show welcome screen
+      setShowOnboarding(false);
+      setOnboardingCompleted(true);
+      setAuthMode('welcome');
+    } catch (error) {
+      console.error('Error saving onboarding completion:', error);
+      // Still proceed to hide onboarding
+      setShowOnboarding(false);
+      setOnboardingCompleted(true);
+      setAuthMode('welcome');
+    }
+  };
+
+  const handleOnboardingSkip = async () => {
+    try {
+      // Save onboarding completion status (skipped)
+      await AsyncStorage.setItem('onboarding_completed', 'true');
+      
+      // Hide onboarding and show welcome screen
+      setShowOnboarding(false);
+      setOnboardingCompleted(true);
+      setAuthMode('welcome');
+    } catch (error) {
+      console.error('Error saving onboarding skip:', error);
+      // Still proceed to hide onboarding
+      setShowOnboarding(false);
+      setOnboardingCompleted(true);
+      setAuthMode('welcome');
     }
   };
 
@@ -413,9 +476,29 @@ const AppContent: React.FC = () => {
     }
     
     try {
-      // Use current system language
-      const currentLanguage = i18nInstance?.language || 'en';
-      await register(registerForm.email, registerForm.password, registerForm.name, currentLanguage as 'en' | 'it');
+      // Use preferences from onboarding if available, otherwise use current system language
+      let preferredLanguage: 'en' | 'it' = 'en';
+      let dietaryRestrictions: string[] = [];
+      
+      try {
+        const savedPreferences = await AsyncStorage.getItem('user_preferences');
+        if (savedPreferences) {
+          const preferences = JSON.parse(savedPreferences);
+          preferredLanguage = preferences.preferredLanguage || (i18nInstance?.language as 'en' | 'it') || 'en';
+          dietaryRestrictions = preferences.dietaryRestrictions || [];
+        } else {
+          preferredLanguage = (i18nInstance?.language as 'en' | 'it') || 'en';
+        }
+      } catch (error) {
+        // If we can't read preferences, use current language
+        preferredLanguage = (i18nInstance?.language as 'en' | 'it') || 'en';
+      }
+      
+      await register(registerForm.email, registerForm.password, registerForm.name, preferredLanguage);
+      
+      // If user registered successfully and we have dietary restrictions from onboarding,
+      // we could update their profile here, but for now we'll keep it simple
+      
     } catch (error: any) {
       setNotification({
         visible: true,
@@ -578,8 +661,23 @@ const AppContent: React.FC = () => {
         allRecipes: [],
         currentRecipeIndex: 0,
       });
+      
+      // Reset to welcome screen (don't show onboarding again after logout)
+      setAuthMode('welcome');
     } catch (error) {
       // Logout error
+    }
+  };
+
+  // Function to reset onboarding (useful for testing or if user wants to see onboarding again)
+  const resetOnboarding = async () => {
+    try {
+      await AsyncStorage.removeItem('onboarding_completed');
+      await AsyncStorage.removeItem('user_preferences');
+      setShowOnboarding(true);
+      setOnboardingCompleted(false);
+    } catch (error) {
+      console.error('Error resetting onboarding:', error);
     }
   };
 
@@ -654,7 +752,7 @@ const AppContent: React.FC = () => {
 
   const styles = getStyles(colors);
 
-  if (isLoading || backendStatus.isCheckingHealth) {
+  if (isLoading || backendStatus.isCheckingHealth || showOnboarding === null) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -675,6 +773,20 @@ const AppContent: React.FC = () => {
       onClose={() => setNotification({ ...notification, visible: false })}
     />
   );
+
+  // Show onboarding if user is not logged in and hasn't completed onboarding
+  if (!user && showOnboarding) {
+    return (
+      <>
+        <OnboardingScreen
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+        <StatusBar style={isDarkMode ? "light" : "dark"} />
+        {renderNotificationModal()}
+      </>
+    );
+  }
 
   if (!user) {
     if (authMode === 'welcome') {
@@ -830,6 +942,19 @@ const AppContent: React.FC = () => {
               >
                 <Text style={styles.linkButtonText}>
                   {safeT('auth.dontHaveAccount')} {safeT('auth.register')}
+                </Text>
+              </TouchableOpacity>
+              
+              {/* Debug button to reset onboarding */}
+              <TouchableOpacity 
+                style={[styles.linkButton, { marginTop: 20, backgroundColor: colors.surface, padding: 10, borderRadius: 8 }]} 
+                onPress={() => {
+                  setShowOnboarding(true);
+                  setOnboardingCompleted(false);
+                }}
+              >
+                <Text style={[styles.linkButtonText, { color: colors.primary, fontSize: 12 }]}>
+                  🔄 Reset Onboarding (Debug)
                 </Text>
               </TouchableOpacity>
             </View>
