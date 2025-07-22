@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, SafeAreaView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,6 +14,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, EASING_CURVES } from '../constants/animations';
+import { handleRateLimitError, extractErrorFromResponse } from '../utils/rateLimitHandler';
 
 // Modern typing indicator component
 const TypingIndicator = () => {
@@ -78,6 +80,7 @@ interface ChatAIModalProps {
 export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAIModalProps) => {
   const { t } = useTranslation();
   const { token } = useAuth();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -145,37 +148,53 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
         }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await extractErrorFromResponse(response);
+        throw errorData;
+      }
 
-      if (response.ok) {
-        let messageContent = data.response || data.message || 'Risposta ricevuta.';
+      const data = await response.json();
+      let messageContent = data.response || data.message || 'Risposta ricevuta.';
+      
+      if (data.hasModifications && data.modifications && onRecipeUpdate) {
+        const updatedRecipe = data.modifications;
         
-        if (data.hasModifications && data.modifications && onRecipeUpdate) {
-          const updatedRecipe = data.modifications;
-          
-          setMessages(prev => [...prev, { 
-            role: 'assistant', 
-            content: messageContent,
-            hasModifications: true,
-            modifications: data.modifications,
-            updatedRecipe: updatedRecipe
-          }]);
-        } else {
-          setMessages(prev => [...prev, { 
-            role: 'assistant', 
-            content: messageContent
-          }]);
-        }
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: messageContent,
+          hasModifications: true,
+          modifications: data.modifications,
+          updatedRecipe: updatedRecipe
+        }]);
       } else {
-        throw new Error(data.error || 'Errore nella comunicazione con AI');
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: messageContent
+        }]);
       }
     } catch (error) {
       console.error('AI Chat error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Si è verificato un errore imprevisto.';
-      setErrorModal({ 
-        visible: true, 
-        message: errorMessage
-      });
+      
+      const rateLimitNotification = handleRateLimitError(
+        error, 
+        'AI Chat Limit',
+        () => sendMessage()
+      );
+      
+      if (rateLimitNotification.type === 'warning') {
+        // For rate limit errors, show as modal
+        setErrorModal({ 
+          visible: true, 
+          message: rateLimitNotification.message
+        });
+      } else {
+        // For other errors, use original error message
+        const errorMessage = error instanceof Error ? error.message : 'Si è verificato un errore imprevisto.';
+        setErrorModal({ 
+          visible: true, 
+          message: errorMessage
+        });
+      }
     } finally {
       setIsSending(false);
     }
@@ -245,7 +264,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
             <ScrollView 
               ref={scrollViewRef}
               style={styles.messagesContainer}
-              contentContainerStyle={styles.messagesContent}
+              contentContainerStyle={[styles.messagesContent, { paddingBottom: 100 }]}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
@@ -297,7 +316,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
 
             {/* Input */}
             <View style={styles.inputContainer}>
-              <View style={styles.inputWrapper}>
+              <View style={[styles.inputWrapper, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                 <TextInput
                   style={styles.textInput}
                   value={input}
@@ -543,29 +562,33 @@ const styles = StyleSheet.create({
     borderTopColor: '#e9ecef',
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+    paddingBottom: 30,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   inputWrapper: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     backgroundColor: '#f8f9fa',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 48,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minHeight: 36,
   },
   textInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: '#212529',
-    maxHeight: 100,
-    paddingVertical: 8,
+    paddingVertical: 0,
     paddingRight: 8,
+    lineHeight: 18,
   },
   sendButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',

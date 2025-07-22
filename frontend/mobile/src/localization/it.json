@@ -21,6 +21,9 @@
     "startOver": "Ricomincia",
     "remove": "Rimuovi",
     "skip": "Salta",
+    "back": "Indietro",
+    "next": "Avanti", 
+    "start": "Inizia",
     "allTags": "Tutti i tag",
     "all": "Tutti",
     "warning": "Attenzione",
@@ -59,7 +62,7 @@
     "enterNewPasswordInstructions": "Inserisci la tua nuova password qui sotto.",
     "enterCodeInstructions": "Inserisci il codice a 6 cifre inviato alla tua email e la tua nuova password.",
     "resetToken": "Token di Reset",
-    "resetCode": "Codice di Reset",
+    "resetCode": "Codice",
     "enterCode": "Inserisci codice a 6 cifre",
     "verifyCode": "Verifica Codice",
     "verifyCodeInstructions": "Inserisci il codice a 6 cifre inviato alla tua email.",
@@ -68,7 +71,15 @@
     "confirmNewPassword": "Conferma Nuova Password",
     "passwordResetSuccess": "Password reimpostata con successo! Ora puoi accedere con la tua nuova password.",
     "invalidResetToken": "Token di reset non valido o scaduto. Richiedi un nuovo reset password.",
-    "backToLogin": "Torna al Login"
+    "backToLogin": "Torna al Login",
+    "verifyEmail": "Verifica Email",
+    "verifyEmailInstructions": "Inserisci il codice a 6 cifre inviato al tuo indirizzo email per verificare il tuo account.",
+    "verificationSuccess": "Email Verificata",
+    "verificationSuccessMessage": "La tua email è stata verificata con successo! Ora puoi accedere.",
+    "verificationError": "Impossibile verificare l'email. Riprova.",
+    "codeSent": "Codice Inviato",
+    "verificationCodeSent": "Un nuovo codice di verifica è stato inviato alla tua email.",
+    "resendError": "Impossibile reinviare il codice. Riprova."
   },
   "validation": {
     "nameRequired": "Il nome è obbligatorio",
@@ -259,6 +270,9 @@
     "title": "Ricetta",
     "noIngredientsProvided": "Nessun ingrediente fornito",
     "generationFailed": "Generazione ricetta fallita",
+    "rateLimitTitle": "Troppe Richieste di Ricette",
+    "dailyLimitReached": "Limite Giornaliero Raggiunto",
+    "dailyLimitMessage": "Hai raggiunto il limite giornaliero di 3 generazioni di ricette. Riprova domani!",
     "generateRecipe": "Genera Ricetta",
     "generating": "Generando ricetta...",
     "generatingTitle": "Creando la Tua Ricetta",
@@ -550,6 +564,17 @@
     "howItWorks": "Come funziona",
     "dietaryExplanation": "Le tue preferenze alimentari ci aiutano a filtrare le ricette e suggerire ingredienti che si adattano al tuo stile di vita. Puoi cambiare queste impostazioni in qualsiasi momento.",
     "dietaryPreferencesUpdated": "Preferenze alimentari aggiornate",
+    "dangerZone": "Zona di Pericolo",
+    "deleteAccount": "Elimina Account",
+    "deleteAccountWarning": "Questa azione non può essere annullata. Tutti i tuoi dati verranno eliminati permanentemente.",
+    "confirmDeleteTitle": "Elimina Account",
+    "confirmDeleteMessage": "Sei sicuro di voler eliminare il tuo account? Questa azione non può essere annullata e tutti i tuoi dati verranno persi definitivamente.",
+    "accountDeleted": "Account Eliminato",
+    "accountDeletedMessage": "Il tuo account è stato eliminato con successo.",
+    "deleteAccountError": "Impossibile eliminare l'account. Riprova.",
+    "enterPasswordToConfirm": "Inserisci la tua password per confermare:",
+    "enterPassword": "Inserisci password",
+    "passwordRequired": "La password è obbligatoria per eliminare l'account",
     "avatar": {
       "title": "Cambia Avatar",
       "takePhoto": "Scatta Foto",
@@ -576,7 +601,7 @@
       "soy-free": "Senza soia",
       "eggfree": "Senza uova",
       "egg-free": "Senza uova",
-      "low-carb": "Basso contenuto di carboidrati",
+      "low-carb": "Low carb",
       "keto": "Chetogenica",
       "paleo": "Paleo",
       "pescatarian": "Pescatariano",
@@ -823,36 +848,62 @@
   },
   "onboarding": {
     "welcome": {
-      "title": "Benvenuto in FridgeWise",
-      "subtitle": "Il tuo assistente culinario con IA",
-      "description": "Trasforma i tuoi ingredienti in ricette deliziose con l'intelligenza artificiale"
+      "title": "Mai più sprechi alimentari",
+      "subtitle": "Trasforma quello che hai in quello che ami",
+      "description": "FridgeWise ti aiuta a cucinare piatti deliziosi con gli ingredienti che hai già a casa."
     },
     "scan": {
-      "title": "Scansiona il Frigorifero",
+      "title": "Scatta una foto, ottieni ricette",
       "subtitle": "Riconoscimento ingredienti con IA",
-      "description": "Basta scattare una foto del contenuto del tuo frigorifero e lascia che la nostra IA identifichi automaticamente tutti gli ingredienti"
+      "description": "Fotografa i tuoi ingredienti e lascia che l'IA faccia il lavoro pesante. Niente da digitare, niente liste."
     },
     "ai": {
-      "title": "Riconoscimento Intelligente",
-      "subtitle": "Machine learning avanzato",
-      "description": "La nostra IA riconosce accuratamente centinaia di ingredienti e suggerisce le migliori ricette basate su quello che hai"
+      "title": "Suggerimenti intelligenti che funzionano",
+      "subtitle": "Ricette basate su quello che hai davvero",
+      "description": "Ricevi ricette personalizzate che si adattano ai tuoi ingredienti, tempo e abilità culinarie."
     },
     "recipes": {
-      "title": "Ricette Personalizzate",
-      "subtitle": "Su misura per il tuo gusto",
-      "description": "Ricevi suggerimenti di ricette che corrispondono alle tue preferenze alimentari e al tuo livello di cucina"
-    },
-    "language": {
-      "title": "Scegli la Tua Lingua",
-      "subtitle": "Seleziona la tua lingua preferita",
-      "description": "FridgeWise supporta più lingue per la migliore esperienza"
+      "title": "Cucina con sicurezza",
+      "subtitle": "Guida passo dopo passo",
+      "description": "Istruzioni chiare, consigli di cucina e timer intelligenti ti aiutano a creare piatti straordinari ogni volta."
     },
     "dietary": {
-      "title": "Preferenze Alimentari",
-      "subtitle": "Parlaci della tua dieta",
-      "description": "Seleziona le tue restrizioni alimentari per ricevere raccomandazioni di ricette personalizzate",
+      "title": "Le Tue Preferenze Alimentari",
+      "subtitle": "Personalizzato solo per te",
+      "description": "Facci sapere le tue restrizioni alimentari così possiamo suggerire le ricette giuste.",
       "hint": "Puoi selezionare più opzioni o saltare questo passaggio"
     },
-    "getStarted": "Inizia"
+    "getStarted": "Inizia",
+    "ingredients": {
+      "tomato": "Pomodoro",
+      "garlic": "Aglio", 
+      "basil": "Basilico"
+    },
+    "demoRecipes": {
+      "pastaArrabbiata": "Pasta all'Arrabbiata",
+      "margheritaPizza": "Pizza Margherita"
+    },
+    "cooking": {
+      "steps": {
+        "heatOil": "Scaldare l'olio d'oliva in una padella",
+        "addGarlic": "Aggiungere l'aglio tritato",
+        "addTomatoes": "Aggiungere i pomodori schiacciati"
+      },
+      "tip": "Consiglio: Mantieni il fuoco medio per evitare di bruciare l'aglio"
+    },
+    "ui": {
+      "loading": "Caricamento...",
+      "recipeIdeas": "idee di ricette",
+      "minutes": "min",
+      "ai": "IA",
+      "checkmark": "✓"
+    },
+    "usage": {
+      "recipeGenerations": "Generazioni Ricette",
+      "aiChatMessages": "Messaggi IA", 
+      "imageAnalyses": "Analisi Immagini",
+      "remaining": "rimanenti oggi",
+      "limitReached": "Limite giornaliero raggiunto"
+    }
   }
 }

@@ -41,12 +41,15 @@ export const OTPInput: React.FC<OTPInputProps> = ({
       const newValue = pastedChars.padEnd(length, '').slice(0, length);
       onChange(newValue.replace(/ /g, ''));
       
-      // Focus on next empty input or last input
-      const nextIndex = Math.min(pastedChars.length - 1, length - 1);
-      if (inputs.current[nextIndex]) {
-        inputs.current[nextIndex]?.focus();
-        setFocusedIndex(nextIndex);
-      }
+      // Focus on the next empty input after the pasted content, or last filled input
+      const nextIndex = Math.min(pastedChars.length, length - 1);
+      // Use setTimeout to ensure the state has updated before focusing
+      setTimeout(() => {
+        if (inputs.current[nextIndex]) {
+          inputs.current[nextIndex]?.focus();
+          setFocusedIndex(nextIndex);
+        }
+      }, 100);
     } else {
       // Single character input
       const newValueArray = [...valueArray];
@@ -92,6 +95,14 @@ export const OTPInput: React.FC<OTPInputProps> = ({
     setFocusedIndex(null);
   };
 
+  const handleSubmitEditing = (index: number) => {
+    // Move to next input when "Next" is pressed
+    if (index < length - 1) {
+      inputs.current[index + 1]?.focus();
+      setFocusedIndex(index + 1);
+    }
+  };
+
   const styles = getStyles(colors);
 
   return (
@@ -110,14 +121,15 @@ export const OTPInput: React.FC<OTPInputProps> = ({
           onKeyPress={(e) => handleKeyPress(e, index)}
           onFocus={() => handleFocus(index)}
           onBlur={handleBlur}
+          onSubmitEditing={() => handleSubmitEditing(index)}
           keyboardType="numeric"
-          maxLength={1}
+          maxLength={6}
           selectTextOnFocus
           textAlign="center"
           autoCapitalize="none"
           autoCorrect={false}
           blurOnSubmit={false}
-          returnKeyType="next"
+          returnKeyType={index === length - 1 ? "done" : "next"}
           textContentType="oneTimeCode"
         />
       ))}

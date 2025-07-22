@@ -15,7 +15,8 @@
       "Bash(then echo \"$file\")",
       "Bash(fi)",
       "Bash(rm:*)",
-      "Bash(npx expo start:*)"
+      "Bash(npx expo start:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }

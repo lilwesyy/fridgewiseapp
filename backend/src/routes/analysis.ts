@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { analyzeImage, getAnalyses, getAnalysis, deleteAnalysis, upload } from '../controllers/analysisController';
 import { protect } from '../middleware/auth';
 import { USDARecognizeService } from '../services/usdaRecognizeService';
+import { rateLimits } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -28,7 +29,7 @@ router.get('/health', async (req, res) => {
 });
 
 // Search ingredients endpoint (no auth required for basic search)
-router.get('/search-ingredients', async (req, res) => {
+router.get('/search-ingredients', rateLimits.ingredientSearch, async (req, res) => {
   try {
     const { query, limit } = req.query;
     
@@ -63,7 +64,7 @@ router.get('/search-ingredients', async (req, res) => {
 // All routes require authentication
 router.use(protect);
 
-router.post('/image', upload.single('image'), analyzeImage);
+router.post('/image', rateLimits.imageAnalysis, upload.single('image'), analyzeImage);
 router.get('/', getAnalyses);
 router.get('/:id', getAnalysis);
 router.delete('/:id', deleteAnalysis);

@@ -18,7 +18,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string, preferredLanguage?: 'en' | 'it') => Promise<void>;
+  register: (email: string, password: string, name?: string, preferredLanguage?: 'en' | 'it', dietaryRestrictions?: string[]) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   uploadAvatar: (imageUri: string) => Promise<User>;
@@ -26,6 +26,9 @@ interface AuthContextType {
   refreshProfile: (currentToken?: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
+  sendEmailVerification: (email: string) => Promise<void>;
+  verifyEmail: (email: string, token: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -114,7 +117,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        // Create error object with additional info for email verification
+        const error = new Error(data.error || 'Login failed') as any;
+        if (data.requireEmailVerification) {
+          error.requireEmailVerification = true;
+          error.email = data.email;
+        }
+        throw error;
       }
 
       const { user, token } = data.data;
@@ -127,12 +136,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(token);
       setUser(userWithCacheBusting);
     } catch (error) {
-      console.error('Login error:', error);
       throw error;
     }
   };
 
-  const register = async (email: string, password: string, name?: string, preferredLanguage: 'en' | 'it' = 'en') => {
+  const register = async (email: string, password: string, name?: string, preferredLanguage: 'en' | 'it' = 'en', dietaryRestrictions: string[] = []) => {
     try {
       console.log('🚀 Registration attempt:', { API_URL, email });
       console.log('📍 Full URL:', `${API_URL}/api/auth/register`);
@@ -142,7 +150,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name, preferredLanguage }),
+        body: JSON.stringify({ email, password, name, preferredLanguage, dietaryRestrictions }),
       });
 
       console.log('📡 Response status:', response.status);
@@ -163,10 +171,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(token);
       setUser(userWithCacheBusting);
     } catch (error) {
-      // console.error('🚨 Registration error details:', error);
-      // console.error('🚨 Error type:', typeof error);
-      // console.error('🚨 Error message:', error?.message);
-      // console.error('🚨 Error cause:', error?.cause);
       throw error;
     }
   };
@@ -348,6 +352,88 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const deleteAccount = async (password: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/delete-account`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      // Clear local storage after successful deletion
+      await AsyncStorage.removeItem('auth_token');
+      await AsyncStorage.removeItem('auth_user');
+      await AsyncStorage.removeItem('onboarding_completed');
+      await AsyncStorage.removeItem('user_preferences');
+      
+      setToken(null);
+      setUser(null);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const sendEmailVerification = async (email: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/send-email-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send verification email');
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const verifyEmail = async (email: string, token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/verify-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, token }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Email verification failed');
+      }
+
+      // Auto-login user after successful verification
+      if (data.data && data.data.token && data.data.user) {
+        const authToken = data.data.token;
+        const userData = data.data.user;
+        
+        await AsyncStorage.setItem('token', authToken);
+        await AsyncStorage.setItem('user', JSON.stringify(userData));
+        
+        setToken(authToken);
+        setUser(userData);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -360,6 +446,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshProfile,
     forgotPassword,
     resetPassword,
+    deleteAccount,
+    sendEmailVerification,
+    verifyEmail,
     isLoading,
   };
 

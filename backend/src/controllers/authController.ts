@@ -2,8 +2,11 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { User } from '../models/User';
+import { Recipe } from '../models/Recipe';
+import { Analysis } from '../models/Analysis';
 import { APIResponse } from '../types';
 import { emailService } from '../services/emailService';
+import { cloudinaryService } from '../services/cloudinaryService';
 
 const signToken = (id: string): string => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
@@ -25,7 +28,7 @@ const sendTokenResponse = (user: any, statusCode: number, res: Response): void =
 
 export const register = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
   try {
-    const { email, password, name, preferredLanguage } = req.body;
+    const { email, password, name, preferredLanguage, dietaryRestrictions } = req.body;
     console.log('🚀 Registration request:', { email, password: '***', name, preferredLanguage });
     console.log('📧 Email validation test:', /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email));
 
@@ -39,15 +42,25 @@ export const register = async (req: Request, res: Response<APIResponse<any>>): P
       return;
     }
 
-    // Create new user
+    // Create new user (not verified)
     const user = await User.create({
       email,
       password,
       name,
-      preferredLanguage: preferredLanguage || 'en'
+      preferredLanguage: preferredLanguage || 'en',
+      dietaryRestrictions: dietaryRestrictions || [],
+      isEmailVerified: false
     });
 
-    sendTokenResponse(user, 201, res);
+    // Don't auto-login, just confirm registration
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful. Please check your email to verify your account.',
+      data: {
+        email: user.email,
+        name: user.name
+      }
+    });
   } catch (error: any) {
     res.status(400).json({
       success: false,
@@ -85,6 +98,17 @@ export const login = async (req: Request, res: Response<APIResponse<any>>): Prom
       res.status(401).json({
         success: false,
         error: 'Invalid credentials'
+      });
+      return;
+    }
+
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      res.status(401).json({
+        success: false,
+        error: 'Please verify your email address before logging in',
+        requireEmailVerification: true,
+        email: user.email
       });
       return;
     }
@@ -232,7 +256,12 @@ export const forgotPassword = async (req: Request, res: Response<APIResponse<any
       console.log('Password reset code sent to email:', email);
     } catch (emailError) {
       console.error('Failed to send reset email:', emailError);
-      // Don't fail the request if email fails, just log it
+      // Return the actual error to help debug
+      res.status(500).json({
+        success: false,
+        error: `Email sending failed: ${emailError instanceof Error ? emailError.message : 'Unknown error'}`
+      });
+      return;
     }
 
     res.status(200).json({
@@ -288,6 +317,189 @@ export const resetPassword = async (req: Request, res: Response<APIResponse<any>
     res.status(500).json({
       success: false,
       error: error.message || 'Password reset failed'
+    });
+  }
+};
+
+export const deleteAccount = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = (req as any).user;
+    const { password } = req.body;
+
+    // Validate password input
+    if (!password) {
+      res.status(400).json({
+        success: false,
+        error: 'Please provide your password to confirm account deletion'
+      });
+      return;
+    }
+
+    // Get user with password field for verification
+    const userWithPassword = await User.findById(user._id).select('+password');
+    if (!userWithPassword) {
+      res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+      return;
+    }
+
+    // Verify password
+    const isMatch = await userWithPassword.comparePassword(password);
+    if (!isMatch) {
+      res.status(401).json({
+        success: false,
+        error: 'Incorrect password'
+      });
+      return;
+    }
+
+    // Get all user recipes to clean up associated images
+    const userRecipes = await Recipe.find({ userId: user._id });
+    
+    // Clean up Cloudinary images for recipes (dish photos)
+    for (const recipe of userRecipes) {
+      if (recipe.dishPhotos && recipe.dishPhotos.length > 0) {
+        for (const photo of recipe.dishPhotos) {
+          try {
+            await cloudinaryService.deleteImage(photo.publicId);
+          } catch (error) {
+            console.error(`Failed to delete recipe image ${photo.publicId}:`, error);
+            // Continue with deletion even if image cleanup fails
+          }
+        }
+      }
+    }
+
+    // Clean up user avatar if exists
+    if (userWithPassword.avatar && userWithPassword.avatar.publicId) {
+      try {
+        await cloudinaryService.deleteImage(userWithPassword.avatar.publicId);
+      } catch (error) {
+        console.error(`Failed to delete user avatar ${userWithPassword.avatar.publicId}:`, error);
+        // Continue with deletion even if avatar cleanup fails
+      }
+    }
+
+    // Delete all user-related data
+    await Recipe.deleteMany({ userId: user._id });
+    await Analysis.deleteMany({ userId: user._id });
+    await User.findByIdAndDelete(user._id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Account deleted successfully'
+    });
+  } catch (error: any) {
+    console.error('Delete account error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Account deletion failed'
+    });
+  }
+};
+
+export const sendEmailVerification = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        error: 'Please provide email address'
+      });
+      return;
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+      return;
+    }
+
+    // Check if already verified
+    if (user.isEmailVerified) {
+      res.status(400).json({
+        success: false,
+        error: 'Email already verified'
+      });
+      return;
+    }
+
+    // Generate verification code (6 digits)
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Update user with verification code
+    user.emailVerificationToken = verificationCode;
+    user.emailVerificationExpiry = verificationTokenExpiry;
+    await user.save();
+
+    // Send email with verification code
+    try {
+      await emailService.sendEmailVerificationCode(email, verificationCode);
+      console.log('Email verification code sent to:', email);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Don't fail the request if email fails, just log it
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verification code sent'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to send verification code'
+    });
+  }
+};
+
+export const verifyEmail = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const { email, token } = req.body;
+
+    if (!email || !token) {
+      res.status(400).json({
+        success: false,
+        error: 'Please provide email and verification token'
+      });
+      return;
+    }
+
+    // Find user with valid verification token
+    const user = await User.findOne({
+      email,
+      emailVerificationToken: token,
+      emailVerificationExpiry: { $gt: new Date() }
+    });
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid or expired verification token'
+      });
+      return;
+    }
+
+    // Mark email as verified and remove verification token
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpiry = undefined;
+    await user.save();
+
+    // Auto-login the user after successful email verification
+    sendTokenResponse(user, 200, res);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Email verification failed'
     });
   }
 };

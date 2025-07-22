@@ -27,6 +27,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS } from '../constants/animations';
+import { handleRateLimitError, extractErrorFromResponse } from '../utils/rateLimitHandler';
+import { DailyUsageIndicator } from './DailyUsageIndicator';
+import { useDailyUsage } from '../hooks/useDailyUsage';
 
 interface Ingredient {
   name: string;
@@ -133,6 +136,8 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
     title: '',
     message: '',
   });
+  
+  const { canGenerateRecipe, usage, refresh: refreshUsage } = useDailyUsage();
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -280,6 +285,18 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
   const generateRecipe = async () => {
     setShowPreferencesModal(false);
+    
+    // Check daily limit before attempting generation
+    if (!canGenerateRecipe) {
+      setNotification({
+        visible: true,
+        type: 'warning',
+        title: t('recipe.dailyLimitReached', 'Daily Limit Reached'),
+        message: t('recipe.dailyLimitMessage', `You have reached your daily limit of ${usage?.recipeGenerations.limit || 3} recipe generations. Try again tomorrow!`),
+      });
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
@@ -301,21 +318,26 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Recipe generation failed');
+        const errorData = await extractErrorFromResponse(response);
+        throw errorData;
       }
 
+      const data = await response.json();
       onGenerateRecipe(data.data);
+      
+      // Refresh usage data after successful generation
+      refreshUsage();
     } catch (error) {
       console.error('Recipe generation error:', error);
-      setNotification({
-        visible: true,
-        type: 'error',
-        title: t('common.error'),
-        message: t('recipe.generationFailed'),
-      });
+      
+      const rateLimitNotification = handleRateLimitError(
+        error, 
+        t('recipe.rateLimitTitle', 'Too Many Recipe Requests'),
+        () => generateRecipe()
+      );
+      
+      setNotification(rateLimitNotification);
     } finally {
       setIsGenerating(false);
     }
@@ -437,10 +459,11 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       )}
 
       <Animated.View style={[styles.footer, footerAnimatedStyle]}>
+        <DailyUsageIndicator type="recipeGeneration" showText={true} />
         <TouchableOpacity activeOpacity={0.7}
-          style={[styles.generateButton, (isGenerating || ingredients.length === 0) && styles.generateButtonDisabled]}
+          style={[styles.generateButton, (isGenerating || ingredients.length === 0 || !canGenerateRecipe) && styles.generateButtonDisabled]}
           onPress={showRecipePreferences}
-          disabled={isGenerating || ingredients.length === 0}
+          disabled={isGenerating || ingredients.length === 0 || !canGenerateRecipe}
         >
           {isGenerating ? (
             <ActivityIndicator size="small" color="white" />

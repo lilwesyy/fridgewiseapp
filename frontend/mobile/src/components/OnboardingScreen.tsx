@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,15 +8,15 @@ import {
   Dimensions,
   SafeAreaView,
   Image,
-  Platform,
   Animated,
   PanResponder,
+  Easing,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
-import Svg, { Path, Circle, G } from 'react-native-svg';
+import Svg, { Path, Circle, G, LinearGradient, Stop, Defs } from 'react-native-svg';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const LogoComponent: React.FC<{ width?: number; height?: number }> = ({ width = 60, height = 54 }) => (
   <Svg width={width} height={height} viewBox="0 0 267 241">
@@ -73,78 +73,7 @@ interface OnboardingStep {
   title: string;
   subtitle: string;
   description: string;
-  icon: React.ReactNode;
 }
-
-const CameraIcon = () => (
-  <Svg width={60} height={60} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M16 13C16 15.2091 14.2091 17 12 17C9.79086 17 8 15.2091 8 13C8 10.7909 9.79086 9 12 9C14.2091 9 16 10.7909 16 13Z"
-      stroke="white"
-      strokeWidth="2"
-      fill="none"
-    />
-  </Svg>
-);
-
-const AIIcon = () => (
-  <Svg width={60} height={60} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 17L12 22L22 17"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 12L12 17L22 12"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const RecipeIcon = () => (
-  <Svg width={60} height={60} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const ProfileIcon = () => (
-  <Svg width={60} height={60} viewBox="0 0 24 24" fill="none">
-    <Path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    <Circle cx={12} cy={7} r={4} stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
 
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onSkip }) => {
   const { t, i18n } = useTranslation();
@@ -154,23 +83,31 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'it'>('en');
   const [selectedDietaryRestrictions, setSelectedDietaryRestrictions] = useState<string[]>([]);
   
-  const panResponder = PanResponder.create({
+  // Animation refs
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const scanAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  
+  // Slide entry animations
+  const slideInAnim = useRef(new Animated.Value(width)).current;
+  const scaleInAnim = useRef(new Animated.Value(0.8)).current;
+  const bounceInAnim = useRef(new Animated.Value(0)).current;
+  
+  const swipePanResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
       return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dy) < 100;
     },
     onPanResponderRelease: (evt, gestureState) => {
       const { dx } = gestureState;
       
-      // Swipe right (vai indietro) - dx positivo
       if (dx > 50 && currentStep > 0) {
-        setCurrentStep(currentStep - 1);
-      }
-      // Swipe left (vai avanti) - dx negativo  
-      else if (dx < -50 && currentStep < steps.length - 1) {
-        setCurrentStep(currentStep + 1);
-      }
-      // Se siamo all'ultimo step e swipe left, completa onboarding
-      else if (dx < -50 && currentStep === steps.length - 1) {
+        handlePrevious();
+      } else if (dx < -50 && currentStep < steps.length - 1) {
+        handleNext();
+      } else if (dx < -50 && currentStep === steps.length - 1) {
         onComplete({
           preferredLanguage: selectedLanguage,
           dietaryRestrictions: selectedDietaryRestrictions
@@ -179,16 +116,181 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
     },
   });
 
+  // Initialize animations
+  useEffect(() => {
+    // Continuous floating animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 3000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 3000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
 
+    // Pulse animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
 
-  // Initialize selected language when i18n is ready
+  // Step change animations
+  useEffect(() => {
+    // Reset animations for new step
+    slideInAnim.setValue(width);
+    scaleInAnim.setValue(0.8);
+    bounceInAnim.setValue(0);
+    fadeAnim.setValue(0);
+
+    // Different entrance animation per step
+    const getEntranceAnimation = () => {
+      switch (currentStep) {
+        case 0:
+          // Welcome: Scale + fade in
+          return Animated.parallel([
+            Animated.timing(scaleInAnim, {
+              toValue: 1,
+              duration: 800,
+              easing: Easing.out(Easing.back(1.1)),
+              useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ]);
+        
+        case 1:
+          // Camera: Slide in from right
+          return Animated.parallel([
+            Animated.timing(slideInAnim, {
+              toValue: 0,
+              duration: 700,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ]);
+        
+        case 2:
+          // AI: Bounce in
+          return Animated.parallel([
+            Animated.spring(bounceInAnim, {
+              toValue: 1,
+              tension: 100,
+              friction: 6,
+              useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: true,
+            }),
+          ]);
+        
+        case 3:
+          // Cooking: Slide up + fade
+          return Animated.parallel([
+            Animated.timing(slideInAnim, {
+              toValue: 0,
+              duration: 600,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ]);
+        
+        case 4:
+          // Dietary: Scale in from small
+          return Animated.parallel([
+            Animated.spring(scaleInAnim, {
+              toValue: 1,
+              tension: 80,
+              friction: 8,
+              useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ]);
+        
+        default:
+          return Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          });
+      }
+    };
+
+    getEntranceAnimation().start();
+
+    // Start specific animations per step
+    if (currentStep === 1) {
+      // Scanning animation
+      setTimeout(() => {
+        Animated.loop(
+          Animated.timing(scanAnim, {
+            toValue: 1,
+            duration: 2000,
+            easing: Easing.linear,
+            useNativeDriver: false,
+          })
+        ).start();
+      }, 700);
+    } else if (currentStep === 2) {
+      // Rotation animation for AI step
+      setTimeout(() => {
+        Animated.loop(
+          Animated.timing(rotateAnim, {
+            toValue: 1,
+            duration: 8000,
+            easing: Easing.linear,
+            useNativeDriver: true,
+          })
+        ).start();
+      }, 500);
+    }
+  }, [currentStep]);
+
   useEffect(() => {
     if (i18n && i18n.language) {
       setSelectedLanguage((i18n.language as 'en' | 'it') || 'en');
     }
   }, [i18n.language]);
 
-  // Safe translation function
   const safeT = (key: string, fallback: string) => {
     try {
       if (!t || typeof t !== 'function') {
@@ -201,12 +303,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
     }
   };
 
-  // Don't render if translation is not ready
   if (!t || typeof t !== 'function') {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: colors.text }}>Loading...</Text>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>{safeT('onboarding.ui.loading', 'Loading...')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -218,42 +319,30 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
       title: safeT('onboarding.welcome.title', 'Never waste food again'),
       subtitle: safeT('onboarding.welcome.subtitle', 'Turn what you have into what you love'),
       description: safeT('onboarding.welcome.description', 'FridgeWise helps you cook delicious meals with ingredients you already have at home.'),
-      icon: <CameraIcon />
     },
     {
       id: 1,
       title: safeT('onboarding.scan.title', 'Snap a photo, get recipes'),
       subtitle: safeT('onboarding.scan.subtitle', 'AI-powered ingredient recognition'),
       description: safeT('onboarding.scan.description', 'Take a photo of your ingredients and let AI do the heavy lifting. No typing, no lists.'),
-      icon: <CameraIcon />
     },
     {
       id: 2,
       title: safeT('onboarding.ai.title', 'Smart suggestions that work'),
       subtitle: safeT('onboarding.ai.subtitle', 'Recipes based on what you actually have'),
       description: safeT('onboarding.ai.description', 'Get personalized recipes that match your ingredients, time, and cooking skills.'),
-      icon: <AIIcon />
     },
     {
       id: 3,
       title: safeT('onboarding.recipes.title', 'Cook with confidence'),
       subtitle: safeT('onboarding.recipes.subtitle', 'Step-by-step guidance'),
       description: safeT('onboarding.recipes.description', 'Clear instructions, cooking tips, and smart timers help you create amazing meals every time.'),
-      icon: <RecipeIcon />
     },
     {
       id: 4,
-      title: safeT('onboarding.language.title', 'Choose Your Language'),
-      subtitle: safeT('onboarding.language.subtitle', 'Cook in your preferred language'),
-      description: safeT('onboarding.language.description', 'Select your language for the best cooking experience.'),
-      icon: <ProfileIcon />
-    },
-    {
-      id: 5,
       title: safeT('onboarding.dietary.title', 'Your Dietary Preferences'),
       subtitle: safeT('onboarding.dietary.subtitle', 'Personalized just for you'),
       description: safeT('onboarding.dietary.description', 'Let us know about any dietary restrictions so we can suggest the right recipes.'),
-      icon: <ProfileIcon />
     }
   ];
 
@@ -287,18 +376,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
     }
   };
 
-  const handleLanguageSelect = (language: 'en' | 'it') => {
-    setSelectedLanguage(language);
-
-    // Safely change language
-    try {
-      if (i18n && typeof i18n.changeLanguage === 'function') {
-        i18n.changeLanguage(language);
-      }
-    } catch (error) {
-      console.warn('Failed to change language:', error);
-    }
-  };
 
   const handleDietaryToggle = (restriction: string) => {
     setSelectedDietaryRestrictions(prev =>
@@ -308,340 +385,436 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
     );
   };
 
-
   const currentStepData = steps[currentStep];
-  const isLanguageStep = currentStep === 4;
-  const isDietaryStep = currentStep === 5;
-  const isLastStep = currentStep === steps.length - 1;
-
-  // Determine if next button should be disabled
-  const isNextDisabled = false;
-
-  // Safety check for currentStepData
-  if (!currentStepData) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: colors.text }}>Loading step...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const isDietaryStep = currentStep === 4;
 
   return (
-    <SafeAreaView style={styles.container} {...panResponder.panHandlers}>
-      <View style={styles.header}>
-        {/* Progress indicators */}
-        <View style={styles.progressContainer}>
-          {steps.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.progressDot,
-                index <= currentStep && styles.progressDotActive
-              ]}
-            />
-          ))}
+    <SafeAreaView style={styles.container} {...swipePanResponder.panHandlers}>
+      {/* Progress Bar */}
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar}>
+          <Animated.View 
+            style={[
+              styles.progressFill,
+              { 
+                width: `${((currentStep + 1) / steps.length) * 100}%`
+              }
+            ]}
+          />
         </View>
-
-        {/* Navigation buttons */}
-        <View style={styles.headerButtons}>
-          {currentStep > 0 && (
-            <TouchableOpacity 
-              style={styles.headerButton}
-              onPress={() => setCurrentStep(currentStep - 1)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.headerButtonText}>Back</Text>
-            </TouchableOpacity>
-          )}
-          
-          {onSkip && currentStep === 0 && (
-            <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-              <Text style={styles.skipButtonText}>
-                {safeT('common.skip', 'Skip')}
-              </Text>
-            </TouchableOpacity>
-          )}
-          
-          {(currentStep < steps.length - 1 || currentStep === steps.length - 1) && (
-            <TouchableOpacity 
-              style={[
-                styles.headerButton,
-                currentStep === steps.length - 1 && styles.completeHeaderButton
-              ]}
-              onPress={() => {
-                if (currentStep < steps.length - 1) {
-                  setCurrentStep(currentStep + 1);
-                } else {
-                  onComplete({
-                    preferredLanguage: selectedLanguage,
-                    dietaryRestrictions: selectedDietaryRestrictions
-                  });
-                }
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={[
-                styles.headerButtonText,
-                currentStep === steps.length - 1 && styles.completeHeaderButtonText
-              ]}>
-                {currentStep === steps.length - 1 ? 'Start' : 'Next'}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <Text style={styles.progressText}>
+          {currentStep + 1} / {steps.length}
+        </Text>
       </View>
 
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={[styles.headerButton, currentStep === 0 && styles.headerButtonDisabled]}
+          onPress={handlePrevious}
+          disabled={currentStep === 0}
+        >
+          <Text style={[styles.headerButtonText, currentStep === 0 && styles.headerButtonTextDisabled]}>
+            ← {safeT('common.back', 'Back')}
+          </Text>
+        </TouchableOpacity>
+
+        {onSkip && currentStep === 0 && (
+          <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
+            <Text style={styles.skipButtonText}>
+              {safeT('common.skip', 'Skip')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity 
+          style={[styles.headerButton, styles.nextButton]}
+          onPress={handleNext}
+        >
+          <Text style={styles.nextButtonText}>
+            {currentStep === steps.length - 1 ? `${safeT('common.start', 'Start')} →` : `${safeT('common.next', 'Next')} →`}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
       <View style={styles.content}>
-        <ScrollView
+        <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Unique layout for each step */}
+          {/* Step 0: Welcome Hero */}
           {currentStep === 0 && (
-            <View style={styles.heroLayout}>
-              <View style={styles.heroContent}>
-                <View style={styles.logoContainer}>
-                  <LogoComponent width={50} height={45} />
+            <Animated.View 
+              style={[
+                styles.heroContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ scale: scaleInAnim }]
+                }
+              ]}
+            >
+              <Animated.View 
+                style={[
+                  styles.logoWrapper,
+                  { 
+                    transform: [
+                      { 
+                        translateY: floatAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -20]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <View style={styles.logoBackground}>
+                  <LogoComponent width={80} height={72} />
                 </View>
-                <Text style={styles.heroTitle}>Your kitchen. Unlimited recipes.</Text>
-                <Text style={styles.heroSubtitle}>AI turns any ingredients into amazing meals</Text>
-                
-                <View style={styles.ingredientGrid}>
-                  <View style={styles.ingredientCircle}>
-                    <Text style={styles.bigEmoji}>🍅</Text>
+              </Animated.View>
+
+              <Text style={styles.heroTitle}>{currentStepData.title}</Text>
+              <Text style={styles.heroSubtitle}>{currentStepData.subtitle}</Text>
+
+              <Animated.View 
+                style={[
+                  styles.ingredientsShowcase,
+                  { transform: [{ scale: pulseAnim }] }
+                ]}
+              >
+                <View style={styles.ingredientRow}>
+                  <View style={styles.ingredientBubble}>
+                    <Text style={styles.ingredientEmoji}>🍅</Text>
                   </View>
-                  <View style={styles.ingredientCircle}>
-                    <Text style={styles.bigEmoji}>🧄</Text>
+                  <View style={styles.ingredientBubble}>
+                    <Text style={styles.ingredientEmoji}>🥕</Text>
                   </View>
-                  <View style={styles.ingredientCircle}>
-                    <Text style={styles.bigEmoji}>🌿</Text>
-                  </View>
-                  <View style={styles.ingredientCircle}>
-                    <Text style={styles.bigEmoji}>🧀</Text>
-                  </View>
-                </View>
-                
-                <Text style={styles.magicText}>✨ = 200+ recipe possibilities</Text>
-                
-                <View style={styles.quickStats}>
-                  <View style={styles.statBubble}>
-                    <Text style={styles.statEmoji}>⚡</Text>
-                    <Text style={styles.statText}>Instant recipes</Text>
-                  </View>
-                  <View style={styles.statBubble}>
-                    <Text style={styles.statEmoji}>🎯</Text>
-                    <Text style={styles.statText}>Zero waste</Text>
+                  <View style={styles.ingredientBubble}>
+                    <Text style={styles.ingredientEmoji}>🧄</Text>
                   </View>
                 </View>
-              </View>
-            </View>
+                <Text style={styles.magicArrow}>↓</Text>
+                <Text style={styles.magicText}>✨ 100+ {safeT('onboarding.ui.recipeIdeas', 'recipe ideas')}</Text>
+              </Animated.View>
+
+              <Text style={styles.heroDescription}>{currentStepData.description}</Text>
+            </Animated.View>
           )}
 
+          {/* Step 1: Camera Scan */}
           {currentStep === 1 && (
-            <View style={styles.scanLayout}>
-              <Text style={styles.scanTitle}>Just point and shoot</Text>
-              <View style={styles.phoneDemo}>
-                <View style={styles.phoneScreen}>
-                  <View style={styles.cameraViewfinder}>
+            <Animated.View 
+              style={[
+                styles.scanContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateX: slideInAnim }]
+                }
+              ]}
+            >
+              <Text style={styles.stepTitle}>{currentStepData.title}</Text>
+              <Text style={styles.stepSubtitle}>{currentStepData.subtitle}</Text>
+
+              <View style={styles.phoneFrameContainer}>
+                <View style={styles.phoneFrame}>
+                  {/* Dynamic Island */}
+                  <View style={styles.dynamicIsland} />
+                  
+                  <View style={styles.phoneScreen}>
                     <Image 
                       source={require('../../assets/fridge.png')} 
-                      style={styles.fridgeImage}
+                      style={styles.cameraPreview}
                       resizeMode="cover"
                     />
-                    <View style={styles.scanningLine}></View>
-                    <Text style={styles.viewfinderText}>Scanning...</Text>
-                  </View>
-                </View>
-                <View style={styles.scanResults}>
-                  <Text style={styles.foundText}>Found:</Text>
-                  <Text style={styles.ingredientFound}>🍅 Tomatoes</Text>
-                  <Text style={styles.ingredientFound}>🧄 Garlic</Text>
-                  <Text style={styles.ingredientFound}>🌿 Basil</Text>
-                </View>
-              </View>
-              <Text style={styles.scanDescription}>AI recognizes ingredients instantly</Text>
-            </View>
-          )}
-
-          {currentStep === 2 && (
-            <View style={styles.gameLayout}>
-              <Text style={styles.gameTitle}>Recipe roulette!</Text>
-              <Text style={styles.gameSubtitle}>Same ingredients, endless possibilities</Text>
-              
-              <View style={styles.rouletteDemo}>
-                <View style={styles.fixedIngredients}>
-                  <View style={styles.smallChip}>
-                    <Text style={styles.chipText}>🍅</Text>
-                  </View>
-                  <View style={styles.smallChip}>
-                    <Text style={styles.chipText}>🧄</Text>
-                  </View>
-                  <View style={styles.smallChip}>
-                    <Text style={styles.chipText}>🌿</Text>
-                  </View>
-                </View>
-                
-                <Text style={styles.plusSign}>+</Text>
-                
-                <View style={styles.rouletteWheel}>
-                  <Text style={styles.wheelEmoji}>🍝</Text>
-                  <Text style={styles.recipeTypeText}>Italian</Text>
-                </View>
-                
-                <Text style={styles.equalsSign}>=</Text>
-                
-                <View style={styles.resultCard}>
-                  <Text style={styles.resultEmoji}>🍝</Text>
-                  <Text style={styles.resultName}>Spaghetti Aglio</Text>
-                  <Text style={styles.resultTime}>15 min</Text>
-                </View>
-              </View>
-              
-              <View style={styles.alternativeResults}>
-                <Text style={styles.alternativesLabel}>Or try:</Text>
-                <View style={styles.miniCards}>
-                  <View style={styles.miniCard}>
-                    <Text style={styles.miniEmoji}>🥗</Text>
-                    <Text style={styles.miniName}>Bruschetta</Text>
-                  </View>
-                  <View style={styles.miniCard}>
-                    <Text style={styles.miniEmoji}>🍕</Text>
-                    <Text style={styles.miniName}>Margherita</Text>
-                  </View>
-                  <View style={styles.miniCard}>
-                    <Text style={styles.miniEmoji}>🍲</Text>
-                    <Text style={styles.miniName}>Soup</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-
-          {currentStep === 3 && (
-            <View style={styles.confidenceLayout}>
-              <Text style={styles.confidenceTitle}>Cook like a pro</Text>
-              <Text style={styles.confidenceSubtitle}>Smart guidance every step of the way</Text>
-              
-              <View style={styles.cookingDemo}>
-                <View style={styles.chefAvatar}>
-                  <Text style={styles.chefEmoji}>👩‍🍳</Text>
-                  <View style={styles.speechBubble}>
-                    <Text style={styles.bubbleText}>Add garlic when oil sizzles!</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.cookingScene}>
-                  <View style={styles.panContainer}>
-                    <Text style={styles.panEmoji}>🍳</Text>
-                    <View style={styles.heatIndicator}>
-                      <Text style={styles.flameEmoji}>🔥</Text>
-                      <Text style={styles.heatText}>Medium heat</Text>
-                    </View>
+                    
+                    {/* Animated Scanning Line */}
+                    <Animated.View 
+                      style={[
+                        styles.scanLine,
+                        {
+                          transform: [{
+                            translateY: scanAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 320]
+                            })
+                          }]
+                        }
+                      ]}
+                    />
+                    
+                    {/* Scan Points - Ingredienti rilevati - Posizioni realistiche */}
+                    {/* Latte - Posizione tipica: porta del frigo, ripiano alto */}
+                    <Animated.View 
+                      style={[
+                        styles.scanPoint, 
+                        { top: '48%', right: '12%' },
+                        {
+                          transform: [
+                            { scale: pulseAnim.interpolate({
+                              inputRange: [1, 1.1],
+                              outputRange: [1, 1.05]
+                            }) }
+                          ]
+                        }
+                      ]}
+                    >
+                      <View style={styles.scanDot} />
+                      <Text style={styles.scanLabel}>{safeT('onboarding.ingredients.milk', 'Latte')}</Text>
+                    </Animated.View>
+                    
+                    {/* Formaggio - Posizione tipica: ripiano centrale del frigo, ora più in basso e leggermente a sinistra */}
+                    <Animated.View 
+                      style={[
+                        styles.scanPoint, 
+                        { top: '48%', left: '18%' },
+                        {
+                          transform: [
+                            { scale: pulseAnim.interpolate({
+                              inputRange: [1, 1.1],
+                              outputRange: [1, 1.1]
+                            }) }
+                          ]
+                        }
+                      ]}
+                    >
+                      <View style={styles.scanDot} />
+                      <Text style={styles.scanLabel}>{safeT('onboarding.ingredients.cheese', 'Formaggio')}</Text>
+                    </Animated.View>
+                    
+                    {/* Uova - Ora in alto a destra (ex latte) */}
+                    <Animated.View 
+                      style={[
+                        styles.scanPoint, 
+                        { top: '25%', right: '8%' },
+                        {
+                          transform: [
+                            { scale: pulseAnim.interpolate({
+                              inputRange: [1, 1.1],
+                              outputRange: [1, 1.2]
+                            }) }
+                          ]
+                        }
+                      ]}
+                    >
+                      <View style={styles.scanDot} />
+                      <Text style={styles.scanLabel}>{safeT('onboarding.ingredients.eggs', 'Uova')}</Text>
+                    </Animated.View>
+                    
+                    {/* Pomodori - Posizione tipica: ripiano alto a sinistra del frigo, ora leggermente più in basso */}
+                    <Animated.View 
+                      style={[
+                        styles.scanPoint, 
+                        { top: '23%', left: '7%' },
+                        {
+                          transform: [
+                            { scale: pulseAnim.interpolate({
+                              inputRange: [1, 1.1],
+                              outputRange: [1, 1.15]
+                            }) }
+                          ]
+                        }
+                      ]}
+                    >
+                      <View style={styles.scanDot} />
+                      <Text style={styles.scanLabel}>{safeT('onboarding.ingredients.tomato', 'Pomodori')}</Text>
+                    </Animated.View>
+                    
+                    {/* Basilico - Più in basso */}
+                    <Animated.View 
+                      style={[
+                        styles.scanPoint, 
+                        { bottom: '18%', left: '30%' },
+                        {
+                          transform: [
+                            { scale: pulseAnim.interpolate({
+                              inputRange: [1, 1.1],
+                              outputRange: [1, 1.12]
+                            }) }
+                          ]
+                        }
+                      ]}
+                    >
+                      <View style={styles.scanDot} />
+                      <Text style={styles.scanLabel}>{safeT('onboarding.ingredients.basil', 'Basilico')}</Text>
+                    </Animated.View>
                   </View>
                   
-                  <View style={styles.smartFeatures}>
-                    <View style={styles.feature}>
-                      <Text style={styles.featureIcon}>⏱️</Text>
-                      <Text style={styles.featureText}>Smart timers</Text>
-                    </View>
-                    <View style={styles.feature}>
-                      <Text style={styles.featureIcon}>🔔</Text>
-                      <Text style={styles.featureText}>Audio cues</Text>
-                    </View>
-                    <View style={styles.feature}>
-                      <Text style={styles.featureIcon}>💡</Text>
-                      <Text style={styles.featureText}>Pro tips</Text>
-                    </View>
+                  {/* iPhone Home Indicator */}
+                  <View style={styles.homeIndicator} />
+                </View>
+              </View>
+
+              <Text style={styles.stepDescription}>{currentStepData.description}</Text>
+            </Animated.View>
+          )}
+
+          {/* Step 2: AI Suggestions */}
+          {currentStep === 2 && (
+            <Animated.View 
+              style={[
+                styles.aiContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ scale: bounceInAnim }]
+                }
+              ]}
+            >
+              <Text style={styles.stepTitle}>{currentStepData.title}</Text>
+              <Text style={styles.stepSubtitle}>{currentStepData.subtitle}</Text>
+
+              <View style={styles.aiFlowContainer}>
+                <View style={styles.ingredientsInput}>
+                  <View style={styles.ingredientChip}>
+                    <Text style={styles.chipEmoji}>🍅</Text>
+                    <Text style={styles.chipText}>{safeT('onboarding.ingredients.tomato', 'Tomato')}</Text>
+                  </View>
+                  <View style={styles.ingredientChip}>
+                    <Text style={styles.chipEmoji}>🧄</Text>
+                    <Text style={styles.chipText}>{safeT('onboarding.ingredients.garlic', 'Garlic')}</Text>
+                  </View>
+                  <View style={styles.ingredientChip}>
+                    <Text style={styles.chipEmoji}>🌿</Text>
+                    <Text style={styles.chipText}>{safeT('onboarding.ingredients.basil', 'Basil')}</Text>
+                  </View>
+                </View>
+
+                <Animated.View 
+                  style={[
+                    styles.aiProcessor,
+                    {
+                      transform: [{
+                        rotate: rotateAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '360deg']
+                        })
+                      }]
+                    }
+                  ]}
+                >
+                  <Text style={styles.aiIcon}>🤖</Text>
+                  <Text style={styles.aiText}>{safeT('onboarding.ui.ai', 'AI')}</Text>
+                </Animated.View>
+
+                <View style={styles.recipeSuggestions}>
+                  <View style={styles.recipeCard}>
+                    <Text style={styles.recipeEmoji}>🍝</Text>
+                    <Text style={styles.recipeName}>{safeT('onboarding.demoRecipes.pastaArrabbiata', 'Pasta Arrabbiata')}</Text>
+                    <Text style={styles.recipeTime}>15 {safeT('onboarding.ui.minutes', 'min')}</Text>
+                  </View>
+                  <View style={styles.recipeCard}>
+                    <Text style={styles.recipeEmoji}>🍕</Text>
+                    <Text style={styles.recipeName}>{safeT('onboarding.demoRecipes.margheritaPizza', 'Margherita Pizza')}</Text>
+                    <Text style={styles.recipeTime}>25 {safeT('onboarding.ui.minutes', 'min')}</Text>
                   </View>
                 </View>
               </View>
-              
-              <View style={styles.successRate}>
-                <Text style={styles.successText}>98% success rate with our guidance</Text>
-                <View style={styles.stars}>
-                  <Text style={styles.starText}>⭐⭐⭐⭐⭐</Text>
+
+              <Text style={styles.stepDescription}>{currentStepData.description}</Text>
+            </Animated.View>
+          )}
+
+          {/* Step 3: Cooking Guidance */}
+          {currentStep === 3 && (
+            <Animated.View 
+              style={[
+                styles.cookingContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideInAnim.interpolate({
+                    inputRange: [0, width],
+                    outputRange: [0, 50]
+                  }) }]
+                }
+              ]}
+            >
+              <Text style={styles.stepTitle}>{currentStepData.title}</Text>
+              <Text style={styles.stepSubtitle}>{currentStepData.subtitle}</Text>
+
+              <View style={styles.cookingDemo}>
+                <View style={styles.recipeSteps}>
+                  <View style={[styles.stepItem, styles.stepActive]}>
+                    <View style={styles.stepNumber}>
+                      <Text style={styles.stepNumberText}>1</Text>
+                    </View>
+                    <Text style={styles.stepText}>{safeT('onboarding.cooking.steps.heatOil', 'Heat olive oil in a pan')}</Text>
+                  </View>
+                  
+                  <View style={[styles.stepItem, styles.stepNext]}>
+                    <View style={styles.stepNumber}>
+                      <Text style={styles.stepNumberText}>2</Text>
+                    </View>
+                    <Text style={styles.stepText}>{safeT('onboarding.cooking.steps.addGarlic', 'Add minced garlic')}</Text>
+                  </View>
+                  
+                  <View style={styles.stepItem}>
+                    <View style={styles.stepNumber}>
+                      <Text style={styles.stepNumberText}>3</Text>
+                    </View>
+                    <Text style={styles.stepText}>{safeT('onboarding.cooking.steps.addTomatoes', 'Add crushed tomatoes')}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.cookingVisual}>
+                  <View style={styles.panIcon}>
+                    <Text style={styles.panEmoji}>🍳</Text>
+                  </View>
+                  <View style={styles.timerBadge}>
+                    <Text style={styles.timerIcon}>⏱️</Text>
+                    <Text style={styles.timerText}>2:45</Text>
+                  </View>
+                </View>
+
+                <View style={styles.cookingTips}>
+                  <Text style={styles.tipIcon}>💡</Text>
+                  <Text style={styles.tipText}>{safeT('onboarding.cooking.tip', 'Tip: Keep heat at medium to avoid burning the garlic')}</Text>
                 </View>
               </View>
-            </View>
+
+              <Text style={styles.stepDescription}>{currentStepData.description}</Text>
+            </Animated.View>
           )}
 
-          {/* Language Selection */}
-          {isLanguageStep && (
-            <View style={styles.selectionContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.languageOption,
-                  selectedLanguage === 'en' && styles.languageOptionSelected
-                ]}
-                onPress={() => handleLanguageSelect('en')}
-              >
-                <Text style={styles.languageFlag}>🇺🇸</Text>
-                <View style={styles.languageTextContainer}>
-                  <Text style={styles.languageTitle}>English</Text>
-                  <Text style={styles.languageSubtitle}>English</Text>
-                </View>
-                {selectedLanguage === 'en' && (
-                  <View style={styles.checkmark}>
-                    <Text style={styles.checkmarkText}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.languageOption,
-                  selectedLanguage === 'it' && styles.languageOptionSelected
-                ]}
-                onPress={() => handleLanguageSelect('it')}
-              >
-                <Text style={styles.languageFlag}>🇮🇹</Text>
-                <View style={styles.languageTextContainer}>
-                  <Text style={styles.languageTitle}>Italiano</Text>
-                  <Text style={styles.languageSubtitle}>Italian</Text>
-                </View>
-                {selectedLanguage === 'it' && (
-                  <View style={styles.checkmark}>
-                    <Text style={styles.checkmarkText}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Dietary Restrictions Selection */}
+          {/* Step 4: Dietary Preferences */}
           {isDietaryStep && (
-            <View style={styles.selectionContainer}>
+            <Animated.View 
+              style={[
+                styles.selectionContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ scale: scaleInAnim }]
+                }
+              ]}
+            >
+              <Text style={styles.stepTitle}>{currentStepData.title}</Text>
+              <Text style={styles.stepSubtitle}>{currentStepData.subtitle}</Text>
+
               <View style={styles.dietaryGrid}>
                 {dietaryOptions.map((option) => (
                   <TouchableOpacity
                     key={option.key}
                     style={[
-                      styles.dietaryOption,
-                      selectedDietaryRestrictions.includes(option.key) && styles.dietaryOptionSelected
+                      styles.dietaryCard,
+                      selectedDietaryRestrictions.includes(option.key) && styles.dietaryCardSelected
                     ]}
                     onPress={() => handleDietaryToggle(option.key)}
                   >
                     <Text style={styles.dietaryEmoji}>{option.emoji}</Text>
-                    <Text style={styles.dietaryLabel}>{option.label}</Text>
-                    {selectedDietaryRestrictions.includes(option.key) && (
-                      <View style={styles.dietaryCheckmark}>
-                        <Text style={styles.checkmarkText}>✓</Text>
-                      </View>
-                    )}
+                    <Text style={[
+                      styles.dietaryLabel,
+                      selectedDietaryRestrictions.includes(option.key) && styles.dietaryLabelSelected
+                    ]}>{option.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
+
               <Text style={styles.selectionHint}>
                 {safeT('onboarding.dietary.hint', 'You can select multiple options or skip this step')}
               </Text>
-            </View>
+            </Animated.View>
           )}
         </ScrollView>
       </View>
-
-
     </SafeAreaView>
   );
 };
@@ -651,952 +824,578 @@ const getStyles = (colors: any) => StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: colors.text,
+    fontSize: 16,
+  },
+  
+  // Progress Bar
+  progressContainer: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
-    position: 'relative',
   },
-  
-  headerButtons: {
+  progressBar: {
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+
+  // Header
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
   },
-  
   headerButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: colors.surface,
   },
-  
+  headerButtonDisabled: {
+    opacity: 0.5,
+  },
   headerButtonText: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: colors.text,
     fontWeight: '600',
   },
-  
-  completeHeaderButton: {
+  headerButtonTextDisabled: {
+    color: colors.textSecondary,
+  },
+  nextButton: {
     backgroundColor: colors.primary,
   },
-  
-  completeHeaderButtonText: {
+  nextButtonText: {
     color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  
   skipButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
   },
   skipButtonText: {
     fontSize: 14,
     color: colors.textSecondary,
     fontWeight: '500',
   },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 15,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-  },
-  progressDotActive: {
-    backgroundColor: colors.primary,
-  },
+
+  // Content
   content: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
-  selectionContainer: {
+
+  // Step 0: Hero
+  heroContainer: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
-  languageOption: {
-    flexDirection: 'row',
+  logoWrapper: {
+    marginBottom: 20,
+  },
+  logoBackground: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: colors.text,
+    textAlign: 'center',
     marginBottom: 12,
-    width: width - 40,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    lineHeight: 38,
+  },
+  heroSubtitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 40,
+    lineHeight: 26,
+  },
+  ingredientsShowcase: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  ingredientRow: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 20,
+  },
+  ingredientBubble: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  ingredientEmoji: {
+    fontSize: 36,
+  },
+  magicArrow: {
+    fontSize: 24,
+    color: colors.primary,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  magicText: {
+    fontSize: 18,
+    color: colors.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  heroDescription: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: 20,
+  },
+
+  // Step 1: Scan
+  scanContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  stepTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 34,
+  },
+  stepSubtitle: {
+    fontSize: 18,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 40,
+    fontWeight: '600',
+  },
+  phoneFrameContainer: {
+    marginBottom: 40,
+  },
+  phoneFrame: {
+    width: 220,
+    height: 380,
+    backgroundColor: '#1a1a1a', // Titanium Black come iPhone 16 Pro
+    borderRadius: 32, // Bordi più arrotondati come iPhone moderni
+    padding: 6,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 12,
+    position: 'relative',
+  },
+  phoneScreen: {
+    flex: 1,
+    backgroundColor: '#000',
+    borderRadius: 26, // Arrotondato per seguire la cornice
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  // iPhone 16 Pro Dynamic Island
+  dynamicIsland: {
+    position: 'absolute',
+    top: 8,
+    left: '50%',
+    marginLeft: -37, // Half of width (74/2)
+    width: 74,
+    height: 20,
+    backgroundColor: '#000',
+    borderRadius: 12,
+    zIndex: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.6,
+    shadowRadius: 2,
+    elevation: 6,
+  },
+  // iPhone Home Indicator (bottom bar)
+  homeIndicator: {
+    position: 'absolute',
+    bottom: 8,
+    left: '50%',
+    marginLeft: -40, // Half of width (80/2)
+    width: 80,
+    height: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 2,
+    zIndex: 20,
+  },
+  cameraPreview: {
+    width: '100%',
+    height: '100%',
+  },
+  scanLine: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    height: 2,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
     shadowRadius: 4,
     elevation: 2,
   },
-  languageOptionSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '10',
+  scanPoint: {
+    position: 'absolute',
+    alignItems: 'center',
+    zIndex: 10,
   },
-  languageFlag: {
-    fontSize: 32,
-    marginRight: 16,
+  scanDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.primary,
+    marginBottom: 4,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.9)',
   },
-  languageTextContainer: {
+  scanLabel: {
+    fontSize: 11,
+    color: 'white',
+    fontWeight: '700',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    minWidth: 60,
+    textAlign: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  stepDescription: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 20,
+  },
+
+  // Step 2: AI
+  aiContainer: {
     flex: 1,
+    alignItems: 'center',
+    paddingVertical: 20,
   },
-  languageTitle: {
+  aiFlowContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  ingredientsInput: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 30,
+  },
+  ingredientChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    gap: 6,
+  },
+  chipEmoji: {
     fontSize: 18,
-    fontWeight: '600',
+  },
+  chipText: {
+    fontSize: 14,
     color: colors.text,
+    fontWeight: '600',
+  },
+  aiProcessor: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  aiIcon: {
+    fontSize: 32,
+  },
+  aiText: {
+    fontSize: 12,
+    color: 'white',
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  recipeSuggestions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  recipeCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    minWidth: 120,
+  },
+  recipeEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  recipeName: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '700',
+    textAlign: 'center',
     marginBottom: 4,
   },
-  languageSubtitle: {
-    fontSize: 14,
+  recipeTime: {
+    fontSize: 12,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
-  checkmark: {
-    width: 24,
-    height: 24,
+
+  // Step 3: Cooking
+  cookingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  cookingDemo: {
+    width: '100%',
+    marginBottom: 40,
+  },
+  recipeSteps: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  stepItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  stepActive: {
+    opacity: 1,
+  },
+  stepNext: {
+    opacity: 0.7,
+  },
+  stepNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  stepNumberText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  stepText: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  cookingVisual: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  panIcon: {
+    alignItems: 'center',
+  },
+  panEmoji: {
+    fontSize: 48,
+  },
+  timerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
+    gap: 6,
+  },
+  timerIcon: {
+    fontSize: 16,
+  },
+  timerText: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '700',
+  },
+  cookingTips: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  tipIcon: {
+    fontSize: 20,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 14,
+    color: 'white',
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+
+  // Selection Steps (Dietary)
+  selectionContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  selectedBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkmarkText: {
+  selectedBadgeText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
+
+  // Dietary Grid
   dietaryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 20,
+    gap: 10,
+    justifyContent: 'space-between',
+    marginBottom: 30,
   },
-  dietaryOption: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
+  dietaryCard: {
     alignItems: 'center',
-    minWidth: (width - 80) / 2,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 14,
+    width: (width - 60) / 2,
     borderWidth: 2,
     borderColor: 'transparent',
     shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
     position: 'relative',
   },
-  dietaryOptionSelected: {
+  dietaryCardSelected: {
     borderColor: colors.primary,
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primary,
   },
   dietaryEmoji: {
-    fontSize: 24,
+    fontSize: 28,
     marginBottom: 8,
   },
   dietaryLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
+    lineHeight: 16,
   },
-  dietaryCheckmark: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+  dietaryLabelSelected: {
+    color: 'white',
   },
   selectionHint: {
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  navigation: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingBottom: 20,
-    paddingTop: 12,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  navButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  backButton: {
-    backgroundColor: 'transparent',
-  },
-  nextButton: {
-    backgroundColor: colors.primary,
-  },
-  navButtonDisabled: {
-    opacity: 0.3,
-  },
-  navButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  backButtonText: {
-    color: colors.textSecondary,
-  },
-  nextButtonText: {
-    color: 'white',
-  },
-  navButtonTextDisabled: {
-    color: colors.border,
-  },
-  
-  // Step 0: Hero Layout - Redesigned
-  heroLayout: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 30,
-  },
-  
-  heroContent: {
-    alignItems: 'center',
-  },
-  
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  
-  heroTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-    lineHeight: 38,
-    marginBottom: 12,
-  },
-  
-  heroSubtitle: {
-    fontSize: 18,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 40,
-    fontWeight: '500',
-  },
-  
-  ingredientGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 15,
-    marginBottom: 25,
-  },
-  
-  ingredientCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  
-  bigEmoji: {
-    fontSize: 32,
-  },
-  
-  magicText: {
-    fontSize: 18,
-    color: colors.primary,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  
-  quickStats: {
-    flexDirection: 'row',
-    gap: 20,
-  },
-  
-  statBubble: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-    elevation: 2,
-  },
-  
-  statEmoji: {
-    fontSize: 24,
-    marginBottom: 5,
-  },
-  
-  statText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  
-  // Step 1: Scan Layout
-  scanLayout: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  
-  scanTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 40,
-  },
-  
-  phoneDemo: {
-    alignItems: 'center',
-    gap: 30,
-  },
-  
-  phoneScreen: {
-    width: 200,
-    height: 300,
-    backgroundColor: colors.surface,
-    borderRadius: 25,
-    padding: 15,
-    elevation: 8,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-  },
-  
-  cameraViewfinder: {
-    flex: 1,
-    backgroundColor: '#00000010',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  
-  fridgeImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-  
-  scanningLine: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    right: 20,
-    height: 2,
-    backgroundColor: colors.primary,
-  },
-  
-  viewfinderText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 20,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  
-  scanResults: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    elevation: 4,
-    gap: 8,
-  },
-  
-  foundText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: 8,
-  },
-  
-  ingredientFound: {
-    fontSize: 18,
-    color: colors.text,
-    fontWeight: '500',
-  },
-  
-  scanDescription: {
-    fontSize: 18,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  
-  // Step 2: AI Layout
-  aiLayout: {
-    paddingHorizontal: 20,
-    marginTop: 40,
-  },
-  
-  aiTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  
-  matchingDemo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  
-  ingredientsColumn: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  
-  recipesColumn: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  
-  columnTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  
-  ingredientChip: {
-    backgroundColor: colors.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 8,
-    elevation: 2,
-  },
-  
-  ingredientChipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-  },
-  
-  aiMagic: {
-    alignItems: 'center',
-    marginHorizontal: 20,
-  },
-  
-  aiIcon: {
-    fontSize: 40,
-    marginBottom: 5,
-  },
-  
-  aiText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  
-  sparkles: {
-    flexDirection: 'row',
-    gap: 3,
-    marginTop: 5,
-  },
-  
-  sparkle: {
-    fontSize: 12,
-    color: colors.primary,
-  },
-  
-  recipeMatch: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-    elevation: 3,
-    minWidth: 100,
-  },
-  
-  recipeIcon: {
-    fontSize: 28,
-    marginBottom: 5,
-  },
-  
-  recipeTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 3,
-  },
-  
-  matchScore: {
-    fontSize: 10,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  
-  // Step 3: Cooking Layout
-  cookingLayout: {
-    paddingHorizontal: 20,
-    marginTop: 40,
-  },
-  
-  cookingTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  
-  cookingGuide: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 25,
-    elevation: 6,
-  },
-  
-  stepProgress: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 15,
-    marginBottom: 25,
-  },
-  
-  progressStep: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  
-  completed: {
-    backgroundColor: colors.primary,
-  },
-  
-  active: {
-    backgroundColor: colors.primary,
-    borderWidth: 3,
-    borderColor: colors.primary + '50',
-  },
-  
-  stepNumber: {
-    color: 'white',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  
-  currentStep: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  
-  stepInstruction: {
-    fontSize: 18,
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 15,
-    fontWeight: '500',
-    lineHeight: 24,
-  },
-  
-  timer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary + '15',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 8,
-  },
-  
-  timerIcon: {
-    fontSize: 18,
-  },
-  
-  timerText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  
-  cookingTips: {
-    backgroundColor: colors.primary + '10',
-    borderRadius: 12,
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  
-  tipLabel: {
-    fontSize: 16,
-  },
-  
-  tipText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    flex: 1,
     lineHeight: 20,
-  },
-  
-  // Step 2: Game Layout (Recipe Roulette)
-  gameLayout: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  
-  gameTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  
-  gameSubtitle: {
-    fontSize: 18,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 40,
-    fontWeight: '500',
-  },
-  
-  rouletteDemo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 15,
-    marginBottom: 40,
-  },
-  
-  fixedIngredients: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  
-  smallChip: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  
-  chipText: {
-    fontSize: 20,
-  },
-  
-  plusSign: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.textSecondary,
-  },
-  
-  rouletteWheel: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 6,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  
-  wheelEmoji: {
-    fontSize: 32,
-    marginBottom: 4,
-  },
-  
-  recipeTypeText: {
-    fontSize: 10,
-    color: 'white',
-    fontWeight: '700',
-  },
-  
-  equalsSign: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.textSecondary,
-  },
-  
-  resultCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    minWidth: 100,
-  },
-  
-  resultEmoji: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  
-  resultName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  
-  resultTime: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  
-  alternativeResults: {
-    alignItems: 'center',
-  },
-  
-  alternativesLabel: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 15,
-    fontWeight: '600',
-  },
-  
-  miniCards: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  
-  miniCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    minWidth: 70,
-  },
-  
-  miniEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  
-  miniName: {
-    fontSize: 10,
-    color: colors.text,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  
-  // Step 3: Confidence Layout (Cook Like a Pro)
-  confidenceLayout: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  
-  confidenceTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  
-  confidenceSubtitle: {
-    fontSize: 18,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 40,
-    fontWeight: '500',
-  },
-  
-  cookingDemo: {
-    alignItems: 'center',
-    gap: 30,
-    marginBottom: 40,
-  },
-  
-  chefAvatar: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  
-  chefEmoji: {
-    fontSize: 60,
-    marginBottom: 10,
-  },
-  
-  speechBubble: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 12,
-    marginTop: 10,
-    elevation: 3,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    maxWidth: 200,
-  },
-  
-  bubbleText: {
-    fontSize: 14,
-    color: colors.text,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  
-  cookingScene: {
-    alignItems: 'center',
-    gap: 20,
-  },
-  
-  panContainer: {
-    alignItems: 'center',
-  },
-  
-  panEmoji: {
-    fontSize: 60,
-    marginBottom: 10,
-  },
-  
-  heatIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 6,
-  },
-  
-  flameEmoji: {
-    fontSize: 16,
-  },
-  
-  heatText: {
-    fontSize: 12,
-    color: 'white',
-    fontWeight: '600',
-  },
-  
-  smartFeatures: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  
-  feature: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 12,
-    elevation: 2,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    minWidth: 70,
-  },
-  
-  featureIcon: {
-    fontSize: 20,
-    marginBottom: 6,
-  },
-  
-  featureText: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  
-  successRate: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    elevation: 2,
-  },
-  
-  successText: {
-    fontSize: 16,
-    color: 'white',
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  
-  stars: {
-    alignItems: 'center',
-  },
-  
-  starText: {
-    fontSize: 18,
   },
 });

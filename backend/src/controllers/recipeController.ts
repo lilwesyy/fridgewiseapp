@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import { Recipe } from '../models/Recipe';
 import { GeminiService } from '../services/geminiService';
 import { cloudinaryService } from '../services/cloudinaryService';
+import { DailyUsage } from '../models/DailyUsage';
 import { APIResponse } from '@/types';
 
 // Helper function to normalize dietary tags
@@ -177,6 +178,14 @@ export const generateRecipe = async (req: AuthRequest, res: Response<APIResponse
       _id: null,
       id: null
     };
+
+    // Increment daily usage counter after successful generation
+    try {
+      await DailyUsage.incrementRecipeGeneration(user.id);
+    } catch (usageError) {
+      console.error('Failed to increment daily usage:', usageError);
+      // Don't fail the request if usage tracking fails
+    }
 
     res.status(201).json({
       success: true,

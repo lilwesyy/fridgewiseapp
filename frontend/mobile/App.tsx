@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, TextInput, ScrollView, SafeAreaView, StatusBar as RNStatusBar, Animated, Platform } from 'react-native';
+import { useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
@@ -152,8 +153,9 @@ const PasswordStrengthIndicator: React.FC<{ strength: number; colors: any; t: an
 
 const AppContent: React.FC = () => {
   const { t, i18n: i18nInstance } = useTranslation();
-  const { user, token, isLoading, login, register, logout, forgotPassword, resetPassword } = useAuth();
+  const { user, token, isLoading, login, register, logout, forgotPassword, resetPassword, sendEmailVerification, verifyEmail } = useAuth();
   const { isDarkMode, themeMode, colors } = useTheme();
+  const insets = useSafeAreaInsets();
   
   // Handle splash screen
   useEffect(() => {
@@ -195,7 +197,7 @@ const AppContent: React.FC = () => {
     currentRecipeIndex: 0,
   });
 
-  const [authMode, setAuthMode] = useState<'welcome' | 'login' | 'register' | 'forgot-password' | 'verify-code' | 'reset-password'>('welcome');
+  const [authMode, setAuthMode] = useState<'welcome' | 'login' | 'register' | 'forgot-password' | 'verify-code' | 'reset-password' | 'verify-email'>('welcome');
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null); // null = loading, true = show, false = don't show
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [loginForm, setLoginForm] = useState({
@@ -208,6 +210,10 @@ const AppContent: React.FC = () => {
     password: '',
     confirmPassword: '',
     acceptTerms: false,
+  });
+  const [emailVerificationForm, setEmailVerificationForm] = useState({
+    email: '',
+    token: ''
   });
   
   const [forgotPasswordForm, setForgotPasswordForm] = useState({
@@ -229,6 +235,11 @@ const AppContent: React.FC = () => {
     email: { isValid: false, message: '' },
     password: { isValid: false, message: '', strength: 0 },
     confirmPassword: { isValid: false, message: '' },
+  });
+
+  const [loginValidation, setLoginValidation] = useState({
+    email: { isValid: true, message: '' },
+    password: { isValid: true, message: '' },
   });
 
   const [notification, setNotification] = useState({
@@ -288,6 +299,29 @@ const AppContent: React.FC = () => {
     performInitialHealthCheck();
   }, []);
 
+  // Reset onboarding when user logs out or deletes account
+  useEffect(() => {
+    const handleUserLogout = async () => {
+      if (user === null && token === null) {
+        // User has logged out or deleted account, check if onboarding should be reset
+        try {
+          const onboardingStatus = await AsyncStorage.getItem('onboarding_completed');
+          if (onboardingStatus === null) {
+            // onboarding_completed was removed (likely from account deletion)
+            // Use the same resetOnboarding function as the login page
+            await resetOnboarding();
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status after logout:', error);
+          // Default to resetting onboarding completely
+          await resetOnboarding();
+        }
+      }
+    };
+
+    handleUserLogout();
+  }, [user, token]);
+
   const handleRetryConnection = async () => {
     setBackendStatus(prev => ({ ...prev, isCheckingHealth: true }));
     
@@ -319,10 +353,10 @@ const AppContent: React.FC = () => {
       // Update language immediately
       i18nInstance.changeLanguage(preferences.preferredLanguage);
       
-      // Hide onboarding and show welcome screen
+      // Hide onboarding and show register screen
       setShowOnboarding(false);
       setOnboardingCompleted(true);
-      setAuthMode('welcome');
+      setAuthMode('register');
     } catch (error) {
       console.error('Error saving onboarding completion:', error);
       // Still proceed to hide onboarding
@@ -351,15 +385,50 @@ const AppContent: React.FC = () => {
   };
 
   const handleLogin = async () => {
+    // Validate login form
+    const emailValidation = validateLoginEmail(loginForm.email);
+    const passwordValidation = validateLoginPassword(loginForm.password);
+    
+    setLoginValidation({
+      email: emailValidation,
+      password: passwordValidation,
+    });
+
+    // Check if validation passed
+    if (!emailValidation.isValid || !passwordValidation.isValid) {
+      return;
+    }
+
     try {
       await login(loginForm.email, loginForm.password);
     } catch (error: any) {
-      setNotification({
-        visible: true,
-        type: 'error',
-        title: safeT('common.error'),
-        message: error.message,
-      });
+      // Check if the error is due to unverified email
+      if (error.requireEmailVerification) {
+        // Pre-fill the email and redirect to verification screen
+        setEmailVerificationForm({ email: error.email || loginForm.email, token: '' });
+        setAuthMode('verify-email');
+        // Send verification code automatically
+        try {
+          await sendEmailVerification(error.email || loginForm.email);
+        } catch (sendError) {
+          console.error('Failed to send verification code:', sendError);
+        }
+      } else {
+        // Check for specific error types and set field-specific errors
+        if (error.message && error.message.toLowerCase().includes('invalid credentials')) {
+          setLoginValidation({
+            email: { isValid: false, message: safeT('auth.loginError') },
+            password: { isValid: false, message: safeT('auth.loginError') },
+          });
+        } else {
+          setNotification({
+            visible: true,
+            type: 'error',
+            title: safeT('common.error'),
+            message: error.message,
+          });
+        }
+      }
     }
   };
 
@@ -414,6 +483,37 @@ const AppContent: React.FC = () => {
       return { isValid: false, message: safeT('validation.passwordsDoNotMatch') };
     }
     return { isValid: true, message: '' };
+  };
+
+  // Login validation functions (simpler than registration)
+  const validateLoginEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      return { isValid: false, message: safeT('validation.emailRequired') };
+    }
+    if (!emailRegex.test(email)) {
+      return { isValid: false, message: safeT('validation.emailInvalid') };
+    }
+    return { isValid: true, message: '' };
+  };
+
+  const validateLoginPassword = (password: string) => {
+    if (!password) {
+      return { isValid: false, message: safeT('validation.passwordRequired') };
+    }
+    return { isValid: true, message: '' };
+  };
+
+  const handleLoginFormChange = (field: string, value: string) => {
+    const newForm = { ...loginForm, [field]: value };
+    setLoginForm(newForm);
+    
+    // Clear validation errors when user starts typing
+    if (field === 'email') {
+      setLoginValidation(prev => ({ ...prev, email: { isValid: true, message: '' } }));
+    } else if (field === 'password') {
+      setLoginValidation(prev => ({ ...prev, password: { isValid: true, message: '' } }));
+    }
   };
 
   const handleRegisterFormChange = (field: string, value: string | boolean) => {
@@ -494,10 +594,12 @@ const AppContent: React.FC = () => {
         preferredLanguage = (i18nInstance?.language as 'en' | 'it') || 'en';
       }
       
-      await register(registerForm.email, registerForm.password, registerForm.name, preferredLanguage);
+      await register(registerForm.email, registerForm.password, registerForm.name, preferredLanguage, dietaryRestrictions);
       
-      // If user registered successfully and we have dietary restrictions from onboarding,
-      // we could update their profile here, but for now we'll keep it simple
+      // After successful registration, send verification email and go to verification screen
+      setEmailVerificationForm({ email: registerForm.email, token: '' });
+      await sendEmailVerification(registerForm.email);
+      setAuthMode('verify-email');
       
     } catch (error: any) {
       setNotification({
@@ -681,6 +783,56 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleEmailVerification = async () => {
+    try {
+      await verifyEmail(emailVerificationForm.email, emailVerificationForm.token);
+      
+      setNotification({
+        visible: true,
+        type: 'success',
+        title: safeT('auth.verificationSuccess', 'Email Verified'),
+        message: safeT('auth.verificationSuccessMessage', 'Your email has been verified successfully! Welcome to FridgeWise.'),
+      });
+      
+      // Clear forms - user will be automatically logged in
+      setEmailVerificationForm({ email: '', token: '' });
+      setRegisterForm({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        acceptTerms: false,
+      });
+      
+    } catch (error: any) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: error.message || safeT('auth.verificationError', 'Failed to verify email. Please try again.'),
+      });
+    }
+  };
+
+  const handleResendVerificationCode = async () => {
+    try {
+      await sendEmailVerification(emailVerificationForm.email);
+      setNotification({
+        visible: true,
+        type: 'success',
+        title: safeT('auth.codeSent', 'Code Sent'),
+        message: safeT('auth.verificationCodeSent', 'A new verification code has been sent to your email.'),
+      });
+    } catch (error: any) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: error.message || safeT('auth.resendError', 'Failed to resend code. Please try again.'),
+      });
+    }
+  };
+
   const handleGoBack = () => {
     if (appState.currentScreen === 'camera') {
       setAppState({ ...appState, currentScreen: 'home', ingredients: [] });
@@ -846,9 +998,12 @@ const AppContent: React.FC = () => {
             </View>
 
           </ScrollView>
+          <StatusBar style={isDarkMode ? "light" : "dark"} />
+          </AnimatedContainer>
+          </SafeAreaView>
           
           <AnimatedContainer animationType="slideUp" delay={150}>
-          <View style={styles.fixedBottomButtons}>
+          <View style={[styles.fixedBottomButtons, { paddingBottom: Math.max(insets.bottom, 16) }]}>
             <TouchableOpacity 
               style={styles.primaryButton} 
               onPress={() => setAuthMode('register')}
@@ -866,9 +1021,6 @@ const AppContent: React.FC = () => {
           </View>
           </AnimatedContainer>
           
-          <StatusBar style={isDarkMode ? "light" : "dark"} />
-          </AnimatedContainer>
-          </SafeAreaView>
           {renderNotificationModal()}
         </>
       );
@@ -893,34 +1045,50 @@ const AppContent: React.FC = () => {
             <View style={styles.authForm}>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>{safeT('auth.email')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={loginForm.email}
-                  onChangeText={(text) => setLoginForm({ ...loginForm, email: text })}
-                  placeholder={safeT('auth.email')}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="emailAddress"
-                  autoComplete="email"
-                  placeholderTextColor={colors.textSecondary}
-                />
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      !loginValidation.email.isValid ? styles.inputError : null
+                    ]}
+                    value={loginForm.email}
+                    onChangeText={(text) => handleLoginFormChange('email', text)}
+                    placeholder={safeT('auth.email')}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="emailAddress"
+                    autoComplete="email"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+                {!loginValidation.email.isValid && (
+                  <Text style={styles.errorText}>{loginValidation.email.message}</Text>
+                )}
               </View>
               
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>{safeT('auth.password')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={loginForm.password}
-                  onChangeText={(text) => setLoginForm({ ...loginForm, password: text })}
-                  placeholder={safeT('auth.password')}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="password"
-                  autoComplete="current-password"
-                  placeholderTextColor={colors.textSecondary}
-                />
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      !loginValidation.password.isValid ? styles.inputError : null
+                    ]}
+                    value={loginForm.password}
+                    onChangeText={(text) => handleLoginFormChange('password', text)}
+                    placeholder={safeT('auth.password')}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="password"
+                    autoComplete="current-password"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+                {!loginValidation.password.isValid && (
+                  <Text style={styles.errorText}>{loginValidation.password.message}</Text>
+                )}
               </View>
               
               <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
@@ -1225,7 +1393,7 @@ const AppContent: React.FC = () => {
               </Text>
               
               <View style={styles.otpContainer}>
-                <Text style={styles.label}>{safeT('auth.resetCode')}</Text>
+                <Text style={[styles.label, { textAlign: 'center' }]}>{safeT('auth.resetCode')}</Text>
                 <OTPInput
                   length={6}
                   value={verifyCodeForm.code}
@@ -1326,6 +1494,62 @@ const AppContent: React.FC = () => {
               >
                 <Text style={styles.linkButtonText}>
                   {safeT('auth.backToLogin')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+          <StatusBar style={isDarkMode ? "light" : "dark"} />
+          </AnimatedContainer>
+          </SafeAreaView>
+          {renderNotificationModal()}
+        </>
+      );
+    }
+
+    if (authMode === 'verify-email') {
+      return (
+        <>
+          <SafeAreaView style={styles.authContainer}>
+            <AnimatedContainer animationType="scale">
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.authHeader}>
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => setAuthMode('register')}
+              >
+                <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
+              </TouchableOpacity>
+              <Text style={styles.authTitle}>{safeT('auth.verifyEmail', 'Verify Email')}</Text>
+            </View>
+            
+            <View style={styles.authForm}>
+              <Text style={styles.instructionText}>
+                {safeT('auth.verifyEmailInstructions', 'Enter the 6-digit code sent to your email address to verify your account.')}
+              </Text>
+              
+              <Text style={styles.emailDisplayText}>
+                {emailVerificationForm.email}
+              </Text>
+              
+              <View style={styles.inputGroup}>
+                <OTPInput
+                  length={6}
+                  value={emailVerificationForm.token}
+                  onChange={(code) => setEmailVerificationForm({...emailVerificationForm, token: code})}
+                  autoFocus={true}
+                />
+              </View>
+              
+              <TouchableOpacity style={styles.primaryButton} onPress={handleEmailVerification}>
+                <Text style={styles.primaryButtonText}>{safeT('auth.verifyEmail', 'Verify Email')}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.linkButton} 
+                onPress={handleResendVerificationCode}
+              >
+                <Text style={styles.linkButtonText}>
+                  {safeT('auth.resendCode')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1520,11 +1744,13 @@ SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 
@@ -1700,8 +1926,11 @@ const getStyles = (colors: any) => StyleSheet.create({
 
   // Fixed Bottom Buttons
   fixedBottomButtons: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     paddingHorizontal: 24,
-    paddingBottom: 24,
     paddingTop: 16,
     backgroundColor: colors.background,
     borderTopWidth: 1,
@@ -1862,6 +2091,15 @@ const getStyles = (colors: any) => StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
+    fontFamily: 'System',
+  },
+  emailDisplayText: {
+    fontSize: 16,
+    color: colors.primary,
+    textAlign: 'center',
+    fontWeight: '600',
+    marginBottom: 20,
+    paddingHorizontal: 20,
     fontFamily: 'System',
   },
   otpContainer: {

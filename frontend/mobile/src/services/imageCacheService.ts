@@ -362,9 +362,9 @@ class ImageCacheService {
    * Logging utility
    */
   private log(message: string, data?: any): void {
-    if (__DEV__) {
-      console.log(`[ImageCache] ${message}`, data || '');
-    }
+    // if (__DEV__) {
+    //   console.log(`[ImageCache] ${message}`, data || '');
+    // }
   }
 }
 

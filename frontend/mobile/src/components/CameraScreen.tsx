@@ -29,6 +29,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, EASING_CURVES, SPRING_CONFIGS } from '../constants/animations';
+import { handleRateLimitError, extractErrorFromResponse } from '../utils/rateLimitHandler';
 
 const { width, height } = Dimensions.get('window');
 
@@ -459,12 +460,12 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         },
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Analysis failed');
+        const errorData = await extractErrorFromResponse(response);
+        throw errorData;
       }
 
+      const data = await response.json();
       const ingredients = data.data.ingredients || [];
       
       // Filter out suspicious/generic results that might be false positives
@@ -500,28 +501,40 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       console.error('❌ Analysis error:', error);
       setCameraError('Analysis failed');
       
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.log('🔍 Error details:', errorMessage);
+      const rateLimitNotification = handleRateLimitError(
+        error, 
+        'Image Analysis Limit',
+        () => {
+          setCameraError(null);
+          setTimeout(() => analyzeImage(uriToAnalyze), 500);
+        }
+      );
       
-      setNotification({
-        visible: true,
-        type: 'error',
-        title: 'Error',
-        message: 'Image analysis failed. Please try again or use manual input.',
-        buttons: [
-          {
-            text: 'Manual Input',
-            onPress: onGoToManualInput,
-          },
-          {
-            text: 'Retry',
-            onPress: () => {
-              setCameraError(null);
-              setTimeout(() => analyzeImage(uriToAnalyze), 500);
+      // For rate limit errors, use the rate limit notification
+      if (rateLimitNotification.type === 'warning') {
+        setNotification(rateLimitNotification);
+      } else {
+        // For other errors, use the original detailed notification with options
+        setNotification({
+          visible: true,
+          type: 'error',
+          title: 'Error',
+          message: 'Image analysis failed. Please try again or use manual input.',
+          buttons: [
+            {
+              text: 'Manual Input',
+              onPress: onGoToManualInput,
             },
-          },
-        ],
-      });
+            {
+              text: 'Retry',
+              onPress: () => {
+                setCameraError(null);
+                setTimeout(() => analyzeImage(uriToAnalyze), 500);
+              },
+            },
+          ],
+        });
+      }
     } finally {
       setIsAnalyzing(false);
     }

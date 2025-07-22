@@ -64,8 +64,6 @@ export const performHealthCheck = async (apiUrl: string): Promise<HealthCheckRes
 
     return result;
   } catch (error) {
-    console.error('Health check failed:', error);
-    
     const result: HealthCheckResult = {
       isHealthy: false,
       isMaintenance: false,
@@ -230,7 +228,7 @@ export class BackendHealthMonitor {
       try {
         listener(result);
       } catch (error) {
-        console.error('Error in health check listener:', error);
+        // Silently handle listener errors
       }
     });
   }

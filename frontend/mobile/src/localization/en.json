@@ -25,7 +25,11 @@
     "imageLoadError": "Failed to load image",
     "shareError": "Failed to share",
     "pullToRefresh": "Pull to refresh",
-    "refreshError": "Failed to refresh data"
+    "refreshError": "Failed to refresh data",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next", 
+    "start": "Start"
   },
   "auth": {
     "login": "Login",
@@ -57,7 +61,7 @@
     "enterNewPasswordInstructions": "Enter your new password below.",
     "enterCodeInstructions": "Enter the 6-digit code sent to your email and your new password.",
     "resetToken": "Reset Token",
-    "resetCode": "Reset Code",
+    "resetCode": "Code",
     "enterCode": "Enter 6-digit code",
     "verifyCode": "Verify Code",
     "verifyCodeInstructions": "Enter the 6-digit code sent to your email address.",
@@ -66,7 +70,15 @@
     "confirmNewPassword": "Confirm New Password",
     "passwordResetSuccess": "Password reset successfully! You can now log in with your new password.",
     "invalidResetToken": "Invalid or expired reset token. Please request a new password reset.",
-    "backToLogin": "Back to Login"
+    "backToLogin": "Back to Login",
+    "verifyEmail": "Verify Email",
+    "verifyEmailInstructions": "Enter the 6-digit code sent to your email address to verify your account.",
+    "verificationSuccess": "Email Verified",
+    "verificationSuccessMessage": "Your email has been verified successfully! You can now log in.",
+    "verificationError": "Failed to verify email. Please try again.",
+    "codeSent": "Code Sent",
+    "verificationCodeSent": "A new verification code has been sent to your email.",
+    "resendError": "Failed to resend code. Please try again."
   },
   "validation": {
     "nameRequired": "Name is required",
@@ -257,6 +269,9 @@
     "title": "Recipe",
     "noIngredientsProvided": "No ingredients provided",
     "generationFailed": "Recipe generation failed",
+    "rateLimitTitle": "Too Many Recipe Requests",
+    "dailyLimitReached": "Daily Limit Reached",
+    "dailyLimitMessage": "You have reached your daily limit of 3 recipe generations. Try again tomorrow!",
     "generateRecipe": "Generate Recipe",
     "generating": "Generating recipe...",
     "generatingTitle": "Creating Your Recipe",
@@ -547,6 +562,17 @@
     "howItWorks": "How it works",
     "dietaryExplanation": "Your dietary preferences help us filter recipes and suggest ingredients that match your lifestyle. You can change these settings anytime.",
     "dietaryPreferencesUpdated": "Dietary preferences updated",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "deleteAccountWarning": "This action cannot be undone. All your data will be permanently deleted.",
+    "confirmDeleteTitle": "Delete Account",
+    "confirmDeleteMessage": "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.",
+    "accountDeleted": "Account Deleted",
+    "accountDeletedMessage": "Your account has been successfully deleted.",
+    "deleteAccountError": "Failed to delete account. Please try again.",
+    "enterPasswordToConfirm": "Enter your password to confirm:",
+    "enterPassword": "Enter password",
+    "passwordRequired": "Password is required to delete account",
     "avatar": {
       "title": "Change Avatar",
       "takePhoto": "Take Photo",
@@ -820,36 +846,62 @@
   },
   "onboarding": {
     "welcome": {
-      "title": "Welcome to FridgeWise",
-      "subtitle": "Your AI-powered cooking assistant",
-      "description": "Transform your ingredients into delicious recipes with artificial intelligence"
+      "title": "Never waste food again",
+      "subtitle": "Turn what you have into what you love",
+      "description": "FridgeWise helps you cook delicious meals with ingredients you already have at home."
     },
     "scan": {
-      "title": "Scan Your Fridge",
-      "subtitle": "AI-powered ingredient detection",
-      "description": "Just take a photo of your fridge contents and let our AI identify all your ingredients automatically"
+      "title": "Snap a photo, get recipes",
+      "subtitle": "AI-powered ingredient recognition",
+      "description": "Take a photo of your ingredients and let AI do the heavy lifting. No typing, no lists."
     },
     "ai": {
-      "title": "Smart Recognition",
-      "subtitle": "Advanced machine learning",
-      "description": "Our AI accurately recognizes hundreds of ingredients and suggests the best recipes based on what you have"
+      "title": "Smart suggestions that work",
+      "subtitle": "Recipes based on what you actually have",
+      "description": "Get personalized recipes that match your ingredients, time, and cooking skills."
     },
     "recipes": {
-      "title": "Personalized Recipes",
-      "subtitle": "Tailored to your taste",
-      "description": "Get recipe suggestions that match your dietary preferences and cooking skill level"
-    },
-    "language": {
-      "title": "Choose Your Language",
-      "subtitle": "Select your preferred language",
-      "description": "FridgeWise supports multiple languages for the best experience"
+      "title": "Cook with confidence",
+      "subtitle": "Step-by-step guidance",
+      "description": "Clear instructions, cooking tips, and smart timers help you create amazing meals every time."
     },
     "dietary": {
-      "title": "Dietary Preferences",
-      "subtitle": "Tell us about your diet",
-      "description": "Select your dietary restrictions to get personalized recipe recommendations",
+      "title": "Your Dietary Preferences",
+      "subtitle": "Personalized just for you",
+      "description": "Let us know about any dietary restrictions so we can suggest the right recipes.",
       "hint": "You can select multiple options or skip this step"
     },
-    "getStarted": "Get Started"
+    "getStarted": "Get Started",
+    "ingredients": {
+      "tomato": "Tomato",
+      "garlic": "Garlic", 
+      "basil": "Basil"
+    },
+    "demoRecipes": {
+      "pastaArrabbiata": "Pasta Arrabbiata",
+      "margheritaPizza": "Margherita Pizza"
+    },
+    "cooking": {
+      "steps": {
+        "heatOil": "Heat olive oil in a pan",
+        "addGarlic": "Add minced garlic",
+        "addTomatoes": "Add crushed tomatoes"
+      },
+      "tip": "Tip: Keep heat at medium to avoid burning the garlic"
+    },
+    "ui": {
+      "loading": "Loading...",
+      "recipeIdeas": "recipe ideas",
+      "minutes": "min",
+      "ai": "AI",
+      "checkmark": "✓"
+    },
+    "usage": {
+      "recipeGenerations": "Recipe Generations",
+      "aiChatMessages": "AI Messages", 
+      "imageAnalyses": "Image Analyses",
+      "remaining": "remaining today",
+      "limitReached": "Daily limit reached"
+    }
   }
 }

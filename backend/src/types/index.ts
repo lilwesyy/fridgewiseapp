@@ -6,6 +6,8 @@ export interface APIResponse<T> {
   code?: string;
   currentCount?: number;
   maxAllowed?: number;
+  requireEmailVerification?: boolean;
+  email?: string;
 }
 
 export interface PaginatedResponse<T> {

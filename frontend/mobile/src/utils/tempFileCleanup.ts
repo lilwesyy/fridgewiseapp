@@ -281,9 +281,9 @@ class TempFileCleanupService {
    * Logging utility
    */
   private log(message: string, data?: any): void {
-    if (__DEV__) {
-      console.log(`[TempFileCleanup] ${message}`, data || '');
-    }
+    // if (__DEV__) {
+    //   console.log(`[TempFileCleanup] ${message}`, data || '');
+    // }
   }
 
   /**
