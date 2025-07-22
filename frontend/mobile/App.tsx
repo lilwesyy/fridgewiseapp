@@ -1084,6 +1084,8 @@ const AppContent: React.FC = () => {
                     textContentType="password"
                     autoComplete="current-password"
                     placeholderTextColor={colors.textSecondary}
+                    onSubmitEditing={handleLogin}
+                    returnKeyType="go"
                   />
                 </View>
                 {!loginValidation.password.isValid && (
@@ -1113,18 +1115,6 @@ const AppContent: React.FC = () => {
                 </Text>
               </TouchableOpacity>
               
-              {/* Debug button to reset onboarding */}
-              <TouchableOpacity 
-                style={[styles.linkButton, { marginTop: 20, backgroundColor: colors.surface, padding: 10, borderRadius: 8 }]} 
-                onPress={() => {
-                  setShowOnboarding(true);
-                  setOnboardingCompleted(false);
-                }}
-              >
-                <Text style={[styles.linkButtonText, { color: colors.primary, fontSize: 12 }]}>
-                  🔄 Reset Onboarding (Debug)
-                </Text>
-              </TouchableOpacity>
             </View>
           </ScrollView>
           <StatusBar style={isDarkMode ? "light" : "dark"} />
