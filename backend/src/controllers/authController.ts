@@ -7,6 +7,7 @@ import { Analysis } from '../models/Analysis';
 import { APIResponse } from '../types';
 import { emailService } from '../services/emailService';
 import { cloudinaryService } from '../services/cloudinaryService';
+import { getUserLocale } from '../utils/localeHelper';
 
 const signToken = (id: string): string => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
@@ -252,8 +253,9 @@ export const forgotPassword = async (req: Request, res: Response<APIResponse<any
 
     // Send email with reset code
     try {
-      await emailService.sendPasswordResetCode(email, resetCode);
-      console.log('Password reset code sent to email:', email);
+      const userLocale = getUserLocale(user.preferredLanguage, req);
+      await emailService.sendPasswordResetCode(email, resetCode, userLocale);
+      console.log('Password reset code sent to email:', email, 'in locale:', userLocale);
     } catch (emailError) {
       console.error('Failed to send reset email:', emailError);
       // Return the actual error to help debug
@@ -442,8 +444,9 @@ export const sendEmailVerification = async (req: Request, res: Response<APIRespo
 
     // Send email with verification code
     try {
-      await emailService.sendEmailVerificationCode(email, verificationCode);
-      console.log('Email verification code sent to:', email);
+      const userLocale = getUserLocale(user.preferredLanguage, req);
+      await emailService.sendEmailVerificationCode(email, verificationCode, userLocale);
+      console.log('Email verification code sent to:', email, 'in locale:', userLocale);
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);
       // Don't fail the request if email fails, just log it

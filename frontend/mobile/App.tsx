@@ -39,6 +39,8 @@ interface AppState {
   isRecipeJustGenerated: boolean;
   allRecipes: any[]; // Array of all recipes for navigation
   currentRecipeIndex: number; // Current recipe index
+  isCookingModeActive: boolean; // Flag to control navigation blocking
+  isPublicRecipe: boolean; // Flag to track if recipe is from public collection
 }
 
 const LogoComponent: React.FC<{ width?: number; height?: number }> = ({ width = 60, height = 54 }) => (
@@ -195,11 +197,15 @@ const AppContent: React.FC = () => {
     isRecipeJustGenerated: false,
     allRecipes: [],
     currentRecipeIndex: 0,
+    isCookingModeActive: false,
+    isPublicRecipe: false,
   });
 
   const [authMode, setAuthMode] = useState<'welcome' | 'login' | 'register' | 'forgot-password' | 'verify-code' | 'reset-password' | 'verify-email'>('welcome');
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null); // null = loading, true = show, false = don't show
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [showCookingExitModal, setShowCookingExitModal] = useState(false);
+  const [pendingTab, setPendingTab] = useState<TabName | null>(null);
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',
@@ -732,10 +738,19 @@ const AppContent: React.FC = () => {
       isRecipeJustGenerated: false,
       allRecipes: [],
       currentRecipeIndex: 0,
+      isCookingModeActive: false,
+      isPublicRecipe: false,
     });
   };
 
   const handleTabPress = (tab: TabName) => {
+    // Check if we're in cooking mode and trying to navigate away
+    if (appState.isCookingModeActive && appState.currentScreen === 'cooking') {
+      setPendingTab(tab);
+      setShowCookingExitModal(true);
+      return;
+    }
+
     if (tab === 'camera') {
       setAppState({
         ...appState,
@@ -749,6 +764,34 @@ const AppContent: React.FC = () => {
         activeTab: tab,
       });
     }
+  };
+
+  const handleConfirmExitCooking = () => {
+    setShowCookingExitModal(false);
+    
+    if (pendingTab) {
+      if (pendingTab === 'camera') {
+        setAppState({
+          ...appState,
+          currentScreen: 'camera',
+          activeTab: pendingTab,
+          isCookingModeActive: false,
+        });
+      } else {
+        setAppState({
+          ...appState,
+          currentScreen: pendingTab,
+          activeTab: pendingTab,
+          isCookingModeActive: false,
+        });
+      }
+      setPendingTab(null);
+    }
+  };
+
+  const handleCancelExitCooking = () => {
+    setShowCookingExitModal(false);
+    setPendingTab(null);
   };
 
   const handleLogout = async () => {
@@ -848,7 +891,7 @@ const AppContent: React.FC = () => {
       }
     } else if (appState.currentScreen === 'cooking') {
       // Go back to recipe screen from cooking mode
-      setAppState({ ...appState, currentScreen: 'recipe' });
+      setAppState({ ...appState, currentScreen: 'recipe', isCookingModeActive: false });
     }
   };
 
@@ -869,6 +912,7 @@ const AppContent: React.FC = () => {
       ...appState,
       currentScreen: 'cooking',
       recipe,
+      isCookingModeActive: true,
     });
   };
 
@@ -877,10 +921,11 @@ const AppContent: React.FC = () => {
       ...appState,
       currentScreen: 'saved',
       activeTab: 'saved',
+      isCookingModeActive: false,
     });
   };
 
-  const handleSelectRecipeFromList = (recipe: any, allRecipes: any[], index: number, tab: TabName) => {
+  const handleSelectRecipeFromList = (recipe: any, allRecipes: any[], index: number, tab: TabName, isPublic?: boolean) => {
     setAppState({
       ...appState,
       currentScreen: 'recipe',
@@ -889,6 +934,7 @@ const AppContent: React.FC = () => {
       isRecipeJustGenerated: false,
       allRecipes,
       currentRecipeIndex: index,
+      isPublicRecipe: isPublic || false, // Add flag to track if recipe is public
     });
   };
 
@@ -925,6 +971,7 @@ const AppContent: React.FC = () => {
       onClose={() => setNotification({ ...notification, visible: false })}
     />
   );
+
 
   // Show onboarding if user is not logged in and hasn't completed onboarding
   if (!user && showOnboarding) {
@@ -1648,6 +1695,7 @@ const AppContent: React.FC = () => {
             // Recipe has no ID, skipping database save
           }
         }}
+        isPublic={appState.isPublicRecipe}
       />
     );
   }
@@ -1676,7 +1724,7 @@ const AppContent: React.FC = () => {
       case 'recipes':
         return (
           <RecipesScreen
-            onSelectRecipe={(recipe, allRecipes, index) => handleSelectRecipeFromList(recipe, allRecipes, index, 'recipes')}
+            onSelectRecipe={(recipe, allRecipes, index, isPublic) => handleSelectRecipeFromList(recipe, allRecipes, index, 'recipes', isPublic)}
             onGoToCamera={() => setAppState({ ...appState, currentScreen: 'camera', activeTab: 'camera' })}
           />
         );
@@ -1702,6 +1750,9 @@ const AppContent: React.FC = () => {
             recipe={appState.recipe}
             onGoBack={handleGoBack}
             onFinishCooking={handleFinishCooking}
+            showForceExitModal={showCookingExitModal}
+            onForceExitConfirm={handleConfirmExitCooking}
+            onForceExitCancel={handleCancelExitCooking}
           />
         ) : null;
       

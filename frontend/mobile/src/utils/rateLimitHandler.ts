@@ -31,8 +31,11 @@ export interface RateLimitNotification {
 export const handleRateLimitError = (
   error: any,
   defaultTitle: string = 'Rate Limit Exceeded',
-  onRetry?: () => void
+  onRetry?: () => void,
+  t?: (key: string, options?: any) => string
 ): RateLimitNotification => {
+  console.log('🔍 Rate limit handler called with t function:', !!t);
+  
   // Check if it's a rate limit error (status 429)
   const isRateLimit = error.status === 429 || 
                      (error.message && error.message.includes('Too many requests'));
@@ -42,15 +45,15 @@ export const handleRateLimitError = (
     return {
       visible: true,
       type: 'error',
-      title: 'Error',
-      message: error.message || 'An unexpected error occurred. Please try again.',
+      title: t ? t('rateLimit.error') : 'Error',
+      message: error.message || (t ? t('rateLimit.unexpectedError') : 'An unexpected error occurred. Please try again.'),
     };
   }
 
   const rateLimitInfo = error.rateLimitInfo;
   const dailyLimitInfo = error.dailyLimitInfo;
   
-  let message = 'You have made too many requests. Please wait before trying again.';
+  let message = t ? t('rateLimit.tooManyRequests') : 'You have made too many requests. Please wait before trying again.';
   let retryAfter = 60; // default 60 seconds
   let isDailyLimit = false;
 
@@ -62,12 +65,19 @@ export const handleRateLimitError = (
     const now = new Date();
     const hoursUntilReset = Math.ceil((resetTime.getTime() - now.getTime()) / (1000 * 60 * 60));
     
-    message = `You have reached your daily limit of ${limit} ${limitType.replace(/([A-Z])/g, ' $1').toLowerCase()}. You've used ${used}/${limit} today. Resets in ${hoursUntilReset} hours.`;
+    message = t ? 
+      t('rateLimit.dailyLimitMessage', { 
+        limit, 
+        limitType: limitType.replace(/([A-Z])/g, ' $1').toLowerCase(), 
+        used, 
+        hours: hoursUntilReset 
+      }) : 
+      `You have reached your daily limit of ${limit} ${limitType.replace(/([A-Z])/g, ' $1').toLowerCase()}. You've used ${used}/${limit} today. Resets in ${hoursUntilReset} hours.`;
     
     return {
       visible: true,
       type: 'warning',
-      title: 'Daily Limit Reached',
+      title: t ? t('rateLimit.dailyLimitReached') : 'Daily Limit Reached',
       message,
     };
   } else if (rateLimitInfo) {
@@ -75,16 +85,18 @@ export const handleRateLimitError = (
     const { limit, retryAfter: apiRetryAfter } = rateLimitInfo;
     retryAfter = apiRetryAfter || 60;
     
-    message = `You can make ${limit} requests per minute. Please wait ${retryAfter} seconds before trying again.`;
+    message = t ? 
+      t('rateLimit.rateLimitMessage', { limit, retryAfter }) : 
+      `You can make ${limit} requests per minute. Please wait ${retryAfter} seconds before trying again.`;
   }
 
   const buttons = onRetry && !isDailyLimit ? [
     {
-      text: 'OK',
+      text: t ? t('common.ok') : 'OK',
       onPress: () => {} // Just close the modal
     },
     {
-      text: `Retry in ${retryAfter}s`,
+      text: t ? t('rateLimit.retryIn', { seconds: retryAfter }) : `Retry in ${retryAfter}s`,
       onPress: () => {
         setTimeout(() => {
           onRetry();
@@ -96,7 +108,7 @@ export const handleRateLimitError = (
   return {
     visible: true,
     type: 'warning',
-    title: isDailyLimit ? 'Daily Limit Reached' : defaultTitle,
+    title: isDailyLimit ? (t ? t('rateLimit.dailyLimitReached') : 'Daily Limit Reached') : defaultTitle,
     message,
     buttons,
   };

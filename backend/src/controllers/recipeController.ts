@@ -296,7 +296,11 @@ export const saveRecipe = async (req: AuthRequest, res: Response<APIResponse<any
 
     // If id is provided, try to find existing recipe
     if (id) {
-      const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+      const recipe = await Recipe.findOne({ 
+      _id: id, 
+      userId: user._id,
+      isDeleted: false // Exclude soft-deleted recipes
+    });
       
       if (recipe) {
         // Mark existing recipe as saved
@@ -410,7 +414,10 @@ export const getRecipes = async (req: AuthRequest, res: Response<APIResponse<any
     const skip = (page - 1) * limit;
 
     // Build query filters
-    const filter: any = { userId: user._id };
+    const filter: any = { 
+      userId: user._id,
+      isDeleted: false // Exclude soft-deleted recipes
+    };
     
     if (req.query.language) {
       filter.language = req.query.language;
@@ -470,7 +477,8 @@ export const getSavedRecipes = async (req: AuthRequest, res: Response<APIRespons
 
     const filter: any = { 
       userId: user._id,
-      isSaved: true // Only saved recipes
+      isSaved: true, // Only saved recipes
+      isDeleted: false // Exclude soft-deleted recipes
     };
 
     if (req.query.difficulty) {
@@ -523,7 +531,11 @@ export const getRecipe = async (req: AuthRequest, res: Response<APIResponse<any>
     const user = req.user!;
     const { id } = req.params;
 
-    const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+    const recipe = await Recipe.findOne({ 
+      _id: id, 
+      userId: user._id,
+      isDeleted: false // Exclude soft-deleted recipes
+    });
 
     if (!recipe) {
       res.status(404).json({
@@ -550,7 +562,11 @@ export const unsaveRecipe = async (req: AuthRequest, res: Response<APIResponse<a
     const user = req.user!;
     const { id } = req.params;
 
-    const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+    const recipe = await Recipe.findOne({ 
+      _id: id, 
+      userId: user._id,
+      isDeleted: false // Exclude soft-deleted recipes
+    });
     
     if (!recipe) {
       res.status(404).json({
@@ -584,7 +600,11 @@ export const updateRecipe = async (req: AuthRequest, res: Response<APIResponse<a
     const { id } = req.params;
     const { title, description, ingredients, instructions, cookingTime, servings, difficulty, dietaryTags } = req.body;
 
-    const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+    const recipe = await Recipe.findOne({ 
+      _id: id, 
+      userId: user._id,
+      isDeleted: false // Exclude soft-deleted recipes
+    });
 
     if (!recipe) {
       res.status(404).json({
@@ -630,7 +650,11 @@ export const deleteRecipe = async (req: AuthRequest, res: Response<APIResponse<a
     const user = req.user!;
     const { id } = req.params;
 
-    const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+    const recipe = await Recipe.findOne({ 
+      _id: id, 
+      userId: user._id,
+      isDeleted: false // Only find non-deleted recipes
+    });
 
     if (!recipe) {
       res.status(404).json({
@@ -640,13 +664,33 @@ export const deleteRecipe = async (req: AuthRequest, res: Response<APIResponse<a
       return;
     }
 
-    await Recipe.findByIdAndDelete(id);
+    // Soft delete: keep recipe if it was cooked (has completion history)
+    if (recipe.completionCount > 0 || recipe.cookedAt) {
+      console.log(`📚 Soft deleting recipe "${recipe.title}" - preserving cooking history (${recipe.completionCount} completions)`);
+      
+      // Soft delete - mark as deleted but keep in database for history
+      recipe.isDeleted = true;
+      recipe.deletedAt = new Date();
+      recipe.isSaved = false; // Remove from saved recipes
+      await recipe.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'Recipe deleted successfully'
-    });
+      res.status(200).json({
+        success: true,
+        message: 'Recipe removed successfully (cooking history preserved)'
+      });
+    } else {
+      console.log(`🗑️ Hard deleting recipe "${recipe.title}" - no cooking history`);
+      
+      // Hard delete - recipe was never cooked, can be safely removed
+      await Recipe.findByIdAndDelete(id);
+
+      res.status(200).json({
+        success: true,
+        message: 'Recipe deleted successfully'
+      });
+    }
   } catch (error: any) {
+    console.error('Error deleting recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete recipe'
@@ -672,7 +716,11 @@ export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse
       }
     }
 
-    const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+    const recipe = await Recipe.findOne({ 
+      _id: id, 
+      userId: user._id,
+      isDeleted: false // Exclude soft-deleted recipes
+    });
 
     if (!recipe) {
       res.status(404).json({
@@ -708,6 +756,80 @@ export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse
   }
 };
 
+export const getCookedRecipes = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = req.user!;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get all recipes that were cooked (including soft-deleted ones)
+    const filter: any = { 
+      userId: user._id,
+      $or: [
+        { completionCount: { $gt: 0 } },
+        { cookedAt: { $exists: true, $ne: null } }
+      ]
+    };
+
+    if (req.query.search) {
+      const searchTerm = req.query.search as string;
+      filter.$and = [
+        filter.$or, // Keep the cooked condition
+        {
+          $or: [
+            { title: { $regex: searchTerm, $options: 'i' } },
+            { description: { $regex: searchTerm, $options: 'i' } },
+            { originalIngredients: { $regex: searchTerm, $options: 'i' } }
+          ]
+        }
+      ];
+      delete filter.$or; // Remove the top-level $or since we're using $and
+    }
+
+    const recipes = await Recipe.find(filter)
+      .sort({ cookedAt: -1, updatedAt: -1 }) // Sort by cooked date, then update date
+      .skip(skip)
+      .limit(limit)
+      .select('-__v'); // Exclude version field
+
+    const total = await Recipe.countDocuments(filter);
+
+    // Add cooking statistics to each recipe
+    const recipesWithStats = recipes.map(recipe => {
+      const recipeObj = recipe.toObject();
+      return {
+        ...recipeObj,
+        cookingStats: {
+          totalCompletions: recipe.completionCount,
+          lastCooked: recipe.cookedAt,
+          isDeleted: recipe.isDeleted,
+          deletedAt: recipe.deletedAt
+        }
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        recipes: recipesWithStats,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      }
+    });
+  } catch (error: any) {
+    console.error('Error getting cooked recipes:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get cooked recipes'
+    });
+  }
+};
+
 export const deleteRecipePhoto = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
   try {
     const user = req.user!;
@@ -722,7 +844,11 @@ export const deleteRecipePhoto = async (req: AuthRequest, res: Response<APIRespo
       return;
     }
 
-    const recipe = await Recipe.findOne({ _id: id, userId: user._id });
+    const recipe = await Recipe.findOne({ 
+      _id: id, 
+      userId: user._id,
+      isDeleted: false // Exclude soft-deleted recipes
+    });
 
     if (!recipe) {
       res.status(404).json({
@@ -776,6 +902,180 @@ export const deleteRecipePhoto = async (req: AuthRequest, res: Response<APIRespo
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete photo'
+    });
+  }
+};
+
+// Get all public recipes (cooked recipes from all users)
+export const getPublicRecipes = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      sortBy = 'recent' // recent, popular, alphabetical
+    } = req.query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    
+    // Build query for public recipes (cooked/saved recipes)
+    const query: any = { 
+      isDeleted: false,
+      isSaved: true, // Only show recipes that have been cooked/saved
+      $or: [
+        { dishPhotos: { $exists: true, $ne: [] } }, // Has photos
+        { cookedAt: { $exists: true, $ne: null } } // Has been cooked
+      ]
+    };
+    
+    // Search in title and description
+    if (search) {
+      query.$and = query.$and || [];
+      query.$and.push({
+        $or: [
+          { title: { $regex: search as string, $options: 'i' } },
+          { description: { $regex: search as string, $options: 'i' } }
+        ]
+      });
+    }
+
+    // Build sort criteria
+    let sort: any = {};
+    switch (sortBy) {
+      case 'popular':
+        // Sort by average rating, then by number of ratings, then by dish photos
+        sort = { averageRating: -1, totalRatings: -1, 'dishPhotos.length': -1, createdAt: -1 };
+        break;
+      case 'recent':
+        sort = { cookedAt: -1, createdAt: -1 };
+        break;
+      case 'alphabetical':
+        sort = { title: 1 };
+        break;
+      case 'rating':
+        sort = { averageRating: -1, totalRatings: -1 };
+        break;
+      default:
+        sort = { cookedAt: -1, createdAt: -1 };
+    }
+
+    const recipes = await Recipe
+      .find(query)
+      .populate('userId', 'name email avatar')
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    const total = await Recipe.countDocuments(query);
+
+    console.log('Public recipes with ratings:', recipes.map(r => ({ 
+      title: r.title, 
+      averageRating: r.averageRating, 
+      totalRatings: r.totalRatings 
+    })));
+
+    res.json({
+      success: true,
+      data: {
+        recipes,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / Number(limit))
+        }
+      }
+    });
+  } catch (error: any) {
+    console.error('Error fetching public recipes:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch public recipes'
+    });
+  }
+};
+
+// Get users who cooked a specific recipe
+export const getUsersWhoCookedRecipe = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const { recipeId } = req.params;
+    const { limit = 10 } = req.query;
+
+    if (!recipeId) {
+      res.status(400).json({
+        success: false,
+        error: 'Recipe ID is required'
+      });
+      return;
+    }
+
+    // Find all users who have cooked this recipe (recipes with same title/ingredients but different userIds)
+    const originalRecipe = await Recipe.findById(recipeId).lean();
+    
+    if (!originalRecipe) {
+      res.status(404).json({
+        success: false,
+        error: 'Recipe not found'
+      });
+      return;
+    }
+
+    // Find recipes with same title that have been cooked by different users (excluding the original creator)
+    const cookedVersions = await Recipe
+      .find({
+        title: originalRecipe.title,
+        userId: { $ne: originalRecipe.userId }, // Exclude the original creator
+        isSaved: true,
+        isDeleted: false,
+        $or: [
+          { dishPhotos: { $exists: true, $ne: [] } },
+          { cookedAt: { $exists: true, $ne: null } }
+        ]
+      })
+      .populate('userId', 'name email avatar')
+      .select('userId cookedAt dishPhotos createdAt')
+      .sort({ cookedAt: -1, createdAt: -1 })
+      .limit(Number(limit))
+      .lean();
+
+    // Group by user and get unique users with their cooking info
+    const userCookingMap = new Map();
+    
+    cookedVersions.forEach(recipe => {
+      const userId = (recipe.userId as any)._id.toString();
+      const userData = recipe.userId as any;
+      
+      if (!userCookingMap.has(userId)) {
+        userCookingMap.set(userId, {
+          user: {
+            _id: userData._id,
+            name: userData.name,
+            email: userData.email,
+            avatar: userData.avatar
+          },
+          cookedAt: recipe.cookedAt,
+          hasPhoto: recipe.dishPhotos && recipe.dishPhotos.length > 0,
+          photoUrl: recipe.dishPhotos && recipe.dishPhotos.length > 0 ? recipe.dishPhotos[0].url : null
+        });
+      }
+    });
+
+    const uniqueUsers = Array.from(userCookingMap.values());
+
+    res.json({
+      success: true,
+      data: {
+        users: uniqueUsers,
+        total: uniqueUsers.length,
+        recipeTitle: originalRecipe.title
+      }
+    });
+  } catch (error: any) {
+    console.error('Error fetching users who cooked recipe:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch users who cooked this recipe'
     });
   }
 };

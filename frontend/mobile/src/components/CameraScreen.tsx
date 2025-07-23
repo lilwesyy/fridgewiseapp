@@ -503,11 +503,12 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       
       const rateLimitNotification = handleRateLimitError(
         error, 
-        'Image Analysis Limit',
+        t('rateLimit.imageAnalysisLimit'),
         () => {
           setCameraError(null);
           setTimeout(() => analyzeImage(uriToAnalyze), 500);
-        }
+        },
+        t
       );
       
       // For rate limit errors, use the rate limit notification

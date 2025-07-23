@@ -49,12 +49,29 @@ interface Recipe {
   servings: number;
   difficulty: 'easy' | 'medium' | 'hard';
   dietaryTags: string[];
+  nutrition?: {
+    calories: number;
+    protein: number;
+    carbohydrates: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+    sodium: number;
+  };
+  cookingTips?: Array<{
+    step: number;
+    tip: string;
+    type: 'technique' | 'timing' | 'ingredient' | 'temperature' | 'safety';
+  }>;
 }
 
 interface CookingModeScreenProps {
   recipe: Recipe;
   onGoBack: () => void;
   onFinishCooking: () => void;
+  showForceExitModal?: boolean;
+  onForceExitConfirm?: () => void;
+  onForceExitCancel?: () => void;
 }
 
 type CookingPhase = 'preparation' | 'cooking' | 'completed';
@@ -70,7 +87,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     );
   }
   
-  const { recipe, onGoBack, onFinishCooking } = props;
+  const { recipe, onGoBack, onFinishCooking, showForceExitModal = false, onForceExitConfirm, onForceExitCancel } = props;
   
   // Safety check for recipe before any hooks
   if (!recipe || typeof recipe !== 'object') {
@@ -147,6 +164,8 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     title: '',
     message: '',
   });
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [isHelpModalClosing, setIsHelpModalClosing] = useState(false);
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
@@ -155,6 +174,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const phaseTransition = useSharedValue(0);
   const stepTransition = useSharedValue(0);
   const timerPulse = useSharedValue(1);
+  
+  // Help modal animations
+  const helpModalTranslateY = useSharedValue(screenHeight);
+  const helpModalOpacity = useSharedValue(0);
 
   // Initialize animations
   useEffect(() => {
@@ -177,6 +200,18 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       });
     }
   }, [currentPhase]);
+
+  // Help modal animations - only handle entrance
+  useEffect(() => {
+    if (showHelpModal && !isHelpModalClosing) {
+      // Entrance animation
+      helpModalOpacity.value = withTiming(1, {
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2),
+      });
+      helpModalTranslateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
+    }
+  }, [showHelpModal, isHelpModalClosing]);
 
   // Auto-generate timers from instructions if not provided
   const generateTimerFromInstruction = (instruction: string): number => {
@@ -255,12 +290,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     }
   }, [currentStep, currentPhase, recipe?.stepTimers, recipe?.instructions, hasAutoStartedTimer]);
 
-  // Auto-close NotificationModal after 2.5s
+  // Auto-close NotificationModal after 1.5s
   useEffect(() => {
     if (showAutoTimerModal) {
       const timer = setTimeout(() => {
         setShowAutoTimerModal(false);
-      }, 2500);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [showAutoTimerModal]);
@@ -781,6 +816,13 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     }
   };
 
+  // Handle force exit modal from external navigation
+  useEffect(() => {
+    if (showForceExitModal) {
+      setShowExitModal(true);
+    }
+  }, [showForceExitModal]);
+
   const startTimer = (minutes: number) => {
     setTimerSeconds(minutes * 60);
     setIsTimerRunning(true);
@@ -812,6 +854,28 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const closeHelpModal = () => {
+    if (isHelpModalClosing) return; // Prevent multiple close attempts
+    
+    setIsHelpModalClosing(true);
+    
+    // Start exit animation
+    helpModalOpacity.value = withTiming(0, {
+      duration: ANIMATION_DURATIONS.QUICK,
+      easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
+    });
+    helpModalTranslateY.value = withTiming(screenHeight, {
+      duration: ANIMATION_DURATIONS.QUICK,
+      easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
+    });
+    
+    // Close modal after animation completes
+    setTimeout(() => {
+      setShowHelpModal(false);
+      setIsHelpModalClosing(false);
+    }, ANIMATION_DURATIONS.QUICK);
+  };
+
   const getTimerColor = () => {
     if (timerSeconds > 60) return colors.success;
     if (timerSeconds > 30) return colors.warning;
@@ -834,6 +898,15 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const timerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: timerPulse.value }],
+  }));
+
+  // Help modal animated styles
+  const helpModalOverlayAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: helpModalOpacity.value,
+  }));
+
+  const helpModalContainerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: helpModalTranslateY.value }],
   }));
 
   const renderIngredientsList = () => {
@@ -939,6 +1012,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
             <Text style={styles.stepInstruction}>
               {String(typeof stepText === 'string' && stepText.length > 0 ? stepText : safeT('cookingMode.noInstructions', 'No instructions available'))}
             </Text>
+            
           </ScrollView>
         </Animated.View>
         {/* Timer Section */}
@@ -1050,6 +1124,28 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           <Text style={styles.headerTitle}>{String(recipe?.title || 'Ricetta')}</Text>
           <Text style={styles.headerSubtitle}>{String(headerSubtitle)}</Text>
         </View>
+        {/* Help Button - only visible during cooking phase and if current step has tips */}
+        {currentPhase === 'cooking' && recipe?.cookingTips && recipe.cookingTips.length > 0 && 
+         recipe.cookingTips.some(tip => tip.step === currentStep + 1) && (
+          <TouchableOpacity 
+            onPress={() => setShowHelpModal(true)} 
+            style={styles.helpButton}
+          >
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M9 12L11 14L15 10"
+                stroke="none"
+                fill="none"
+              />
+              <Path
+                d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z"
+                fill={colors.primary}
+                stroke={colors.primary}
+                strokeWidth={1}
+              />
+            </Svg>
+          </TouchableOpacity>
+        )}
       </Animated.View>
 
       {/* Content */}
@@ -1138,12 +1234,133 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         )}
       </View>
 
+      {/* Help Modal */}
+      <Modal
+        visible={showHelpModal}
+        transparent
+        animationType="none"
+        onRequestClose={closeHelpModal}
+      >
+        <Animated.View style={[styles.helpModalOverlay, helpModalOverlayAnimatedStyle]}>
+          <TouchableOpacity 
+            style={styles.helpModalBackdrop} 
+            activeOpacity={1} 
+            onPress={closeHelpModal}
+          />
+          <Animated.View style={[styles.helpModalContainer, helpModalContainerAnimatedStyle]}>
+            {/* Help Header */}
+            <View style={styles.helpModalHeader}>
+              <View style={styles.helpModalHandle} />
+              <View style={styles.helpModalHeaderContent}>
+                <Text style={styles.helpModalTitle}>{safeT('cookingMode.helpTitle', 'Consigli di Cucina')}</Text>
+                <Text style={styles.helpModalSubtitle}>
+                  {String(`${safeT('cookingMode.step', 'Step')} ${currentStep + 1} - ${recipe?.title || 'Ricetta'}`)}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={closeHelpModal} style={styles.helpCloseButton}>
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M18 6L6 18M6 6L18 18"
+                    stroke={colors.textSecondary}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </Svg>
+              </TouchableOpacity>
+            </View>
+
+            {/* Help Content - Only Current Step */}
+            <ScrollView style={styles.helpModalScroll} showsVerticalScrollIndicator={false}>
+              {(() => {
+                // Get current step tips
+                const currentStepTips = recipe?.cookingTips?.filter(tip => tip.step === currentStep + 1) || [];
+                const currentInstruction = recipe?.instructions?.[currentStep] || '';
+                
+                if (currentStepTips.length === 0) {
+                  return (
+                    <View style={styles.helpEmptyState}>
+                      <Svg width={48} height={48} viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16 }}>
+                        <Circle cx="12" cy="12" r="10" stroke={colors.border} strokeWidth={2} />
+                        <Path
+                          d="M8 12H16M12 8V16"
+                          stroke={colors.border}
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                        />
+                      </Svg>
+                      <Text style={styles.helpEmptyStateText}>
+                        {safeT('cookingMode.noTips', 'Nessun consiglio disponibile per questo passaggio.')}
+                      </Text>
+                    </View>
+                  );
+                }
+
+                return (
+                  <View style={styles.helpContentContainer}>
+                    {/* Current Step Tips Only */}
+                    <View style={styles.helpTipsContainer}>
+                      {currentStepTips.map((tip: any, tipIndex: number) => (
+                        <View key={tipIndex} style={[
+                          styles.helpTipItem,
+                          styles[`helpTipType${tip.type.charAt(0).toUpperCase() + tip.type.slice(1)}`]
+                        ]}>
+                          <View style={styles.helpTipIconContainer}>
+                            {tip.type === 'technique' && (
+                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke={colors.primary} strokeWidth={2} fill="none"/>
+                              </Svg>
+                            )}
+                            {tip.type === 'timing' && (
+                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                <Circle cx="12" cy="12" r="10" stroke={colors.warning} strokeWidth={2} fill="none"/>
+                                <Path d="M12 6V12L16 14" stroke={colors.warning} strokeWidth={2}/>
+                              </Svg>
+                            )}
+                            {tip.type === 'temperature' && (
+                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                <Path d="M14 4V16.5C14 18.4 12.4 20 10.5 20S7 18.4 7 16.5V4C7 2.9 7.9 2 9 2H12C13.1 2 14 2.9 14 4Z" stroke={colors.error} strokeWidth={2} fill="none"/>
+                              </Svg>
+                            )}
+                            {tip.type === 'ingredient' && (
+                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                <Path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L11.84 12.17L17.5 6.5L20.17 9.17L21.5 7.83L21 9ZM1 9L2 8L6 12L2 16L1 15C1 15 5.5 9 5.5 9H1Z" fill={colors.success}/>
+                              </Svg>
+                            )}
+                            {tip.type === 'safety' && (
+                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                <Path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 7C13.1 7 14 7.9 14 9S13.1 11 12 11S10 10.1 10 9S10.9 7 12 7ZM12 17C10.9 17 10 16.1 10 15S10.9 13 12 13S14 13.9 14 15S13.1 17 12 17Z" fill={colors.error}/>
+                              </Svg>
+                            )}
+                          </View>
+                          <View style={styles.helpTipContent}>
+                            <Text style={styles.helpTipTypeLabel}>
+                              {safeT(`cookingMode.tipTypes.${tip.type}`, tip.type.charAt(0).toUpperCase() + tip.type.slice(1))}
+                            </Text>
+                            <Text style={styles.helpTipText}>{tip.tip}</Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                );
+              })()}
+            </ScrollView>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+
       {/* Exit Confirmation Modal */}
       <Modal
         visible={showExitModal}
         transparent
         animationType="none"
-        onRequestClose={() => setShowExitModal(false)}
+        onRequestClose={() => {
+          setShowExitModal(false);
+          if (showForceExitModal && onForceExitCancel) {
+            onForceExitCancel();
+          }
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -1152,7 +1369,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonSecondary]}
-                onPress={() => setShowExitModal(false)}
+                onPress={() => {
+                  setShowExitModal(false);
+                  if (showForceExitModal && onForceExitCancel) {
+                    onForceExitCancel();
+                  }
+                }}
               >
                 <Text style={styles.modalButtonTextSecondary}>{safeT('common.cancel', 'Cancel')}</Text>
               </TouchableOpacity>
@@ -1160,7 +1382,11 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                 style={[styles.modalButton, styles.modalButtonPrimary]}
                 onPress={() => {
                   setShowExitModal(false);
-                  onGoBack();
+                  if (showForceExitModal && onForceExitConfirm) {
+                    onForceExitConfirm();
+                  } else {
+                    onGoBack();
+                  }
                 }}
               >
                 <Text style={styles.modalButtonTextPrimary}>{safeT('cookingMode.exitConfirm', 'Exit')}</Text>
@@ -1252,6 +1478,13 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   headerContent: {
     flex: 1,
+  },
+  helpButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
   },
   headerTitle: {
     fontSize: 18,
@@ -1700,6 +1933,204 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.buttonText,
+  },
+
+  // Cooking Tips Styles
+  tipsContainer: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  tipsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  tipsHeaderText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginLeft: 8,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.surface,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  tipIconContainer: {
+    marginRight: 12,
+    marginTop: 2,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.text,
+  },
+  tipTypeTechnique: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+  },
+  tipTypeTiming: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.warning,
+  },
+  tipTypeIngredient: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.success,
+  },
+  tipTypeTemperature: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.error,
+  },
+  tipTypeSafety: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.error,
+  },
+
+  // Help Modal Styles - PhotoUpload Style
+  helpModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  helpModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  helpModalContainer: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: screenHeight * 0.8,
+    minHeight: screenHeight * 0.4,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  helpModalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  helpModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  helpModalHeaderContent: {
+    flex: 1,
+  },
+  helpModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  helpModalSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  helpCloseButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  helpModalScroll: {
+    flex: 1,
+  },
+  helpContentContainer: {
+    padding: 20,
+  },
+  helpTipsContainer: {
+    gap: 12,
+  },
+  helpTipItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.background,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  helpTipIconContainer: {
+    marginRight: 12,
+    marginTop: 2,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  helpTipContent: {
+    flex: 1,
+  },
+  helpTipTypeLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  helpTipText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.text,
+  },
+  helpTipTypeTechnique: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  helpTipTypeTiming: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+  },
+  helpTipTypeIngredient: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+  },
+  helpTipTypeTemperature: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.error,
+  },
+  helpTipTypeSafety: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.error,
+  },
+  helpEmptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 60,
+    minHeight: 200,
+  },
+  helpEmptyStateText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 
 });

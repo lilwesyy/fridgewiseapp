@@ -334,7 +334,8 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       const rateLimitNotification = handleRateLimitError(
         error, 
         t('recipe.rateLimitTitle', 'Too Many Recipe Requests'),
-        () => generateRecipe()
+        () => generateRecipe(),
+        t
       );
       
       setNotification(rateLimitNotification);
@@ -385,7 +386,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.textInput}
-            placeholder="Cerca ingredienti USDA..."
+            placeholder={t('ingredients.searchPlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={newIngredient}
             onChangeText={handleIngredientInputChange}

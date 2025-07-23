@@ -185,11 +185,12 @@
     "confidence": "Confidenza",
     "category": "Categoria",
     "getRecipes": "Ottieni Ricette",
-    "noIngredients": "Nessun ingrediente rilevato"
+    "noIngredients": "Nessun ingrediente rilevato",
+    "searchPlaceholder": "Cerca ingredienti USDA..."
   },
   "recipes": {
     "title": "Ricette",
-    "subtitle": "Ricette deliziose basate sui tuoi ingredienti",
+    "subtitle": "Le tue ricette e quelle della community",
     "searchPlaceholder": "Cerca ricette...",
     "loading": "Caricamento ricette...",
     "fetchError": "Errore nel caricamento delle ricette",
@@ -264,9 +265,34 @@
     "imageViewInstructions": "Pizzica per ingrandire • Doppio tap per resettare • Scorri per spostare",
     "photoDeleted": "Foto eliminata con successo",
     "photoDeleteError": "Impossibile eliminare la foto",
-    "photoDeleteConfirm": "Sei sicuro di voler eliminare questa foto?"
+    "photoDeleteConfirm": "Sei sicuro di voler eliminare questa foto?",
+    "myRecipes": "Le mie ricette",
+    "explore": "Esplora ricette",
+    "searchCollections": "Cerca ricette pubbliche...",
+    "noPublicRecipes": "Nessuna ricetta trovata",
+    "noPublicRecipesDesc": "Non ci sono ancora ricette pubbliche della community",
+    "tryDifferentCollectionSearch": "Prova a cercare qualcosa di diverso",
+    "loadingCollections": "Caricamento ricette...",
+    "collectionsError": "Errore nel caricamento delle ricette pubbliche"
+  },
+  "rateLimit": {
+    "tooManyRequests": "Hai fatto troppe richieste. Attendi prima di riprovare.",
+    "dailyLimitReached": "Limite Giornaliero Raggiunto",
+    "dailyLimitMessage": "Hai raggiunto il limite giornaliero di {{limit}} {{limitType}}. Hai utilizzato {{used}}/{{limit}} oggi. Si resetta in {{hours}} ore.",
+    "rateLimitMessage": "Puoi fare {{limit}} richieste per minuto. Attendi {{retryAfter}} secondi prima di riprovare.",
+    "retryIn": "Riprova in {{seconds}}s",
+    "error": "Errore",
+    "unexpectedError": "Si è verificato un errore imprevisto. Riprova.",
+    "imageAnalysisLimit": "Limite Analisi Immagine",
+    "aiChatLimit": "Limite Chat IA"
+  },
+  "rating": {
+    "review": "recensione",
+    "reviews": "recensioni"
   },
   "recipe": {
+    "whoCookedThis": "Chi ha cucinato questa ricetta",
+    "createdBy": "Creato da",
     "title": "Ricetta",
     "noIngredientsProvided": "Nessun ingrediente fornito",
     "generationFailed": "Generazione ricetta fallita",
@@ -283,6 +309,7 @@
     "recipeCompleted": "Ricetta completata con successo",
     "dietary": "Dietetico",
     "ingredients": "Ingredienti",
+    "nutrition": "Valori Nutrizionali",
     "cookingTime": "Tempo di Cottura",
     "servings": "Porzioni",
     "instructions": "Istruzioni",
@@ -359,6 +386,17 @@
     "noInstructions": "Nessuna istruzione disponibile",
     "noIngredients": "Nessun ingrediente",
     "noIngredientsMessage": "Questa ricetta non ha ingredienti specificati. Puoi passare direttamente alla cottura.",
+    "tips": "Consigli di Cottura",
+    "helpTitle": "Consigli di Cucina",
+    "current": "Corrente",
+    "noTips": "Nessun consiglio disponibile per questo passaggio.",
+    "tipTypes": {
+      "technique": "Tecnica",
+      "timing": "Tempistiche", 
+      "ingredient": "Ingredienti",
+      "temperature": "Temperatura",
+      "safety": "Sicurezza"
+    },
     "exitTitle": "Uscire dalla cottura?",
     "exitMessage": "Sei sicuro di voler uscire dalla modalità cottura? I tuoi progressi andranno persi.",
     "exitConfirm": "Esci",
@@ -905,5 +943,22 @@
       "remaining": "rimanenti oggi",
       "limitReached": "Limite giornaliero raggiunto"
     }
+  },
+  "usage": {
+    "recipeGenerations": "Generazioni Ricette",
+    "aiChatMessages": "Messaggi IA", 
+    "imageAnalyses": "Analisi Immagini",
+    "remaining": "rimanenti oggi",
+    "limitReached": "Limite giornaliero raggiunto"
+  },
+  "nutrition": {
+    "calories": "Calorie",
+    "protein": "Proteine",
+    "carbs": "Carboidrati",
+    "fat": "Grassi",
+    "fiber": "Fibre",
+    "sugar": "Zuccheri",
+    "sodium": "Sodio",
+    "perServing": "Per porzione ({{servings}} porzioni totali)"
   }
 }

@@ -19,6 +19,7 @@ import Svg, { Rect } from 'react-native-svg';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { NotificationModal, NotificationType } from './NotificationModal';
 import { ImageViewerModal } from './ImageViewerModal';
+import { StarRating } from './StarRating';
 import Animated,
 {
   useSharedValue,
@@ -152,13 +153,18 @@ interface Recipe {
   dietaryTags: string[];
   language: 'en' | 'it';
   dishPhoto?: DishPhoto;
+  dishPhotos?: DishPhoto[];
   cookedAt?: string;
   completionCount?: number;
   createdAt: string;
+  isSaved?: boolean;
+  // Rating system
+  averageRating?: number;
+  totalRatings?: number;
 }
 
 interface RecipesScreenProps {
-  onSelectRecipe: (recipe: Recipe, allRecipes: Recipe[], index: number) => void;
+  onSelectRecipe: (recipe: Recipe, allRecipes: Recipe[], index: number, isPublic?: boolean) => void;
   onGoToCamera: () => void;
 }
 
@@ -172,11 +178,17 @@ interface RecipeItemProps {
   t: (key: string) => string;
   formatDate: (date: string) => string;
   getDifficultyColor: (difficulty: string) => string;
+  isPublic?: boolean;
 }
 
 const RecipeItem: React.FC<RecipeItemProps> = (props) => {
   const { colors } = useTheme();
   const cardOpacity = useSharedValue(0);
+  
+  // Helper function to determine if recipe is public (should show rating)
+  const isRecipePublic = () => {
+    return props.isPublic || (props.item.isSaved && ((props.item.dishPhotos && props.item.dishPhotos.length > 0) || props.item.cookedAt));
+  };
   const cardScale = useSharedValue(0.8);
   const cardTranslateY = useSharedValue(30);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -267,7 +279,7 @@ const RecipeItem: React.FC<RecipeItemProps> = (props) => {
             </View>
             <View style={styles.metadataItem}>
               <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
-                {'🥘'} {props.item.ingredients.length} {props.t('recipe.ingredients')}
+                {'🥘'} {props.item.ingredients?.length || 0} {props.t('recipe.ingredients')}
               </Text>
             </View>
             {!!(props.item.completionCount && props.item.completionCount > 0) && (
@@ -278,7 +290,7 @@ const RecipeItem: React.FC<RecipeItemProps> = (props) => {
               </View>
             )}
           </View>
-          {!!(props.item.dietaryTags.length > 0) && (
+          {!!(props.item.dietaryTags && props.item.dietaryTags.length > 0) && (
             <View style={styles.dietaryTags}>
               {props.item.dietaryTags.slice(0, 3).map((tag) => (
                 <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.badge || colors.card }]}>
@@ -287,17 +299,25 @@ const RecipeItem: React.FC<RecipeItemProps> = (props) => {
                   </Text>
                 </View>
               ))}
-              {!!(props.item.dietaryTags.length > 3) && (
+              {!!(props.item.dietaryTags && props.item.dietaryTags.length > 3) && (
                 <Text style={[styles.moreTagsText, { color: colors.textSecondary }]}>+{props.item.dietaryTags.length - 3}</Text>
               )}
             </View>
           )}
           <View style={styles.recipeFooter}>
             <Text style={[styles.recipeDate, { color: colors.textSecondary }]}>{props.formatDate(props.item.createdAt)}</Text>
-            {!!props.item.cookedAt && (
-              <Text style={[styles.cookedDate, { color: colors.primary }]}>
-                {props.t('recipes.lastCooked')}: {props.formatDate(props.item.cookedAt)}
-              </Text>
+            {isRecipePublic() && (
+              <View style={styles.ratingContainer}>
+                <StarRating 
+                  rating={props.item.averageRating || 0} 
+                  size={16} 
+                  color="#FFD700" 
+                  emptyColor="#E5E5E5" 
+                />
+                <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
+                  ({props.item.totalRatings || 0})
+                </Text>
+              </View>
             )}
           </View>
       </TouchableOpacity>
@@ -328,6 +348,13 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>([]);
   const [selectedImageTitle, setSelectedImageTitle] = useState('');
+  
+  // Public collections state
+  const [activeTab, setActiveTab] = useState<'my-recipes' | 'explore'>('my-recipes');
+  const [publicRecipes, setPublicRecipes] = useState<any[]>([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(false);
+  const [collectionsSearchQuery, setCollectionsSearchQuery] = useState('');
+  
   const dietaryTags = [
     'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'
   ];
@@ -395,7 +422,16 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
 
   useEffect(() => {
     fetchRecipes();
+    if (activeTab === 'explore') {
+      fetchPublicRecipes();
+    }
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'explore') {
+      fetchPublicRecipes();
+    }
+  }, [activeTab]);
 
   // Reset swipe states when component becomes visible
   useEffect(() => {
@@ -405,6 +441,15 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   useEffect(() => {
     filterRecipes();
   }, [searchQuery, recipes, difficultyFilter, tagFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'explore') {
+      const timeoutId = setTimeout(() => {
+        fetchPublicRecipes();
+      }, 500); // Debounce search
+      return () => clearTimeout(timeoutId);
+    }
+  }, [collectionsSearchQuery]);
 
   // FIX: estrai array corretto da data.data.recipes
   const fetchRecipes = async () => {
@@ -457,6 +502,40 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchPublicRecipes = async () => {
+    try {
+      setCollectionsLoading(true);
+      const searchParam = collectionsSearchQuery ? `&search=${encodeURIComponent(collectionsSearchQuery)}` : '';
+      const response = await fetch(`${API_URL}/api/recipe/public?sortBy=recent&limit=20${searchParam}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        // If endpoint doesn't exist yet, show empty state instead of error
+        if (response.status === 404) {
+          console.log('Recipes endpoint not available yet');
+          setPublicRecipes([]);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Public recipes data:', data.data?.recipes || []);
+      setPublicRecipes(data.data?.recipes || []);
+    } catch (error) {
+      console.error('Error fetching public recipes:', error);
+      
+      // Always show empty state for network errors, but log them
+      console.log('Network error - showing empty state:', error instanceof Error ? error.message : String(error));
+      setPublicRecipes([]);
+    } finally {
+      setCollectionsLoading(false);
     }
   };
 
@@ -577,7 +656,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             const itemId = (item as any)._id || item.id;
             return currentRecipeId === itemId;
           });
-          onSelectRecipe(item, filteredRecipes, idx);
+          onSelectRecipe(item, filteredRecipes, idx, false); // false = not public
         }}
         onDelete={() => handleDeleteRequest(item)}
         onPhotoPress={handlePhotoPress}
@@ -585,6 +664,26 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         t={t}
         formatDate={formatDate}
         getDifficultyColor={getDifficultyColor}
+        isPublic={false}
+      />
+    );
+  };
+
+  const renderPublicRecipe = ({ item, index }: { item: Recipe; index: number }) => {
+    return (
+      <RecipeItem
+        item={item}
+        index={index}
+        onPress={() => {
+          onSelectRecipe(item, [item], 0, true); // true = is public
+        }}
+        onDelete={() => {}} // No delete action for public recipes
+        onPhotoPress={handlePhotoPress}
+        resetTrigger={resetTrigger}
+        t={t}
+        formatDate={formatDate}
+        getDifficultyColor={getDifficultyColor}
+        isPublic={true}
       />
     );
   };
@@ -592,15 +691,35 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('recipes.title') || 'Le tue ricette'}</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('recipes.subtitle') || 'Ricette deliziose basate sui tuoi ingredienti'}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('recipes.title')}</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('recipes.subtitle')}</Text>
+        
+        {/* Tab Selector */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'my-recipes' && { backgroundColor: colors.primary }]}
+            onPress={() => setActiveTab('my-recipes')}
+          >
+            <Text style={[styles.tabText, { color: activeTab === 'my-recipes' ? colors.buttonText : colors.text }]}>
+              {t('recipes.myRecipes')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'explore' && { backgroundColor: colors.primary }]}
+            onPress={() => setActiveTab('explore')}
+          >
+            <Text style={[styles.tabText, { color: activeTab === 'explore' ? colors.buttonText : colors.text }]}>
+              {t('recipes.explore')}
+            </Text>
+          </TouchableOpacity>
+        </View>
         <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder={t('recipes.searchPlaceholder')}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            placeholder={activeTab === 'my-recipes' ? t('recipes.searchPlaceholder') : t('recipes.searchCollections')}
+            value={activeTab === 'my-recipes' ? searchQuery : collectionsSearchQuery}
+            onChangeText={activeTab === 'my-recipes' ? setSearchQuery : setCollectionsSearchQuery}
             placeholderTextColor={colors.textSecondary}
             textContentType="none"
             autoComplete="off"
@@ -608,8 +727,9 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             autoCorrect={false}
           />
         </Animated.View>
-        <Animated.View style={filtersAnimatedStyle}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
+        {activeTab === 'my-recipes' && (
+          <Animated.View style={filtersAnimatedStyle}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
             {/* Difficoltà */}
             <TouchableOpacity activeOpacity={0.7}
               style={[styles.filterBadge, { backgroundColor: !difficultyFilter ? colors.primary : colors.card, borderColor: !difficultyFilter ? colors.primary : 'transparent' }]}
@@ -637,10 +757,12 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </Animated.View>
+          </Animated.View>
+        )}
       </Animated.View>
 
-      {filteredRecipes.length === 0 ? (
+      {activeTab === 'my-recipes' ? (
+        filteredRecipes.length === 0 ? (
         <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
           <View style={{ marginBottom: 16 }}>
             <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
@@ -690,6 +812,52 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             }
           />
         </Animated.View>
+        )
+      ) : (
+        // Public Collections Tab
+        collectionsLoading ? (
+          <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('recipes.loadingCollections')}</Text>
+          </Animated.View>
+        ) : publicRecipes.length === 0 ? (
+          <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
+            <View style={{ marginBottom: 16 }}>
+              <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
+                <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card} />
+                <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary} />
+                <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.primary} />
+                <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.primary} />
+                <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.primary} />
+              </Svg>
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {collectionsSearchQuery ? t('recipes.noPublicRecipes') : t('recipes.noPublicRecipes')}
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+              {collectionsSearchQuery ? t('recipes.tryDifferentCollectionSearch') : t('recipes.noPublicRecipesDesc')}
+            </Text>
+          </Animated.View>
+        ) : (
+          <Animated.View style={[{ flex: 1 }, listAnimatedStyle]}>
+            <FlatList
+              data={publicRecipes}
+              renderItem={({ item, index }) => renderPublicRecipe({ item, index })}
+              keyExtractor={(item) => item._id}
+              style={styles.recipesList}
+              showsVerticalScrollIndicator={false}
+              refreshing={collectionsLoading}
+              onRefresh={fetchPublicRecipes}
+              refreshControl={
+                <RefreshControl
+                  refreshing={collectionsLoading}
+                  onRefresh={fetchPublicRecipes}
+                  colors={[colors.primary]}
+                  tintColor={colors.primary}
+                />
+              }
+            />
+          </Animated.View>
+        )
       )}
       <DeleteConfirmationModal
         visible={showDeleteModal}
@@ -915,6 +1083,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
   },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
   cookedDate: {
     fontSize: 11,
     fontWeight: '500',
@@ -1009,5 +1186,58 @@ const styles = StyleSheet.create({
   },
   rowContent: {
     flex: 1,
+  },
+  // Tab styles
+  tabContainer: {
+    flexDirection: 'row',
+    marginVertical: 16,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderRadius: 8,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Collection styles
+  collectionCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  collectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  collectionDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  collectionMetadata: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  collectionMeta: {
+    fontSize: 12,
+  },
+  collectionCreator: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

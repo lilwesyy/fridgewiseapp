@@ -19,6 +19,7 @@ import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { ChatAIModal } from './ChatAIModal';
 import { NotificationModal, NotificationType } from './NotificationModal';
 import { ImageViewerModal } from './ImageViewerModal';
+import { StarRating } from './StarRating';
 import { PhotoUploadModal } from './PhotoUploadModal';
 import Animated, {
   useSharedValue,
@@ -54,6 +55,33 @@ interface Recipe {
   _id?: string;
   dishPhoto?: string; // Cloudinary URL della foto del piatto
   cookedAt?: string; // Data e ora in cui è stato cucinato
+  nutrition?: {
+    calories: number;
+    protein: number;
+    carbohydrates: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+    sodium: number;
+  };
+  cookingTips?: Array<{
+    step: number;
+    tip: string;
+    type: 'technique' | 'timing' | 'ingredient' | 'temperature' | 'safety';
+  }>;
+  // Creator info for public recipes
+  userId?: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: {
+      url: string;
+      publicId: string;
+    };
+  };
+  // Rating system
+  averageRating?: number;
+  totalRatings?: number;
 }
 
 interface RecipeScreenProps {
@@ -68,6 +96,7 @@ interface RecipeScreenProps {
   currentIndex?: number; // Current recipe index
   onNavigateToRecipe?: (index: number) => void; // Navigate to specific recipe
   onRecipeUpdate?: (updatedRecipe: Recipe) => void; // Handle recipe updates
+  isPublic?: boolean; // Flag to indicate if recipe is from public collection
 }
 
 export const RecipeScreen: React.FC<RecipeScreenProps> = ({
@@ -82,6 +111,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   currentIndex = 0,
   onNavigateToRecipe,
   onRecipeUpdate,
+  isPublic = false,
 }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
@@ -105,6 +135,8 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     title: string;
     message: string;
   }>({ visible: false, type: 'success', title: '', message: '' });
+  const [usersWhoCookedRecipe, setUsersWhoCookedRecipe] = useState<any[]>([]);
+  const [loadingCookedByUsers, setLoadingCookedByUsers] = useState(false);
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -116,6 +148,12 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   
   const contentOpacity = useSharedValue(0);
   const contentTranslateY = useSharedValue(40);
+  
+  const nutritionOpacity = useSharedValue(0);
+  const nutritionTranslateY = useSharedValue(30);
+  
+  const ingredientsOpacity = useSharedValue(0);
+  const ingredientsTranslateY = useSharedValue(40);
   
   const buttonsOpacity = useSharedValue(0);
   const buttonsTranslateY = useSharedValue(50);
@@ -135,9 +173,17 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     contentOpacity.value = withDelay(300, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     contentTranslateY.value = withDelay(300, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     
+    // Nutrition animation
+    nutritionOpacity.value = withDelay(375, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    nutritionTranslateY.value = withDelay(375, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    
+    // Ingredients animation
+    ingredientsOpacity.value = withDelay(450, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    ingredientsTranslateY.value = withDelay(450, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    
     // Buttons animation
-    buttonsOpacity.value = withDelay(450, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
-    buttonsTranslateY.value = withDelay(450, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    buttonsOpacity.value = withDelay(525, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
+    buttonsTranslateY.value = withDelay(525, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
   }, [recipe.id]); // Re-animate when recipe changes
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -156,6 +202,16 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   const contentAnimatedStyle = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,
     transform: [{ translateY: contentTranslateY.value }],
+  }));
+
+  const nutritionAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: nutritionOpacity.value,
+    transform: [{ translateY: nutritionTranslateY.value }],
+  }));
+
+  const ingredientsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: ingredientsOpacity.value,
+    transform: [{ translateY: ingredientsTranslateY.value }],
   }));
 
   const buttonsAnimatedStyle = useAnimatedStyle(() => ({
@@ -684,6 +740,35 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     }
   }, [notification.visible]);
 
+  // Load users who cooked this recipe (only for public recipes)
+  const fetchUsersWhoCookedRecipe = async () => {
+    if (!isPublic || !recipe._id) return;
+    
+    try {
+      setLoadingCookedByUsers(true);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.17:3000'}/api/recipe/${recipe._id}/cooked-by?limit=8`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Users who cooked recipe data:', data);
+        if (data.success) {
+          console.log('Users array:', data.data.users);
+          setUsersWhoCookedRecipe(data.data.users || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching users who cooked recipe:', error);
+    } finally {
+      setLoadingCookedByUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isPublic) {
+      fetchUsersWhoCookedRecipe();
+    }
+  }, [isPublic, recipe._id]);
+
   return (
     <View 
       key={`recipe-${recipe.id || recipe._id}-${forceUpdateCounter}`}
@@ -733,7 +818,11 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
       >
         <Animated.View style={[styles.recipeHeader, titleAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }] }>
           {/* Dish Photos Section */}
-          {(recipe.cookedAt || recipe.dishPhotos?.length > 0) && (
+          {(
+            isPublic 
+              ? (recipe.dishPhotos?.length > 0) // Per ricette pubbliche: mostra solo se ha foto
+              : (recipe.cookedAt || recipe.dishPhotos?.length > 0) // Per ricette personali: come prima
+          ) && (
             <View 
               key={`photos-section-${recipe.dishPhotos?.length || 0}-${forceUpdateCounter}`}
               style={[styles.section, { backgroundColor: 'transparent', marginBottom: 8, paddingTop: 0 }]}
@@ -759,7 +848,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                     snapToAlignment="start"
                     bounces={false}
                   >
-                    {recipe.dishPhotos.map((photo, index) => (
+                    {(recipe.dishPhotos || []).map((photo, index) => (
                       <View key={`${photo.url}-${index}`} style={styles.photoSlide}>
                         <View style={styles.photoSlideWrapper}>
                           <Image 
@@ -767,13 +856,13 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                             style={[styles.photoSlideImage, { borderColor: colors.border }]} 
                             resizeMode="cover"
                             testID={`dish-photo-image-${index}`}
-                          />
-                          {/* View Photo Overlay */}
-                          <TouchableOpacity 
-                            style={[styles.photoViewOverlay, { backgroundColor: colors.overlay }]}
-                            onPress={() => handleViewPhoto(photo.url, index)}
-                            activeOpacity={0.8}
-                          >
+                                />
+                              {/* View Photo Overlay */}
+                                <TouchableOpacity 
+                               style={[styles.photoViewOverlay, { backgroundColor: colors.overlay }]}
+                                 onPress={() => handleViewPhoto(photo.url, index)}
+                                   activeOpacity={0.8}
+                                  >
                             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                               <Path
                                 d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
@@ -786,6 +875,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                           </TouchableOpacity>
                           
                           {/* Delete Photo Overlay */}
+                          {!isPublic && (
                           <TouchableOpacity 
                             style={[styles.photoDeleteOverlay, { backgroundColor: colors.error }]}
                             onPress={(e) => {
@@ -811,12 +901,13 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                               />
                             </Svg>
                           </TouchableOpacity>
+                          )}
                         </View>
                       </View>
                     ))}
                     
                     {/* Add Photo Slide */}
-                    {recipe.dishPhotos.length < 3 && (
+                    {!isPublic && recipe.dishPhotos.length < 3 && (
                       <View style={styles.photoSlide}>
                         <TouchableOpacity 
                           style={styles.addPhotoSlide}
@@ -850,9 +941,9 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                   </ScrollView>
                   
                   {/* Page Indicators */}
-                  {(recipe.dishPhotos.length > 1 || (recipe.dishPhotos.length < 3)) && (
+                  {((recipe.dishPhotos?.length || 0) > 1 || (!isPublic && (recipe.dishPhotos?.length || 0) < 3)) && (
                     <View style={styles.photoIndicators}>
-                      {Array.from({ length: recipe.dishPhotos.length + (recipe.dishPhotos.length < 3 ? 1 : 0) }).map((_, index) => (
+                      {Array.from({ length: (recipe.dishPhotos?.length || 0) + (!isPublic && (recipe.dishPhotos?.length || 0) < 3 ? 1 : 0) }).map((_, index) => (
                         <View
                           key={index}
                           style={[
@@ -906,12 +997,27 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             </View>
           )}
           
+          {/* Rating stars above title - Only for public recipes */}
+          {isPublic && (
+            <View style={styles.titleRatingContainer}>
+              <StarRating 
+                rating={recipe.averageRating || 0} 
+                size={20} 
+                color="#FFD700" 
+                emptyColor="#E5E5E5" 
+              />
+              <Text style={[styles.titleRatingText, { color: colors.textSecondary }]}>
+                ({recipe.totalRatings || 0})
+              </Text>
+            </View>
+          )}
+          
           <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.title}</Text>
           
           {/* Dietary Tags under title */}
-          {recipe.dietaryTags.length > 0 && (
+          {(recipe.dietaryTags && recipe.dietaryTags.length > 0) && (
             <View style={styles.dietaryTags}>
-              {recipe.dietaryTags.map((tag) => (
+              {(recipe.dietaryTags || []).map((tag) => (
                 <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }]}>
                   <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
                     {t(`recipes.dietary.${tag.replace('-', '')}`)}
@@ -935,6 +1041,35 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             </View>
             <Text style={[styles.aiDisclaimerText, { color: colors.textSecondary }]}>{t('recipe.aiDisclaimerText')}</Text>
           </View>
+
+          {/* Recipe Creator Card - Only for public recipes */}
+          {isPublic && recipe.userId && (
+            <View style={[styles.cookedByUserCard, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 16 }]}>
+              <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
+                {recipe.userId.avatar?.url ? (
+                  <Image 
+                    source={{ uri: recipe.userId.avatar.url }} 
+                    style={styles.userAvatarImage} 
+                  />
+                ) : (
+                  <Text style={[styles.userAvatarText, { color: colors.buttonText }]}>
+                    {recipe.userId.name?.charAt(0).toUpperCase() || 'C'}
+                  </Text>
+                )}
+              </View>
+              <View style={styles.userDetails}>
+                <Text style={[styles.creatorLabel, { color: colors.textSecondary }]}>
+                  {t('recipe.createdBy')}
+                </Text>
+                <Text style={[styles.userName, { color: colors.text }]}>
+                  {recipe.userId.name || 'Chef'}
+                </Text>
+              </View>
+              <Text style={[styles.cookedDate, { color: colors.textSecondary }]}>
+                {new Date(recipe.createdAt).toLocaleDateString()}
+              </Text>
+            </View>
+          )}
 
           {/* Indicatore "Già cucinato" con foto */}
           {recipe.cookedAt && (
@@ -973,24 +1108,61 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         </Animated.View>
 
 
-        <Animated.View style={[styles.section, { backgroundColor: colors.surface }] }>
+        {/* Nutrition Information Section - Moved before ingredients */}
+        {recipe.nutrition && (
+          <Animated.View style={[styles.section, nutritionAnimatedStyle, { backgroundColor: colors.surface }] }>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.nutrition')}</Text>
+            <View style={[styles.nutritionContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.nutritionGrid}>
+                <View style={styles.nutritionItem}>
+                  <Text style={[styles.nutritionValue, { color: colors.primary }]}>{recipe.nutrition.calories}</Text>
+                  <Text style={[styles.nutritionLabel, { color: colors.textSecondary }]}>{t('nutrition.calories')}</Text>
+                </View>
+                <View style={styles.nutritionItem}>
+                  <Text style={[styles.nutritionValue, { color: colors.success }]}>{recipe.nutrition.protein}g</Text>
+                  <Text style={[styles.nutritionLabel, { color: colors.textSecondary }]}>{t('nutrition.protein')}</Text>
+                </View>
+                <View style={styles.nutritionItem}>
+                  <Text style={[styles.nutritionValue, { color: colors.warning }]}>{recipe.nutrition.carbohydrates}g</Text>
+                  <Text style={[styles.nutritionLabel, { color: colors.textSecondary }]}>{t('nutrition.carbs')}</Text>
+                </View>
+                <View style={styles.nutritionItem}>
+                  <Text style={[styles.nutritionValue, { color: colors.error }]}>{recipe.nutrition.fat}g</Text>
+                  <Text style={[styles.nutritionLabel, { color: colors.textSecondary }]}>{t('nutrition.fat')}</Text>
+                </View>
+              </View>
+              <View style={styles.nutritionSecondaryGrid}>
+                <View style={styles.nutritionSecondaryItem}>
+                  <Text style={[styles.nutritionSecondaryValue, { color: colors.text }]}>{recipe.nutrition.fiber}g</Text>
+                  <Text style={[styles.nutritionSecondaryLabel, { color: colors.textSecondary }]}>{t('nutrition.fiber')}</Text>
+                </View>
+                <View style={styles.nutritionSecondaryItem}>
+                  <Text style={[styles.nutritionSecondaryValue, { color: colors.text }]}>{recipe.nutrition.sugar}g</Text>
+                  <Text style={[styles.nutritionSecondaryLabel, { color: colors.textSecondary }]}>{t('nutrition.sugar')}</Text>
+                </View>
+                <View style={styles.nutritionSecondaryItem}>
+                  <Text style={[styles.nutritionSecondaryValue, { color: colors.text }]}>{recipe.nutrition.sodium}mg</Text>
+                  <Text style={[styles.nutritionSecondaryLabel, { color: colors.textSecondary }]}>{t('nutrition.sodium')}</Text>
+                </View>
+              </View>
+              <Text style={[styles.nutritionNote, { color: colors.textSecondary }]}>
+                {t('nutrition.perServing', { servings: recipe.servings })}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
+        <Animated.View style={[styles.section, ingredientsAnimatedStyle, { backgroundColor: colors.surface }] }>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.ingredients')}</Text>
-          <View style={{
-            backgroundColor: colors.card,
-            borderRadius: 10,
-            padding: 10,
-            marginBottom: 8,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}>
-            {recipe.ingredients.map(renderIngredient)}
+          <View style={styles.ingredientsList}>
+            {(recipe.ingredients || []).map(renderIngredient)}
           </View>
         </Animated.View>
 
         <Animated.View style={[styles.section, { backgroundColor: colors.surface }] }>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipe.instructions')}</Text>
           <View style={[styles.instructionsContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            {recipe.instructions.map((instruction, index) => (
+            {(recipe.instructions || []).map((instruction, index) => (
               <View key={index}>
                 <View style={styles.instructionStep}>
                   <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
@@ -1110,6 +1282,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                   </Text>
                 </View>
                 
+                {!isPublic && (
                 <TouchableOpacity 
                   style={[styles.addPhotoButton, { backgroundColor: colors.primary }]}
                   onPress={handleAddPhoto}
@@ -1134,11 +1307,50 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                     </>
                   )}
                 </TouchableOpacity>
+                )}
               </View>
             )}
           </Animated.View>
         )}
 
+        {/* Users Who Cooked This Recipe Section - Only for public recipes */}
+        {isPublic && usersWhoCookedRecipe.length > 0 && (
+          <View style={[styles.section, { backgroundColor: colors.surface, marginTop: 16 }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {t('recipe.whoCookedThis') || 'Chi ha cucinato questa ricetta'}
+            </Text>
+            <View style={styles.cookedByUsersContainer}>
+              {usersWhoCookedRecipe.map((userCooking, index) => (
+                <View key={userCooking.user._id} style={[styles.cookedByUserCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
+                    {userCooking.user.avatar?.url ? (
+                      <Image 
+                        source={{ uri: userCooking.user.avatar.url }} 
+                        style={styles.userAvatarImage} 
+                      />
+                    ) : (
+                      <Text style={[styles.userAvatarText, { color: colors.buttonText }]}>
+                        {userCooking.user.name?.charAt(0).toUpperCase() || 'Chef'?.charAt(0).toUpperCase()}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={styles.userDetails}>
+                    <Text style={[styles.userName, { color: colors.text }]}>
+                      {userCooking.user.name || 'Chef'}
+                    </Text>
+                    {userCooking.cookedAt && (
+                      <Text style={[styles.cookedDate, { color: colors.textSecondary }]}>
+                        {new Date(userCooking.cookedAt).toLocaleDateString()}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {!isPublic && (
         <View style={[styles.deleteSection, { backgroundColor: colors.surface }] }>
           <TouchableOpacity style={[styles.deleteButton, { backgroundColor: colors.error }]} onPress={() => setShowDeleteModal(true)}>
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
@@ -1160,6 +1372,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             <Text style={styles.deleteButtonText}>{t('recipe.deleteRecipe')}</Text>
           </TouchableOpacity>
         </View>
+        )}
       </ScrollView>
       <Animated.View style={[styles.footer, buttonsAnimatedStyle, { backgroundColor: colors.surface, borderTopColor: colors.border }] }>
         {isJustGenerated ? (
@@ -1176,24 +1389,28 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
               <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.startCooking')}</Text>
             </TouchableOpacity>
+            {!isPublic && (
             <TouchableOpacity style={[styles.aiEditButton, { backgroundColor: colors.card }]} onPress={() => setShowChatAIModal(true)}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
                 <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </Svg>
               <Text style={[styles.aiEditButtonText, { color: colors.primary }]}>{t('common.edit') || 'Modifica'}</Text>
             </TouchableOpacity>
+            )}
           </View>
         ) : (
           <View style={styles.dualButtonContainer}>
             <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
               <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.startCooking')}</Text>
             </TouchableOpacity>
+            {!isPublic && (
             <TouchableOpacity style={[styles.aiEditButton, { backgroundColor: colors.card }]} onPress={() => setShowChatAIModal(true)}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
                 <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </Svg>
               <Text style={[styles.aiEditButtonText, { color: colors.primary }]}>{t('common.edit') || 'Modifica'}</Text>
             </TouchableOpacity>
+            )}
           </View>
         )}
       </Animated.View>
@@ -1202,11 +1419,14 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         recipe={recipe}
         onClose={() => setShowShareModal(false)}
       />
+      {!isPublic && (
       <DeleteConfirmationModal
         visible={showDeleteModal}
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={confirmDeleteRecipe}
       />
+      )}
+      {!isPublic && (
       <DeleteConfirmationModal
         visible={showDeletePhotoModal}
         onCancel={() => {
@@ -1217,12 +1437,15 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         title={t('common.delete')}
         message={t('recipes.photoDeleteConfirm') || 'Are you sure you want to delete this photo?'}
       />
+      )}
+      {!isPublic && (
       <ChatAIModal
         visible={showChatAIModal}
         recipe={recipe}
         onClose={() => setShowChatAIModal(false)}
         onRecipeUpdate={onRecipeUpdate}
       />
+      )}
       <NotificationModal
         visible={notification.visible}
         type={notification.type}
@@ -1237,6 +1460,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         title={recipe.title}
         onClose={() => setShowImageViewer(false)}
       />
+      {!isPublic && (
       <PhotoUploadModal
         visible={showPhotoUpload}
         onClose={handleSkipPhoto}
@@ -1259,6 +1483,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           }
         }}
       />
+      )}
     </View>
   );
 };
@@ -1320,6 +1545,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#212529',
     marginBottom: 8,
+  },
+  titleRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: 12,
+    gap: 8,
+  },
+  titleRatingText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   recipeDescription: {
     fontSize: 16,
@@ -1432,6 +1668,9 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'white',
     marginTop: 8,
+  },
+  ingredientsList: {
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -1779,5 +2018,110 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 8,
     minWidth: 160,
+  },
+  
+  // Nutrition Styles
+  nutritionContainer: {
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  nutritionGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  nutritionItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  nutritionValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  nutritionLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  nutritionSecondaryGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+    marginBottom: 12,
+  },
+  nutritionSecondaryItem: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  nutritionSecondaryValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  nutritionSecondaryLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  nutritionNote: {
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  
+  // Cooked By Users Styles
+  cookedByUsersContainer: {
+    gap: 12,
+  },
+  creatorLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cookedByUserCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  userAvatarText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  userAvatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  userDetails: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cookedDate: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });

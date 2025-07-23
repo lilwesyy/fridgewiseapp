@@ -177,8 +177,9 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
       
       const rateLimitNotification = handleRateLimitError(
         error, 
-        'AI Chat Limit',
-        () => sendMessage()
+        t('rateLimit.aiChatLimit'),
+        () => sendMessage(),
+        t
       );
       
       if (rateLimitNotification.type === 'warning') {

@@ -1,0 +1,19 @@
+{
+  "passwordReset": {
+    "subject": "FridgeWise - Password Reset Code",
+    "title": "Password Reset Request",
+    "message": "You have requested to reset your password. Use the following code to reset your password:",
+    "expiry": "This code will expire in <strong>10 minutes</strong> for security reasons.",
+    "securityNotice": "<strong>Security Notice:</strong> If you didn't request this password reset, please ignore this email. Your account remains secure.",
+    "footer": "This is an automated email from FridgeWise. Please do not reply to this email."
+  },
+  "emailVerification": {
+    "subject": "FridgeWise - Email Verification Code",
+    "title": "Verify Your Email Address",
+    "welcome": "Welcome to FridgeWise! To complete your registration, please verify your email address using the code below:",
+    "codeTitle": "Your Verification Code",
+    "expiry": "This code will expire in <strong>10 minutes</strong>. Enter it in the app to verify your email address.",
+    "securityNotice": "<strong>Security Notice:</strong> If you didn't create an account with FridgeWise, please ignore this email.",
+    "footer": "This is an automated email from FridgeWise. Please do not reply to this email."
+  }
+}

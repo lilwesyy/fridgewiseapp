@@ -62,7 +62,7 @@ export const DailyUsageIndicator: React.FC<DailyUsageIndicatorProps> = ({
       </View>
       {showText && usageData.remaining > 0 && (
         <Text style={styles.remaining}>
-          {t('usage.remaining', `${usageData.remaining} remaining today`)}
+          {usageData.remaining} {t('usage.remaining')}
         </Text>
       )}
       {showText && isAtLimit && (

@@ -30,6 +30,20 @@ interface GeneratedRecipe {
   servings: number;
   difficulty: 'easy' | 'medium' | 'hard';
   dietaryTags: string[];
+  nutrition?: {
+    calories: number;
+    protein: number;
+    carbohydrates: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+    sodium: number;
+  };
+  cookingTips: Array<{
+    step: number;
+    tip: string;
+    type: 'technique' | 'timing' | 'ingredient' | 'temperature' | 'safety';
+  }>;
 }
 
 export class GeminiService {
@@ -120,7 +134,28 @@ Please provide the recipe in the following JSON format:
   "cookingTime": 30,
   "servings": 4,
   "difficulty": "easy",
-  "dietaryTags": ["vegetarian", "gluten-free"]
+  "dietaryTags": ["vegetarian", "gluten-free"],
+  "nutrition": {
+    "calories": 450,
+    "protein": 25,
+    "carbohydrates": 35,
+    "fat": 18,
+    "fiber": 8,
+    "sugar": 12,
+    "sodium": 650
+  },
+  "cookingTips": [
+    {
+      "step": 1,
+      "tip": "Make sure to preheat the pan before adding oil",
+      "type": "technique"
+    },
+    {
+      "step": 2,
+      "tip": "Don't overcook the vegetables to maintain their crunch",
+      "type": "timing"
+    }
+  ]
 }
 
 Important:
@@ -128,6 +163,9 @@ Important:
 - You can add common seasonings and basic ingredients (salt, pepper, oil, etc.)
 - Ensure the recipe is practical and achievable
 - Include dietary tags if applicable
+- Provide accurate nutritional information per serving
+- Add helpful cooking tips for key steps (max 5 tips)
+- Tip types: technique, timing, ingredient, temperature, safety
 - Instructions should be clear and detailed
 - For ingredients without specific units (like spices), use "to taste", "pinch", "dash", etc.
 - Never leave the "unit" field empty - always provide a unit
@@ -162,7 +200,28 @@ Fornisci la ricetta nel seguente formato JSON:
   "cookingTime": 30,
   "servings": 4,
   "difficulty": "easy",
-  "dietaryTags": ["vegetarian", "gluten-free"]
+  "dietaryTags": ["vegetarian", "gluten-free"],
+  "nutrition": {
+    "calories": 450,
+    "protein": 25,
+    "carbohydrates": 35,
+    "fat": 18,
+    "fiber": 8,
+    "sugar": 12,
+    "sodium": 650
+  },
+  "cookingTips": [
+    {
+      "step": 1,
+      "tip": "Assicurati di preriscaldare la padella prima di aggiungere l'olio",
+      "type": "technique"
+    },
+    {
+      "step": 2,
+      "tip": "Non cuocere troppo le verdure per mantenere la croccantezza",
+      "type": "timing"
+    }
+  ]
 }
 
 Importante:
@@ -170,13 +229,10 @@ Importante:
 - Puoi aggiungere condimenti comuni e ingredienti di base (sale, pepe, olio, ecc.)
 - Assicurati che la ricetta sia pratica e realizzabile
 - Includi tag dietetici se applicabile
-- Le istruzioni devono essere chiare e dettagliate
-- Per ingredienti senza unità specifiche (come spezie), usa "q.b.", "pizzico", "spolverata", ecc.
-- Non lasciare mai il campo "unit" vuoto - fornisci sempre un'unità
-- stepTimers deve contenere il tempo stimato in minuti per ogni passaggio di cottura
-- Ogni timer in stepTimers corrisponde all'istruzione con lo stesso indice
-- I timer devono essere realistici per il passaggio di cottura (es. 2-3 min per rosolare, 10-15 min per cuocere a fuoco lento)
-- Se un passaggio non richiede tempistiche, usa 0 o ometti quel timer`
+- Fornisci informazioni nutrizionali accurate per porzione
+- Aggiungi consigli di cottura utili per i passaggi chiave (max 5 consigli)
+- Tipi di consigli: technique, timing, ingredient, temperature, safety
+- Le istruzioni devono essere chiare e dettagliate`
       }
     };
 
@@ -253,7 +309,9 @@ Importante:
         cookingTime: parsed.cookingTime || 30,
         servings: parsed.servings || 4,
         difficulty: parsed.difficulty || 'medium',
-        dietaryTags: parsed.dietaryTags || []
+        dietaryTags: parsed.dietaryTags || [],
+        nutrition: parsed.nutrition,
+        cookingTips: parsed.cookingTips || []
       };
 
       return recipe;
@@ -326,6 +384,31 @@ Importante:
     const selectedRecipe = mockRecipes[language];
     const allIngredients = [...selectedRecipe.baseIngredients, ...selectedRecipe.additionalIngredients];
 
+    // Mock nutrition data based on typical values
+    const mockNutrition = {
+      calories: Math.round(300 + (servings * 50) + (ingredients.length * 30)),
+      protein: Math.round(15 + (ingredients.length * 5)),
+      carbohydrates: Math.round(25 + (ingredients.length * 8)),
+      fat: Math.round(12 + (ingredients.length * 3)),
+      fiber: Math.round(4 + (ingredients.length * 2)),
+      sugar: Math.round(8 + (ingredients.length * 1.5)),
+      sodium: Math.round(400 + (servings * 50))
+    };
+
+    // Mock cooking tips
+    const mockTips = {
+      en: [
+        { step: 1, tip: "Make sure all ingredients are at room temperature for better cooking", type: "ingredient" as const },
+        { step: 2, tip: "Preheat the pan properly to avoid sticking", type: "technique" as const },
+        { step: 3, tip: "Don't overcook the vegetables to maintain nutrients", type: "timing" as const }
+      ],
+      it: [
+        { step: 1, tip: "Assicurati che tutti gli ingredienti siano a temperatura ambiente per una cottura migliore", type: "ingredient" as const },
+        { step: 2, tip: "Preriscalda bene la padella per evitare che si attacchi", type: "technique" as const },
+        { step: 3, tip: "Non cuocere troppo le verdure per mantenere i nutrienti", type: "timing" as const }
+      ]
+    };
+
     return {
       title: selectedRecipe.title,
       description: selectedRecipe.description,
@@ -335,7 +418,9 @@ Importante:
       cookingTime: cookingTime,
       servings: servings,
       difficulty: difficulty as 'easy' | 'medium' | 'hard',
-      dietaryTags: []
+      dietaryTags: [],
+      nutrition: mockNutrition,
+      cookingTips: mockTips[language]
     };
   }
 
@@ -704,7 +789,8 @@ RECIPE_MODIFICATION_END`
       cookingTime: 30,
       servings: 4,
       difficulty: 'easy',
-      dietaryTags: []
+      dietaryTags: [],
+      cookingTips: []
     };
   }
 }

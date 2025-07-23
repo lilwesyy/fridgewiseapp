@@ -184,11 +184,12 @@
     "confidence": "Confidence",
     "category": "Category",
     "getRecipes": "Get Recipes",
-    "noIngredients": "No ingredients detected"
+    "noIngredients": "No ingredients detected",
+    "searchPlaceholder": "Search USDA ingredients..."
   },
   "recipes": {
     "title": "Recipes",
-    "subtitle": "Delicious recipes based on your ingredients",
+    "subtitle": "Your recipes and community favorites",
     "searchPlaceholder": "Search recipes...",
     "loading": "Loading recipes...",
     "fetchError": "Failed to fetch recipes",
@@ -263,9 +264,34 @@
     "imageViewInstructions": "Pinch to zoom • Double tap to reset • Swipe to pan",
     "photoDeleted": "Photo deleted successfully",
     "photoDeleteError": "Failed to delete photo",
-    "photoDeleteConfirm": "Are you sure you want to delete this photo?"
+    "photoDeleteConfirm": "Are you sure you want to delete this photo?",
+    "myRecipes": "My Recipes",
+    "explore": "Explore Recipes",
+    "searchCollections": "Search public recipes...",
+    "noPublicRecipes": "No recipes found",
+    "noPublicRecipesDesc": "There are no public community recipes yet",
+    "tryDifferentCollectionSearch": "Try searching for something different",
+    "loadingCollections": "Loading recipes...",
+    "collectionsError": "Error loading public recipes"
+  },
+  "rateLimit": {
+    "tooManyRequests": "You have made too many requests. Please wait before trying again.",
+    "dailyLimitReached": "Daily Limit Reached",
+    "dailyLimitMessage": "You have reached your daily limit of {{limit}} {{limitType}}. You've used {{used}}/{{limit}} today. Resets in {{hours}} hours.",
+    "rateLimitMessage": "You can make {{limit}} requests per minute. Please wait {{retryAfter}} seconds before trying again.",
+    "retryIn": "Retry in {{seconds}}s",
+    "error": "Error",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
+    "imageAnalysisLimit": "Image Analysis Limit",
+    "aiChatLimit": "AI Chat Limit"
+  },
+  "rating": {
+    "review": "review",
+    "reviews": "reviews"
   },
   "recipe": {
+    "whoCookedThis": "Who cooked this recipe",
+    "createdBy": "Created by",
     "title": "Recipe",
     "noIngredientsProvided": "No ingredients provided",
     "generationFailed": "Recipe generation failed",
@@ -282,6 +308,7 @@
     "recipeCompleted": "Recipe completed successfully",
     "dietary": "Dietary",
     "ingredients": "Ingredients",
+    "nutrition": "Nutrition Facts",
     "cookingTime": "Cooking Time",
     "servings": "Servings",
     "instructions": "Instructions",
@@ -374,6 +401,17 @@
     "noInstructions": "No instructions available",
     "noIngredients": "No ingredients",
     "noIngredientsMessage": "This recipe has no specified ingredients. You can go directly to cooking.",
+    "tips": "Cooking Tips",
+    "helpTitle": "Cooking Tips",
+    "current": "Current",
+    "noTips": "No tips available for this step.",
+    "tipTypes": {
+      "technique": "Technique",
+      "timing": "Timing",
+      "ingredient": "Ingredient",
+      "temperature": "Temperature", 
+      "safety": "Safety"
+    },
     "exitTitle": "Exit cooking?",
     "exitMessage": "Are you sure you want to exit cooking mode? Your progress will be lost.",
     "exitConfirm": "Exit",
@@ -903,5 +941,22 @@
       "remaining": "remaining today",
       "limitReached": "Daily limit reached"
     }
+  },
+  "usage": {
+    "recipeGenerations": "Recipe Generations",
+    "aiChatMessages": "AI Messages", 
+    "imageAnalyses": "Image Analyses",
+    "remaining": "remaining today",
+    "limitReached": "Daily limit reached"
+  },
+  "nutrition": {
+    "calories": "Calories",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "fiber": "Fiber",
+    "sugar": "Sugar",
+    "sodium": "Sodium",
+    "perServing": "Per serving ({{servings}} servings total)"
   }
 }

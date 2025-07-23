@@ -18,6 +18,8 @@ import aiRoutes from './routes/ai';
 import adminRoutes from './routes/admin';
 import { uploadRoutes } from './routes/upload';
 import { usageRoutes } from './routes/usage';
+import recipeCollectionRoutes from './routes/recipeCollection';
+import { ratingRoutes } from './routes/rating';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +57,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/usage', usageRoutes);
+app.use('/api/collections', recipeCollectionRoutes);
+app.use('/api/recipe', ratingRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
