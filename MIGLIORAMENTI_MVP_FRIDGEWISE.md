@@ -102,19 +102,6 @@ interface IRecipe {
 }
 ```
 
-#### B. Collezioni Ricette Pubbliche
-```typescript
-interface IRecipeCollection {
-  title: string;
-  description: string;
-  creatorId: ObjectId;
-  recipes: ObjectId[];
-  isPublic: boolean;
-  tags: string[];
-  followers: ObjectId[];
-}
-```
-
 ### 3. **Ottimizzazioni Performance** (Priorità Alta)
 
 #### A. Caching Intelligente
