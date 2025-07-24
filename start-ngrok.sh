@@ -37,23 +37,15 @@ fi
 
 # Avvia ngrok
 echo -e "${BLUE}🌐 Avvio ngrok per esporre il backend...${NC}"
-ngrok http 3000 --log=stdout &
+ngrok http --url=vastly-selected-guppy.ngrok-free.app 3000 --log=stdout &
 NGROK_PID=$!
 
 # Aspetta che ngrok si avvii
 echo -e "${YELLOW}⏳ Aspetto che ngrok si avvii...${NC}"
 sleep 5
 
-# Ottieni l'URL di ngrok
-NGROK_URL=""
-for i in {1..10}; do
-    NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url' 2>/dev/null)
-    if [[ $NGROK_URL != "null" && $NGROK_URL != "" ]]; then
-        break
-    fi
-    echo -e "${YELLOW}⏳ Tentativo $i/10 di ottenere l'URL ngrok...${NC}"
-    sleep 2
-done
+# URL fisso di ngrok
+NGROK_URL="https://vastly-selected-guppy.ngrok-free.app"
 
 if [[ $NGROK_URL == "null" || $NGROK_URL == "" ]]; then
     echo -e "${RED}❌ Non riesco a ottenere l'URL di ngrok${NC}"

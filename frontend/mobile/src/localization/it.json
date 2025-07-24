@@ -76,7 +76,7 @@
     "verifyEmail": "Verifica Email",
     "verifyEmailInstructions": "Inserisci il codice a 6 cifre inviato al tuo indirizzo email per verificare il tuo account.",
     "verificationSuccess": "Email Verificata",
-    "verificationSuccessMessage": "La tua email è stata verificata con successo! Ora puoi accedere.",
+    "verificationSuccessMessage": "La tua email è stata verificata con successo!",
     "verificationError": "Impossibile verificare l'email. Riprova.",
     "codeSent": "Codice Inviato",
     "verificationCodeSent": "Un nuovo codice di verifica è stato inviato alla tua email.",
