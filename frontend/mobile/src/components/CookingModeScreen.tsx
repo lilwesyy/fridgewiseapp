@@ -92,9 +92,9 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       </SafeAreaView>
     );
   }
-  
+
   const { recipe, onGoBack, onFinishCooking, showForceExitModal = false, onForceExitConfirm, onForceExitCancel, isPublicRecipe = false } = props;
-  
+
   // Safety check for recipe before any hooks
   if (!recipe || typeof recipe !== 'object') {
     console.error('CookingModeScreen: Recipe is null or undefined');
@@ -180,27 +180,47 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
   const { user } = useAuth();
 
+  // Timer completion alert with enhanced vibration
+  const playTimerCompletionAlert = () => {
+    // Enhanced vibration pattern - more noticeable and distinctive
+    // Pattern: [wait, vibrate, pause, vibrate, pause, vibrate, pause, vibrate]
+    // This creates a distinctive "alarm" pattern that's hard to miss
+    const alertPattern = [0, 600, 200, 600, 200, 600, 200, 400, 300, 400, 300, 400];
+
+    Vibration.vibrate(alertPattern);
+
+    // Additional reminder vibration after 3 seconds
+    setTimeout(() => {
+      // Only vibrate again if timer is still at 0 (user hasn't interacted)
+      Vibration.vibrate([0, 300, 150, 300, 150, 300]);
+    }, 3000);
+  };
+
   // Animation values
   const headerOpacity = useSharedValue(1);
   const phaseTransition = useSharedValue(0);
   const stepTransition = useSharedValue(0);
   const timerPulse = useSharedValue(1);
-  
+
   // Help modal animations
   const helpModalTranslateY = useSharedValue(screenHeight);
   const helpModalOpacity = useSharedValue(0);
-  
+
   // Finish modal animations
   const finishModalTranslateY = useSharedValue(screenHeight);
   const finishModalOpacity = useSharedValue(0);
 
+  // Exit modal animations - Bottom sheet style
+  const exitModalTranslateY = useSharedValue(screenHeight);
+  const exitModalOpacity = useSharedValue(0);
+
   // Initialize animations
   useEffect(() => {
-    headerOpacity.value = withTiming(1, { 
+    headerOpacity.value = withTiming(1, {
       duration: ANIMATION_DURATIONS.CONTENT,
       easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
     });
-    phaseTransition.value = withTiming(1, { 
+    phaseTransition.value = withTiming(1, {
       duration: ANIMATION_DURATIONS.CONTENT,
       easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
     });
@@ -209,7 +229,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   // Initialize step animation when entering cooking phase
   useEffect(() => {
     if (currentPhase === 'cooking') {
-      stepTransition.value = withTiming(1, { 
+      stepTransition.value = withTiming(1, {
         duration: ANIMATION_DURATIONS.MODAL,
         easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
       });
@@ -250,12 +270,34 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     }
   }, [showFinishModal]);
 
+  // Exit modal animations - Bottom sheet style
+  useEffect(() => {
+    if (showExitModal) {
+      // Entrance animation
+      exitModalOpacity.value = withTiming(1, {
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2),
+      });
+      exitModalTranslateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
+    } else {
+      // Exit animation
+      exitModalOpacity.value = withTiming(0, {
+        duration: ANIMATION_DURATIONS.QUICK,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
+      });
+      exitModalTranslateY.value = withTiming(screenHeight, {
+        duration: ANIMATION_DURATIONS.QUICK,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
+      });
+    }
+  }, [showExitModal]);
+
   // Auto-generate timers from instructions if not provided
   const generateTimerFromInstruction = (instruction: string): number => {
     if (typeof instruction !== 'string') return 0;
-    
+
     const lowerInstruction = instruction.toLowerCase();
-    
+
     // Look for explicit time mentions
     const timePatterns = [
       /(\d+)\s*minut[oi]/g, // Italian minutes
@@ -264,7 +306,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       /(\d+)\s*ore?/g, // Italian hours (convert to minutes)
       /(\d+)\s*hours?/g, // English hours (convert to minutes)
     ];
-    
+
     for (const pattern of timePatterns) {
       const match = pattern.exec(lowerInstruction);
       if (match) {
@@ -276,7 +318,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         return time;
       }
     }
-    
+
     // Fallback logic based on cooking keywords
     if (lowerInstruction.includes('cuocere') || lowerInstruction.includes('cook')) {
       return 10; // Default cooking time
@@ -293,7 +335,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     if (lowerInstruction.includes('riposare') || lowerInstruction.includes('rest')) {
       return 5;
     }
-    
+
     return 0; // No timer for this step
   };
 
@@ -301,7 +343,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   useEffect(() => {
     if (currentPhase === 'cooking' && recipe?.instructions && currentStep < recipe.instructions.length) {
       let stepTimer: number | null = null;
-      
+
       // First try to get timer from recipe.stepTimers
       if (recipe?.stepTimers && Array.isArray(recipe.stepTimers) && currentStep < recipe.stepTimers.length) {
         stepTimer = recipe.stepTimers[currentStep];
@@ -310,7 +352,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         const instruction = recipe.instructions[currentStep];
         stepTimer = generateTimerFromInstruction(instruction);
       }
-      
+
       if (typeof stepTimer === 'number' && stepTimer > 0 && !hasAutoStartedTimer) {
         // Stop any existing timer first
         if (timerRef.current) {
@@ -346,7 +388,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     } else if (isTimerRunning && timerSeconds === 0) {
       // Timer finished
       setIsTimerRunning(false);
-      Vibration.vibrate([500, 200, 500]);
+
+      // Play enhanced vibration
+      playTimerCompletionAlert();
+
       setNotification({
         visible: true,
         type: 'success',
@@ -354,11 +399,11 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         message: safeT('cookingMode.timerCompleteMessage', "Time's up! Check your recipe."),
       });
       timerPulse.value = withSequence(
-        withTiming(1.3, { 
+        withTiming(1.3, {
           duration: ANIMATION_DURATIONS.QUICK,
           easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
         }),
-        withTiming(1, { 
+        withTiming(1, {
           duration: ANIMATION_DURATIONS.QUICK,
           easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
         })
@@ -409,7 +454,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       return;
     }
 
-    phaseTransition.value = withTiming(1, { 
+    phaseTransition.value = withTiming(1, {
       duration: ANIMATION_DURATIONS.MODAL,
       easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
     });
@@ -426,13 +471,13 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       }
       setIsTimerRunning(false);
       setHasAutoStartedTimer(false); // Reset auto-timer flag BEFORE changing step
-      
+
       stepTransition.value = withSequence(
-        withTiming(0.8, { 
+        withTiming(0.8, {
           duration: ANIMATION_DURATIONS.QUICK,
           easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
         }),
-        withTiming(1, { 
+        withTiming(1, {
           duration: ANIMATION_DURATIONS.QUICK,
           easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
         })
@@ -452,13 +497,13 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       }
       setIsTimerRunning(false);
       setHasAutoStartedTimer(false); // Reset auto-timer flag BEFORE changing step
-      
+
       stepTransition.value = withSequence(
-        withTiming(0.8, { 
+        withTiming(0.8, {
           duration: ANIMATION_DURATIONS.QUICK,
           easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
         }),
-        withTiming(1, { 
+        withTiming(1, {
           duration: ANIMATION_DURATIONS.QUICK,
           easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
         })
@@ -470,10 +515,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const completeCooking = () => {
     // Check if recipe has already been cooked (has cookedAt timestamp)
     const hasBeenCookedBefore = recipe?.cookedAt;
-    
+
     // Check if it's a user-generated recipe that's already been completed (has isSaved = true)
     const isUserRecipeAlreadyCompleted = !isPublicRecipe && recipe?.isSaved === true;
-    
+
     // If recipe is already saved (public) OR has been cooked before OR is a user recipe already completed, 
     // skip the finish modal and go directly to rating/completion
     if (isRecipeAlreadySaved || hasBeenCookedBefore || isUserRecipeAlreadyCompleted) {
@@ -496,7 +541,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       // Save recipe with photo URL
       setDishPhoto(result.url);
       await saveDishToCollection();
-      
+
       setNotification({
         visible: true,
         type: 'success',
@@ -508,7 +553,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       // Still try to save without photo
       setDishPhoto(null);
       await saveDishToCollection();
-      
+
       setNotification({
         visible: true,
         type: 'warning',
@@ -522,12 +567,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const handlePhotoUploadError = async (error: any) => {
     console.error('Photo upload error:', error);
-    
+
     // Track the error for analytics
     if (__DEV__) {
       console.log('[CookingMode] Photo upload failed:', error.type, error.message);
     }
-    
+
     // The PhotoUploadModal will handle showing the error UI
     // We don't need to show additional notifications here
   };
@@ -535,7 +580,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const handleSkipPhoto = async () => {
     setDishPhoto(null);
     setShowPhotoModal(false);
-    
+
     try {
       await saveDishToCollection();
     } catch (error) {
@@ -570,7 +615,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         setHasUserRated(hasRating);
         return hasRating;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Error checking user rating:', error);
@@ -597,17 +642,17 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       if (response.ok) {
         const data = await response.json();
         const savedRecipes = data.data?.recipes || [];
-        
+
         // Check if current recipe is already in saved recipes
         const isAlreadySaved = savedRecipes.some((savedRecipe: any) => {
           const savedRecipeId = savedRecipe.id || savedRecipe._id;
           return savedRecipeId === recipeId;
         });
-        
+
         setIsRecipeAlreadySaved(isAlreadySaved);
         return isAlreadySaved;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Error checking if recipe is already saved:', error);
@@ -618,7 +663,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const handleSubmitRating = async (rating: number, comment?: string) => {
     try {
       setIsSubmittingRating(true);
-      
+
       const recipeId = recipe?.id || recipe?._id || '';
       if (!recipeId) {
         throw new Error('Recipe ID not found');
@@ -639,10 +684,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       if (response.ok) {
         // Mark that user has now rated this recipe
         setHasUserRated(true);
-        
+
         // Save public recipe to user's collection and mark as completed
         await savePublicRecipeToCollection();
-        
+
         setNotification({
           visible: true,
           type: 'success',
@@ -668,20 +713,20 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const finishCooking = async () => {
     setShowFinishModal(false);
-    
+
     // Check if recipe has already been cooked (has cookedAt timestamp)
     const hasBeenCookedBefore = recipe?.cookedAt;
-    
+
     // Check if this is a public recipe and user is not the creator
     const isUserNotCreator = isPublicRecipe && recipe?.userId?._id !== user?.id;
-    
+
     // Show rating modal only if:
     // - It's a public recipe AND user is not the creator AND hasn't rated yet AND hasn't been cooked before
     if (isUserNotCreator && !hasUserRated && !hasBeenCookedBefore) {
       setShowRatingModal(true);
       return;
     }
-    
+
     try {
       // Get current recipe data from backend to check photo count
       const recipeId = recipe?.id || recipe?._id || '';
@@ -700,7 +745,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       if (response.ok) {
         const recipeData = await response.json();
         const currentPhotoCount = recipeData.data?.dishPhotos?.length || 0;
-        
+
         if (currentPhotoCount >= 3) {
           // Skip photo upload if already at limit
           setNotification({
@@ -709,12 +754,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
             title: safeT('cookingMode.photoLimit.title', 'Limite foto raggiunto'),
             message: safeT('cookingMode.photoLimit.message', 'Questa ricetta ha già il massimo di 3 foto. Completamento ricetta senza aggiungere nuove foto.'),
           });
-          
+
           // Save recipe completion without photo and complete cooking
           await saveRecipeCompletionOnly();
           return;
         }
-        
+
         // Show remaining photo slots info
         const remainingSlots = 3 - currentPhotoCount;
         if (remainingSlots <= 2) {
@@ -726,7 +771,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           });
         }
       }
-      
+
       // Show photo upload modal if under limit or if we couldn't check
       setShowPhotoModal(true);
     } catch (error) {
@@ -741,27 +786,27 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       console.log('🔄 Starting dish photo upload...');
       console.log('📸 Image URI:', imageUri);
       console.log('🔧 Will create FormData...');
-      
+
       const formData = new FormData();
       console.log('✅ FormData created');
-      
+
       // Handle file URI - React Native specific handling (same as avatar)
       const filename = imageUri.split('/').pop() || 'dish-photo.jpg';
       const fileType = filename.split('.').pop() || 'jpg';
       console.log('📝 File info:', { filename, fileType });
-      
+
       formData.append('dishPhoto', {
         uri: imageUri,
         type: `image/${fileType}`,
         name: filename,
       } as any);
-      
+
       // Add recipe ID to the form data
       const recipeId = recipe?.id || recipe?._id || '';
       if (recipeId) {
         formData.append('recipeId', recipeId);
       }
-      
+
       console.log('📎 File and recipe ID appended to FormData');
 
       console.log('🌐 Uploading to backend...');
@@ -788,7 +833,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('❌ Backend response error:', errorData);
-        
+
         // Check for photo limit error
         if (errorData.code === 'PHOTO_LIMIT_EXCEEDED' || errorData.error?.includes('Maximum 3 photos')) {
           const error = new Error('PHOTO_LIMIT_EXCEEDED');
@@ -797,7 +842,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           (error as any).maxAllowed = errorData.maxAllowed;
           throw error;
         }
-        
+
         throw new Error(`Dish photo upload failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
@@ -809,7 +854,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const saveRecipeCompletionOnly = async () => {
     try {
       const recipeId = recipe?.id || recipe?._id || '';
-      
+
       if (!recipeId) {
         throw new Error('Recipe ID not found');
       }
@@ -857,7 +902,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const savePublicRecipeToCollection = async () => {
     try {
       const recipeId = recipe?.id || recipe?._id || '';
-      
+
       if (!recipeId) {
         throw new Error('Recipe ID not found');
       }
@@ -907,7 +952,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const saveDishToCollection = async () => {
     try {
       const recipeId = recipe?.id || recipe?._id || '';
-      
+
       if (!recipeId) {
         throw new Error('Recipe ID not found');
       }
@@ -918,7 +963,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       if (dishPhoto) {
         try {
           dishPhotoData = await uploadDishPhoto(dishPhoto);
-          
+
           // Show success notification for photo upload
           setNotification({
             visible: true,
@@ -926,12 +971,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
             title: safeT('common.success', 'Success'),
             message: safeT('cookingMode.photoUploaded', 'Photo uploaded successfully'),
           });
-          
+
           // Brief delay to show success message
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (uploadError) {
           console.error('Photo upload failed:', uploadError);
-          
+
           // Check if it's a photo limit error
           if (uploadError instanceof Error && (uploadError.message.includes('PHOTO_LIMIT_EXCEEDED') || uploadError.message.includes('Maximum 3 photos'))) {
             setNotification({
@@ -940,12 +985,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
               title: safeT('cookingMode.photoLimit.title', 'Limite foto raggiunto'),
               message: safeT('cookingMode.photoLimit.message', 'Questa ricetta ha già il massimo di 3 foto.'),
             });
-            
+
             // Complete without photo
             await saveRecipeCompletionOnly();
             return;
           }
-          
+
           // Continue without photo if upload fails - graceful degradation
           setNotification({
             visible: true,
@@ -953,7 +998,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
             title: safeT('common.warning', 'Warning'),
             message: safeT('cookingMode.photoUploadFailed', 'Photo upload failed, saving recipe without photo'),
           });
-          
+
           // Wait a bit before continuing
           await new Promise(resolve => setTimeout(resolve, 1500));
         }
@@ -1001,7 +1046,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         title: safeT('common.error', 'Error'),
         message: safeT('recipe.cookingError', 'Failed to save recipe. Please try again.'),
       });
-      
+
       // Reset upload state on error
       setIsUploadingPhoto(false);
     }
@@ -1025,7 +1070,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const startTimer = (minutes: number) => {
     setTimerSeconds(minutes * 60);
     setIsTimerRunning(true);
-    timerPulse.value = withTiming(1.1, { 
+    timerPulse.value = withTiming(1.1, {
       duration: ANIMATION_DURATIONS.STANDARD,
       easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
     });
@@ -1055,9 +1100,9 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const closeHelpModal = () => {
     if (isHelpModalClosing) return; // Prevent multiple close attempts
-    
+
     setIsHelpModalClosing(true);
-    
+
     // Start exit animation
     helpModalOpacity.value = withTiming(0, {
       duration: ANIMATION_DURATIONS.QUICK,
@@ -1067,7 +1112,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       duration: ANIMATION_DURATIONS.QUICK,
       easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
     });
-    
+
     // Close modal after animation completes
     setTimeout(() => {
       setShowHelpModal(false);
@@ -1106,6 +1151,15 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const helpModalContainerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: helpModalTranslateY.value }],
+  }));
+
+  // Exit modal animated styles
+  const exitModalOverlayAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: exitModalOpacity.value,
+  }));
+
+  const exitModalContainerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: exitModalTranslateY.value }],
   }));
 
   const renderIngredientsList = () => {
@@ -1187,8 +1241,8 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const renderCookingSteps = () => {
     const stepText = recipe?.instructions?.[currentStep];
-    const stepTimer = (recipe?.stepTimers && Array.isArray(recipe.stepTimers) && typeof recipe.stepTimers[currentStep] === 'number') 
-      ? recipe.stepTimers[currentStep] 
+    const stepTimer = (recipe?.stepTimers && Array.isArray(recipe.stepTimers) && typeof recipe.stepTimers[currentStep] === 'number')
+      ? recipe.stepTimers[currentStep]
       : null;
     const presetMinutes = [5, 10, 15, 20];
     // Do not show extra auto-timer button, just show preset and custom buttons
@@ -1211,7 +1265,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
             <Text style={styles.stepInstruction}>
               {String(typeof stepText === 'string' && stepText.length > 0 ? stepText : safeT('cookingMode.noInstructions', 'No instructions available'))}
             </Text>
-            
+
           </ScrollView>
         </Animated.View>
         {/* Timer Section */}
@@ -1324,27 +1378,35 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           <Text style={styles.headerSubtitle}>{String(headerSubtitle)}</Text>
         </View>
         {/* Help Button - only visible during cooking phase and if current step has tips */}
-        {currentPhase === 'cooking' && recipe?.cookingTips && recipe.cookingTips.length > 0 && 
-         recipe.cookingTips.some(tip => tip.step === currentStep + 1) && (
-          <TouchableOpacity 
-            onPress={() => setShowHelpModal(true)} 
-            style={styles.helpButton}
-          >
-            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M9 12L11 14L15 10"
-                stroke="none"
-                fill="none"
-              />
-              <Path
-                d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z"
-                fill={colors.primary}
-                stroke={colors.primary}
-                strokeWidth={1}
-              />
-            </Svg>
-          </TouchableOpacity>
-        )}
+        {currentPhase === 'cooking' && recipe?.cookingTips && recipe.cookingTips.length > 0 &&
+          recipe.cookingTips.some(tip => tip.step === currentStep + 1) && (
+            <TouchableOpacity
+              onPress={() => setShowHelpModal(true)}
+              style={styles.helpButton}
+            >
+              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                <Circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  fill={colors.primary}
+                />
+                <Path
+                  d="M9.09 9C9.32 8.42 9.77 7.93 10.38 7.59C10.99 7.25 11.72 7.08 12.46 7.11C13.2 7.14 13.91 7.37 14.5 7.78C15.09 8.19 15.54 8.76 15.79 9.42C16.04 10.08 16.08 10.8 15.91 11.48C15.74 12.16 15.37 12.78 14.84 13.25C14.31 13.72 13.65 14.02 12.94 14.11C12.23 14.2 11.52 14.08 10.89 13.77"
+                  stroke={colors.surface}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <Circle
+                  cx="12"
+                  cy="17"
+                  r="1"
+                  fill={colors.surface}
+                />
+              </Svg>
+            </TouchableOpacity>
+          )}
       </Animated.View>
 
       {/* Content */}
@@ -1441,33 +1503,19 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         onRequestClose={closeHelpModal}
       >
         <Animated.View style={[styles.helpModalOverlay, helpModalOverlayAnimatedStyle]}>
-          <TouchableOpacity 
-            style={styles.helpModalBackdrop} 
-            activeOpacity={1} 
+          <TouchableOpacity
+            style={styles.helpModalBackdrop}
+            activeOpacity={1}
             onPress={closeHelpModal}
           />
           <Animated.View style={[styles.helpModalContainer, helpModalContainerAnimatedStyle]}>
-            {/* Help Header */}
-            <View style={styles.helpModalHeader}>
-              <View style={styles.helpModalHandle} />
-              <View style={styles.helpModalHeaderContent}>
-                <Text style={styles.helpModalTitle}>{safeT('cookingMode.helpTitle', 'Consigli di Cucina')}</Text>
-                <Text style={styles.helpModalSubtitle}>
-                  {String(`${safeT('cookingMode.step', 'Step')} ${currentStep + 1} - ${recipe?.title || 'Ricetta'}`)}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={closeHelpModal} style={styles.helpCloseButton}>
-                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M18 6L6 18M6 6L18 18"
-                    stroke={colors.textSecondary}
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-              </TouchableOpacity>
-            </View>
+            {/* Bottom sheet handle */}
+            <View style={styles.helpModalHandle} />
+
+            <Text style={styles.helpModalTitle}>{safeT('cookingMode.helpTitle', 'Consigli di Cucina')}</Text>
+            <Text style={styles.helpModalSubtitle}>
+              {String(`${safeT('cookingMode.step', 'Step')} ${currentStep + 1} - ${recipe?.title || 'Ricetta'}`)}
+            </Text>
 
             {/* Help Content - Only Current Step */}
             <ScrollView style={styles.helpModalScroll} showsVerticalScrollIndicator={false}>
@@ -1475,7 +1523,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                 // Get current step tips
                 const currentStepTips = recipe?.cookingTips?.filter(tip => tip.step === currentStep + 1) || [];
                 const currentInstruction = recipe?.instructions?.[currentStep] || '';
-                
+
                 if (currentStepTips.length === 0) {
                   return (
                     <View style={styles.helpEmptyState}>
@@ -1507,28 +1555,28 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                           <View style={styles.helpTipIconContainer}>
                             {tip.type === 'technique' && (
                               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke={colors.primary} strokeWidth={2} fill="none"/>
+                                <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke={colors.primary} strokeWidth={2} fill="none" />
                               </Svg>
                             )}
                             {tip.type === 'timing' && (
                               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Circle cx="12" cy="12" r="10" stroke={colors.warning} strokeWidth={2} fill="none"/>
-                                <Path d="M12 6V12L16 14" stroke={colors.warning} strokeWidth={2}/>
+                                <Circle cx="12" cy="12" r="10" stroke={colors.warning} strokeWidth={2} fill="none" />
+                                <Path d="M12 6V12L16 14" stroke={colors.warning} strokeWidth={2} />
                               </Svg>
                             )}
                             {tip.type === 'temperature' && (
                               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Path d="M14 4V16.5C14 18.4 12.4 20 10.5 20S7 18.4 7 16.5V4C7 2.9 7.9 2 9 2H12C13.1 2 14 2.9 14 4Z" stroke={colors.error} strokeWidth={2} fill="none"/>
+                                <Path d="M14 4V16.5C14 18.4 12.4 20 10.5 20S7 18.4 7 16.5V4C7 2.9 7.9 2 9 2H12C13.1 2 14 2.9 14 4Z" stroke={colors.error} strokeWidth={2} fill="none" />
                               </Svg>
                             )}
                             {tip.type === 'ingredient' && (
                               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L11.84 12.17L17.5 6.5L20.17 9.17L21.5 7.83L21 9ZM1 9L2 8L6 12L2 16L1 15C1 15 5.5 9 5.5 9H1Z" fill={colors.success}/>
+                                <Path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L11.84 12.17L17.5 6.5L20.17 9.17L21.5 7.83L21 9ZM1 9L2 8L6 12L2 16L1 15C1 15 5.5 9 5.5 9H1Z" fill={colors.success} />
                               </Svg>
                             )}
                             {tip.type === 'safety' && (
                               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 7C13.1 7 14 7.9 14 9S13.1 11 12 11S10 10.1 10 9S10.9 7 12 7ZM12 17C10.9 17 10 16.1 10 15S10.9 13 12 13S14 13.9 14 15S13.1 17 12 17Z" fill={colors.error}/>
+                                <Path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 7C13.1 7 14 7.9 14 9S13.1 11 12 11S10 10.1 10 9S10.9 7 12 7ZM12 17C10.9 17 10 16.1 10 15S10.9 13 12 13S14 13.9 14 15S13.1 17 12 17Z" fill={colors.error} />
                               </Svg>
                             )}
                           </View>
@@ -1549,7 +1597,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         </Animated.View>
       </Modal>
 
-      {/* Exit Confirmation Modal */}
+      {/* Exit Confirmation Modal - Bottom Sheet Style */}
       <Modal
         visible={showExitModal}
         transparent
@@ -1561,13 +1609,27 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           }
         }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{safeT('cookingMode.exitTitle', 'Exit cooking?')}</Text>
-            <Text style={styles.modalMessage}>{safeT('cookingMode.exitMessage', 'Are you sure you want to exit cooking mode? Your progress will be lost.')}</Text>
-            <View style={styles.modalButtons}>
+        <Animated.View style={[styles.exitModalOverlay, exitModalOverlayAnimatedStyle]}>
+          <TouchableOpacity
+            style={styles.exitModalOverlayTouchable}
+            activeOpacity={1}
+            onPress={() => {
+              setShowExitModal(false);
+              if (showForceExitModal && onForceExitCancel) {
+                onForceExitCancel();
+              }
+            }}
+          />
+          <Animated.View style={[styles.exitModalContainer, exitModalContainerAnimatedStyle]}>
+            {/* Bottom sheet handle */}
+            <View style={styles.exitModalHandle} />
+
+            <Text style={styles.exitModalTitle}>{safeT('cookingMode.exitTitle', 'Exit cooking?')}</Text>
+            <Text style={styles.exitModalSubtitle}>{safeT('cookingMode.exitMessage', 'Are you sure you want to exit cooking mode? Your progress will be lost.')}</Text>
+
+            <View style={styles.exitModalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSecondary]}
+                style={[styles.exitModalButton, styles.exitModalButtonSecondary]}
                 onPress={() => {
                   setShowExitModal(false);
                   if (showForceExitModal && onForceExitCancel) {
@@ -1575,10 +1637,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                   }
                 }}
               >
-                <Text style={styles.modalButtonTextSecondary}>{safeT('common.cancel', 'Cancel')}</Text>
+                <Text style={[styles.exitModalButtonText, styles.exitModalButtonTextSecondary]}>
+                  {safeT('common.cancel', 'Cancel')}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
+                style={[styles.exitModalButton, styles.exitModalButtonPrimary]}
                 onPress={() => {
                   setShowExitModal(false);
                   if (showForceExitModal && onForceExitConfirm) {
@@ -1588,11 +1652,13 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                   }
                 }}
               >
-                <Text style={styles.modalButtonTextPrimary}>{safeT('cookingMode.exitConfirm', 'Exit')}</Text>
+                <Text style={[styles.exitModalButtonText, styles.exitModalButtonTextPrimary]}>
+                  {safeT('cookingMode.exitConfirm', 'Exit')}
+                </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
 
       {/* Finish Cooking Modal */}
@@ -1610,7 +1676,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           />
           <Animated.View style={[styles.finishModalContainer, { transform: [{ translateY: finishModalTranslateY }] }]}>
             <View style={styles.finishModalHandle} />
-            
+
             <View style={styles.finishModalHeader}>
               <Text style={styles.finishModalTitle}>
                 {safeT('cookingMode.finishTitle', 'Completa la cottura')}
@@ -1629,7 +1695,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                   {safeT('common.cancel', 'Annulla')}
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.finishModalButton, styles.finishModalButtonPrimary]}
                 onPress={finishCooking}
@@ -1670,7 +1736,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         message={`${safeT('cookingMode.timerStartedFor', 'Timer started for')} ${typeof autoTimerMinutes === 'number' ? autoTimerMinutes : 0} ${safeT('cookingMode.minutes', 'minutes')}`}
         onClose={() => setShowAutoTimerModal(false)}
       />
-      
+
       <NotificationModal
         visible={notification.visible}
         type={notification.type}
@@ -2162,6 +2228,85 @@ const getStyles = (colors: any) => StyleSheet.create({
     color: colors.buttonText,
   },
 
+  // Exit Modal Bottom Sheet Styles
+  exitModalOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  exitModalOverlayTouchable: {
+    flex: 1,
+  },
+  exitModalContainer: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 34,
+    alignItems: 'center',
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    minHeight: 200,
+  },
+  exitModalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    marginBottom: 20,
+    opacity: 0.6,
+  },
+  exitModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  exitModalSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  exitModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  exitModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  exitModalButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  exitModalButtonSecondary: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  exitModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  exitModalButtonTextPrimary: {
+    color: colors.buttonText,
+  },
+  exitModalButtonTextSecondary: {
+    color: colors.text,
+  },
+
   // Finish Modal Bottom Sheet Styles
   finishModalOverlay: {
     flex: 1,
@@ -2309,7 +2454,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   // Help Modal Styles - PhotoUpload Style
   helpModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   helpModalBackdrop: {
@@ -2319,13 +2464,16 @@ const getStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 34,
     maxHeight: screenHeight * 0.8,
     minHeight: screenHeight * 0.4,
     shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: -4 },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 12,
+    shadowRadius: 8,
+    elevation: 6,
   },
   helpModalHandle: {
     width: 40,
@@ -2333,42 +2481,28 @@ const getStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.border,
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  helpModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  helpModalHeaderContent: {
-    flex: 1,
+    marginBottom: 20,
+    opacity: 0.6,
   },
   helpModalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   helpModalSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.textSecondary,
-    marginTop: 2,
-  },
-  helpCloseButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
   },
   helpModalScroll: {
     flex: 1,
   },
   helpContentContainer: {
-    padding: 20,
+    paddingBottom: 20,
   },
   helpTipsContainer: {
     gap: 12,
@@ -2376,9 +2510,11 @@ const getStyles = (colors: any) => StyleSheet.create({
   helpTipItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colors.background,
+    backgroundColor: colors.card,
     padding: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -2433,7 +2569,8 @@ const getStyles = (colors: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 60,
+    paddingVertical: 60,
+    paddingHorizontal: 24,
     minHeight: 200,
   },
   helpEmptyStateText: {
