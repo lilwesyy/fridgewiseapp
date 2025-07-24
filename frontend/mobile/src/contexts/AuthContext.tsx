@@ -130,8 +130,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userWithCacheBusting = addCacheBustingToAvatar(user);
       
       // Store in AsyncStorage
-      await AsyncStorage.setItem('auth_token', token);
-      await AsyncStorage.setItem('auth_user', JSON.stringify(userWithCacheBusting));
+      if (token) {
+        await AsyncStorage.setItem('auth_token', token);
+      } else {
+        await AsyncStorage.removeItem('auth_token');
+      }
+      if (userWithCacheBusting) {
+        await AsyncStorage.setItem('auth_user', JSON.stringify(userWithCacheBusting));
+      } else {
+        await AsyncStorage.removeItem('auth_user');
+      }
 
       setToken(token);
       setUser(userWithCacheBusting);
@@ -165,8 +173,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userWithCacheBusting = addCacheBustingToAvatar(user);
       
       // Store in AsyncStorage
-      await AsyncStorage.setItem('auth_token', token);
-      await AsyncStorage.setItem('auth_user', JSON.stringify(userWithCacheBusting));
+      if (token) {
+        await AsyncStorage.setItem('auth_token', token);
+      } else {
+        await AsyncStorage.removeItem('auth_token');
+      }
+      if (userWithCacheBusting) {
+        await AsyncStorage.setItem('auth_user', JSON.stringify(userWithCacheBusting));
+      } else {
+        await AsyncStorage.removeItem('auth_user');
+      }
 
       setToken(token);
       setUser(userWithCacheBusting);

@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "ts-node src/index.ts",
+    "dev:ngrok": "./start-with-ngrok.sh",
+    "ngrok:url": "./get-ngrok-url.sh",
     "test": "jest",
     "create-indexes": "node src/scripts/createIndexes.js",
     "optimize-db": "node src/scripts/optimizeDatabase.js",
