@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe, deleteRecipePhoto, completeRecipe, getCookedRecipes, getPublicRecipes, getUsersWhoCookedRecipe } from '../controllers/recipeController';
+import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe, deleteRecipePhoto, completeRecipe, getCookedRecipes, getPublicRecipes, getUsersWhoCookedRecipe, savePublicRecipe } from '../controllers/recipeController';
 import { protect } from '../middleware/auth';
 import { rateLimits } from '../middleware/rateLimiter';
 import { checkDailyLimit, incrementDailyUsage } from '../middleware/dailyLimits';
@@ -20,6 +20,7 @@ router.get('/saved', getSavedRecipes);
 router.get('/cooked', getCookedRecipes); // Get cooking history (including soft-deleted recipes)
 router.post('/save/:id', rateLimits.recipeCreation, saveRecipe);
 router.post('/save', rateLimits.recipeCreation, saveRecipe); // For temporary recipes without ID
+router.post('/save-public/:id', rateLimits.recipeCreation, savePublicRecipe); // Save public recipe to user's collection
 router.post('/complete/:id', completeRecipe); // Complete recipe without photo
 router.delete('/saved/:id', unsaveRecipe);
 router.put('/:id', updateRecipe);

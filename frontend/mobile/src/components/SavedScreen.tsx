@@ -35,6 +35,7 @@ const { width: screenWidth } = Dimensions.get('window');
 // Sposto le interfacce in alto
 interface SavedRecipe {
   id: string;
+  _id?: string;
   title: string;
   description: string;
   ingredients: Array<{
@@ -52,6 +53,18 @@ interface SavedRecipe {
   dishPhotos: { url: string; publicId: string }[]; // Cloudinary dish photos array
   cookedAt?: string; // Data e ora in cui è stato cucinato
   completionCount?: number; // Numero di volte che la ricetta è stata cucinata
+  isPublicRecipe?: boolean; // Flag per indicare se è una ricetta pubblica salvata
+  originalCreator?: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: {
+      url: string;
+      publicId: string;
+    };
+  }; // Informazioni del creatore originale per ricette pubbliche
+  userRating?: number; // Rating dell'utente per ricette pubbliche
+  userComment?: string; // Commento dell'utente per ricette pubbliche
 }
 
 interface SavedScreenProps {
@@ -777,9 +790,36 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
         <View style={{ flexDirection: 'row', marginBottom: 12 }}>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, flex: 1, marginRight: 12 }} numberOfLines={2}>
-                {item.title}
-              </Text>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text }} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                {/* Badge per ricette pubbliche */}
+                {item.isPublicRecipe && (
+                  <View style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    backgroundColor: colors.primary + '15',
+                    borderColor: colors.primary,
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    marginTop: 4,
+                    alignSelf: 'flex-start'
+                  }}>
+                    <Text style={{ fontSize: 10, marginRight: 4 }}>🌟</Text>
+                    <Text style={{ fontSize: 11, color: 'white', fontWeight: '600' }}>
+                      {t('saved.publicRecipe')}
+                    </Text>
+                    {item.originalCreator?.name && (
+                      <Text style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.8)', marginLeft: 4 }}>
+                        • {item.originalCreator.name}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: getDifficultyColor(item.difficulty) }}>
                   <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>

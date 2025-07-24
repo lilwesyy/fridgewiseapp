@@ -1753,6 +1753,7 @@ const AppContent: React.FC = () => {
             showForceExitModal={showCookingExitModal}
             onForceExitConfirm={handleConfirmExitCooking}
             onForceExitCancel={handleCancelExitCooking}
+            isPublicRecipe={appState.isPublicRecipe}
           />
         ) : null;
       

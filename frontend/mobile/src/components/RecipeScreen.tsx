@@ -82,6 +82,17 @@ interface Recipe {
   // Rating system
   averageRating?: number;
   totalRatings?: number;
+  // Flag for saved public recipes
+  isPublicRecipe?: boolean;
+  originalCreator?: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: {
+      url: string;
+      publicId: string;
+    };
+  };
 }
 
 interface RecipeScreenProps {
@@ -114,7 +125,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   isPublic = false,
 }) => {
   const { t } = useTranslation();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { colors } = useTheme();
   const [recipe, setRecipe] = useState(initialRecipe);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -300,7 +311,13 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
       // Swipe from left edge to go back
       if (locationX < 50 && dx > 100) {
-        onGoBack();
+        // If recipe was just generated but now has an ID, it means it was saved
+        // In this case, go to recipes page instead of back to ingredient selection
+        if (isJustGenerated && (recipe.id || recipe._id)) {
+          onGoToRecipes();
+        } else {
+          onGoBack();
+        }
         return;
       }
 
@@ -740,9 +757,9 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     }
   }, [notification.visible]);
 
-  // Load users who cooked this recipe (only for public recipes)
+  // Load users who cooked this recipe (for public recipes and saved public recipes)
   const fetchUsersWhoCookedRecipe = async () => {
-    if (!isPublic || !recipe._id) return;
+    if ((!isPublic && !recipe.isPublicRecipe) || !recipe._id) return;
 
     try {
       setLoadingCookedByUsers(true);
@@ -750,9 +767,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Users who cooked recipe data:', data);
         if (data.success) {
-          console.log('Users array:', data.data.users);
           setUsersWhoCookedRecipe(data.data.users || []);
         }
       }
@@ -764,10 +779,10 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   };
 
   useEffect(() => {
-    if (isPublic) {
+    if (isPublic || recipe.isPublicRecipe) {
       fetchUsersWhoCookedRecipe();
     }
-  }, [isPublic, recipe._id]);
+  }, [isPublic, recipe.isPublicRecipe, recipe._id]);
 
   return (
     <View
@@ -781,7 +796,15 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
       pointerEvents='auto'
       {...panResponder.panHandlers}>
       <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
+        <TouchableOpacity style={styles.backButton} onPress={() => {
+          // If recipe was just generated but now has an ID, it means it was saved
+          // In this case, go to recipes page instead of back to ingredient selection
+          if (isJustGenerated && (recipe.id || recipe._id)) {
+            onGoToRecipes();
+          } else {
+            onGoBack();
+          }
+        }}>
           <Text style={[styles.backButtonText, { color: colors.primary }]}>←</Text>
         </TouchableOpacity>
         <View style={styles.titleContainer}>
@@ -881,7 +904,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                             </TouchableOpacity>
 
                             {/* Delete Photo Overlay */}
-                            {!isPublic && (
+                            {!isPublic && !recipe.isPublicRecipe && (
                               <TouchableOpacity
                                 style={[styles.photoDeleteOverlay, { backgroundColor: colors.error }]}
                                 onPress={(e) => {
@@ -913,7 +936,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                       ))}
 
                       {/* Add Photo Slide */}
-                      {!isPublic && recipe.dishPhotos.length < 3 && (
+                      {!isPublic && !recipe.isPublicRecipe && recipe.dishPhotos.length < 3 && (
                         <View style={styles.photoSlide}>
                           <TouchableOpacity
                             style={styles.addPhotoSlide}
@@ -964,7 +987,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                       </View>
                     )}
                   </View>
-                ) : recipe.cookedAt && (
+                ) : recipe.cookedAt && !recipe.isPublicRecipe && (
                   <TouchableOpacity
                     style={styles.noPhotoContainer}
                     onPress={handleAddPhoto}
@@ -1018,7 +1041,34 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             </View>
           )}
 
-          <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.title}</Text>
+          <View style={{ marginBottom: 8 }}>
+            <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.title}</Text>
+            {/* Badge per ricette pubbliche salvate */}
+            {recipe.isPublicRecipe && !isPublic && (
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: colors.primary + '15',
+                borderColor: colors.primary,
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                marginTop: 8,
+                alignSelf: 'flex-start'
+              }}>
+                <Text style={{ fontSize: 12, marginRight: 6 }}>🌟</Text>
+                <Text style={{ fontSize: 13, color: 'white', fontWeight: '600' }}>
+                  {t('saved.publicRecipe')}
+                </Text>
+                {recipe.originalCreator?.name && (
+                  <Text style={{ fontSize: 13, color: 'rgba(255, 255, 255, 0.9)', marginLeft: 6 }}>
+                    • {recipe.originalCreator.name}
+                  </Text>
+                )}
+              </View>
+            )}
+          </View>
 
           {/* Dietary Tags under title */}
           {(recipe.dietaryTags && recipe.dietaryTags.length > 0) && (
@@ -1048,32 +1098,43 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             <Text style={[styles.aiDisclaimerText, { color: colors.textSecondary }]}>{t('recipe.aiDisclaimerText')}</Text>
           </View>
 
-          {/* Recipe Creator Card - Only for public recipes */}
-          {isPublic && recipe.userId && (
+          {/* Recipe Creator Card - For public recipes and saved public recipes */}
+          {(isPublic || recipe.isPublicRecipe) && (recipe.userId || recipe.originalCreator) && (
             <View style={[styles.cookedByUserCard, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 16 }]}>
-              <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
-                {recipe.userId.avatar?.url ? (
-                  <Image
-                    source={{ uri: recipe.userId.avatar.url }}
-                    style={styles.userAvatarImage}
-                  />
-                ) : (
-                  <Text style={[styles.userAvatarText, { color: colors.buttonText }]}>
-                    {recipe.userId.name?.charAt(0).toUpperCase() || 'C'}
-                  </Text>
-                )}
-              </View>
-              <View style={styles.userDetails}>
-                <Text style={[styles.creatorLabel, { color: colors.textSecondary }]}>
-                  {t('recipe.createdBy')}
-                </Text>
-                <Text style={[styles.userName, { color: colors.text }]}>
-                  {recipe.userId.name || 'Chef'}
-                </Text>
-              </View>
-              <Text style={[styles.cookedDate, { color: colors.textSecondary }]}>
-                {new Date(recipe.createdAt).toLocaleDateString()}
-              </Text>
+              {(() => {
+                // Use originalCreator if available (for saved public recipes), otherwise use userId
+                const creator = recipe.originalCreator || recipe.userId;
+                return (
+                  <>
+                    <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
+                      {creator.avatar?.url ? (
+                        <Image
+                          source={{ uri: creator.avatar.url }}
+                          style={styles.userAvatarImage}
+                        />
+                      ) : (
+                        <Text style={[styles.userAvatarText, { color: colors.buttonText }]}>
+                          {creator.name?.charAt(0).toUpperCase() || 'C'}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={styles.userDetails}>
+                      <Text style={[styles.creatorLabel, { color: colors.textSecondary }]}>
+                        {t('recipe.createdBy')}
+                      </Text>
+                      <Text style={[styles.userName, { color: colors.text }]}>
+                        {creator.name || 'Chef'}
+                        {user && (creator._id === user.id || creator._id === user._id) && (
+                          <Text style={[styles.youLabel, { color: colors.primary }]}> ({t('common.you')})</Text>
+                        )}
+                      </Text>
+                    </View>
+                    <Text style={[styles.cookedDate, { color: colors.textSecondary }]}>
+                      {new Date(recipe.createdAt).toLocaleDateString()}
+                    </Text>
+                  </>
+                );
+              })()}
             </View>
           )}
 
@@ -1288,7 +1349,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                   </Text>
                 </View>
 
-                {!isPublic && (
+                {!isPublic && !recipe.isPublicRecipe && (
                   <TouchableOpacity
                     style={[styles.addPhotoButton, { backgroundColor: colors.primary }]}
                     onPress={handleAddPhoto}
@@ -1319,8 +1380,8 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           </Animated.View>
         )}
 
-        {/* Users Who Cooked This Recipe Section - Only for public recipes */}
-        {isPublic && usersWhoCookedRecipe.length > 0 && (
+        {/* Users Who Cooked This Recipe Section - For public recipes and saved public recipes */}
+        {(isPublic || recipe.isPublicRecipe) && usersWhoCookedRecipe.length > 0 && (
           <View style={[styles.section, { backgroundColor: colors.surface, marginTop: 16 }]}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               {t('recipe.whoCookedThis') || 'Chi ha cucinato questa ricetta'}
@@ -1343,12 +1404,43 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                   <View style={styles.userDetails}>
                     <Text style={[styles.userName, { color: colors.text }]}>
                       {userCooking.user.name || 'Chef'}
+                      {(() => {
+                        const isCurrentUser = user && (userCooking.user._id === user.id || userCooking.user._id === user._id);
+                        console.log('User comparison:', {
+                          currentUserId: user?.id || user?._id,
+                          cookingUserId: userCooking.user._id,
+                          isCurrentUser
+                        });
+                        return isCurrentUser;
+                      })() && (
+                          <Text style={[styles.youLabel, { color: colors.primary }]}> ({t('common.you')})</Text>
+                        )}
                     </Text>
                     {userCooking.cookedAt && (
                       <Text style={[styles.cookedDate, { color: colors.textSecondary }]}>
                         {new Date(userCooking.cookedAt).toLocaleDateString()}
                       </Text>
                     )}
+                    {(() => {
+                      console.log('Rating check:', {
+                        hasRating: !!userCooking.rating,
+                        rating: userCooking.rating,
+                        userCooking
+                      });
+                      return userCooking.rating;
+                    })() && (
+                        <View style={styles.userRatingContainer}>
+                          <StarRating
+                            rating={userCooking.rating}
+                            size={14}
+                            color="#FFD700"
+                            emptyColor="#E5E5E5"
+                          />
+                          <Text style={[styles.userRatingText, { color: colors.textSecondary }]}>
+                            ({userCooking.rating}/5)
+                          </Text>
+                        </View>
+                      )}
                   </View>
                 </View>
               ))}
@@ -1358,24 +1450,43 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
         {!isPublic && (
           <View style={[styles.deleteSection, { backgroundColor: colors.surface }]}>
-            <TouchableOpacity style={[styles.deleteButton, { backgroundColor: colors.error }]} onPress={() => setShowDeleteModal(true)}>
+            <TouchableOpacity
+              style={[styles.deleteButton, { backgroundColor: recipe.isPublicRecipe ? colors.warning : colors.error }]}
+              onPress={() => setShowDeleteModal(true)}
+            >
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
-                <Path
-                  d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"
-                  stroke="white"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Path
-                  d="M10 11v6M14 11v6"
-                  stroke="white"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                {recipe.isPublicRecipe ? (
+                  // Icon for "remove from saved" (bookmark minus)
+                  <Path
+                    d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16zM12 10H8"
+                    stroke="white"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ) : (
+                  // Icon for "delete recipe" (trash)
+                  <>
+                    <Path
+                      d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"
+                      stroke="white"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <Path
+                      d="M10 11v6M14 11v6"
+                      stroke="white"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </>
+                )}
               </Svg>
-              <Text style={styles.deleteButtonText}>{t('recipe.deleteRecipe')}</Text>
+              <Text style={styles.deleteButtonText}>
+                {recipe.isPublicRecipe ? t('saved.removeFromSaved') : t('recipe.deleteRecipe')}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1387,15 +1498,17 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
               <Text style={[styles.startOverButtonText, { color: colors.buttonText }]}>{t('common.startOver')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
-              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.startCooking')}</Text>
+              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.saveRecipe')}</Text>
             </TouchableOpacity>
           </View>
         ) : recipe.isSaved === true ? (
           <View style={styles.dualButtonContainer}>
             <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
-              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.startCooking')}</Text>
+              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>
+                {(recipe.cookedAt || recipe.isPublicRecipe) ? t('recipe.cookAgain') : t('recipe.startCooking')}
+              </Text>
             </TouchableOpacity>
-            {!isPublic && (
+            {!isPublic && !recipe.isPublicRecipe && (
               <TouchableOpacity style={[styles.aiEditButton, { backgroundColor: colors.card }]} onPress={() => setShowChatAIModal(true)}>
                 <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
                   <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
@@ -1407,12 +1520,14 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         ) : (
           <View style={styles.dualButtonContainer}>
             <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
-              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.startCooking')}</Text>
+              <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>
+                {(recipe.cookedAt || recipe.isPublicRecipe) ? t('recipe.cookAgain') : t('recipe.startCooking')}
+              </Text>
             </TouchableOpacity>
-            {!isPublic && (
+            {!isPublic && !recipe.isPublicRecipe && (
               <TouchableOpacity style={[styles.aiEditButton, { backgroundColor: colors.card }]} onPress={() => setShowChatAIModal(true)}>
                 <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
-                  <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12 C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
                 </Svg>
                 <Text style={[styles.aiEditButtonText, { color: colors.primary }]}>{t('common.edit') || 'Modifica'}</Text>
               </TouchableOpacity>
@@ -2129,5 +2244,20 @@ const styles = StyleSheet.create({
   cookedDate: {
     fontSize: 12,
     marginTop: 2,
+  },
+  userRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  userRatingText: {
+    fontSize: 11,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  youLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    fontStyle: 'italic',
   },
 });

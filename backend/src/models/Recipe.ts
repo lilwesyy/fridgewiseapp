@@ -52,6 +52,7 @@ export interface IRecipe extends Document {
   // Rating system
   averageRating: number;
   totalRatings: number;
+
   createdAt: Date;
   updatedAt: Date;
 }

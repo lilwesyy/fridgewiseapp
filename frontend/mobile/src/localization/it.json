@@ -30,7 +30,8 @@
     "imageLoadError": "Impossibile caricare l'immagine",
     "shareError": "Impossibile condividere",
     "pullToRefresh": "Trascina per aggiornare",
-    "refreshError": "Impossibile aggiornare i dati"
+    "refreshError": "Impossibile aggiornare i dati",
+    "you": "Tu"
   },
   "auth": {
     "login": "Accedi",
@@ -288,11 +289,28 @@
   },
   "rating": {
     "review": "recensione",
-    "reviews": "recensioni"
+    "reviews": "recensioni",
+    "rateRecipe": "Valuta la Ricetta",
+    "howWasRecipe": "Come è andata la ricetta?",
+    "tellUsMore": "Raccontaci di più (opzionale)",
+    "commentPlaceholder": "Condividi la tua esperienza con questa ricetta...",
+    "submitRating": "Invia Valutazione",
+    "submitting": "Invio...",
+    "error": "Errore",
+    "pleaseSelectRating": "Seleziona una valutazione prima di continuare",
+    "submitError": "Errore nell'invio della valutazione. Riprova.",
+    "thankYou": "Grazie per il tuo feedback!",
+    "ratingSubmitted": "La tua valutazione è stata inviata con successo",
+    "alreadyRated": "Hai già valutato questa ricetta",
+    "terrible": "Pessima",
+    "bad": "Scarsa",
+    "okay": "Discreta",
+    "good": "Buona",
+    "excellent": "Eccellente"
   },
   "recipe": {
     "whoCookedThis": "Chi ha cucinato questa ricetta",
-    "createdBy": "Creato da",
+    "createdBy": "Creatore della ricetta",
     "title": "Ricetta",
     "noIngredientsProvided": "Nessun ingrediente fornito",
     "generationFailed": "Generazione ricetta fallita",
@@ -327,6 +345,8 @@
     "notFoundError": "Ricetta non trovata nelle tue ricette salvate",
     "invalidIdError": "ID ricetta non valido",
     "startCooking": "Inizia a cucinare!",
+    "cookAgain": "Cucina di nuovo!",
+    "saveRecipe": "Salva ricetta!",
     "alreadySavedTitle": "Ricetta Già Salvata",
     "alreadySavedMessage": "Questa ricetta è già salvata nella tua collezione.",
     "saveError": "Errore nel salvare la ricetta",
@@ -402,7 +422,7 @@
     "exitConfirm": "Esci",
     "finishTitle": "Completa la cottura",
     "finishMessage": "Complimenti! Hai finito di cucinare. Vuoi salvare questa ricetta nei tuoi piatti?",
-    "finishConfirm": "Salva nei miei piatti",
+    "finishConfirm": "Salva piatto",
     "autoTimer": "Timer Automatico",
     "autoTimerTitle": "Timer Automatico Avviato",
     "timerStartedFor": "Timer avviato per",
@@ -434,6 +454,7 @@
     "dishReadyToEnjoy": "Il tuo piatto è pronto da gustare!",
     "successfulCooking": "Cottura riuscita alla perfezione!",
     "recipeAddedToCollection": "Ricetta aggiunta alla tua collezione",
+    "publicRecipeSaved": "Ricetta pubblica aggiunta ai tuoi piatti",
     "photoUploaded": "Foto caricata con successo",
     "photoLimit": {
       "title": "Limite foto raggiunto",
@@ -511,7 +532,9 @@
     "startSaving": "Cucina le ricette per trovarle qui più tardi",
     "savedOn": "Cucinato il",
     "recipesCount": "piatti nella collezione",
-    "alreadyCooked": "Già cucinato il"
+    "alreadyCooked": "Già cucinato il",
+    "publicRecipe": "Ricetta Pubblica",
+    "removeFromSaved": "Rimuovi dai miei piatti"
   },
   "profile": {
     "title": "Profilo",

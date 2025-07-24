@@ -19,6 +19,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { NotificationModal, NotificationType } from './NotificationModal';
 import { PhotoUploadModal } from './PhotoUploadModal';
+import { RatingModal } from './RatingModal';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   useSharedValue,
@@ -68,10 +69,15 @@ interface Recipe {
 interface CookingModeScreenProps {
   recipe: Recipe;
   onGoBack: () => void;
-  onFinishCooking: () => void;
+  onFinishCooking: (notificationData?: {
+    showSuccessNotification: boolean;
+    title: string;
+    message: string;
+  }) => void;
   showForceExitModal?: boolean;
   onForceExitConfirm?: () => void;
   onForceExitCancel?: () => void;
+  isPublicRecipe?: boolean;
 }
 
 type CookingPhase = 'preparation' | 'cooking' | 'completed';
@@ -87,7 +93,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     );
   }
   
-  const { recipe, onGoBack, onFinishCooking, showForceExitModal = false, onForceExitConfirm, onForceExitCancel } = props;
+  const { recipe, onGoBack, onFinishCooking, showForceExitModal = false, onForceExitConfirm, onForceExitCancel, isPublicRecipe = false } = props;
   
   // Safety check for recipe before any hooks
   if (!recipe || typeof recipe !== 'object') {
@@ -154,6 +160,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [dishPhoto, setDishPhoto] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [hasUserRated, setHasUserRated] = useState(false);
+  const [isRecipeAlreadySaved, setIsRecipeAlreadySaved] = useState(false);
   const [hasAutoStartedTimer, setHasAutoStartedTimer] = useState(false);
   const [showAutoTimerModal, setShowAutoTimerModal] = useState(false);
   const [autoTimerMinutes, setAutoTimerMinutes] = useState<number | null>(null);
@@ -168,6 +178,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const [isHelpModalClosing, setIsHelpModalClosing] = useState(false);
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+  const { user } = useAuth();
 
   // Animation values
   const headerOpacity = useSharedValue(1);
@@ -178,6 +189,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   // Help modal animations
   const helpModalTranslateY = useSharedValue(screenHeight);
   const helpModalOpacity = useSharedValue(0);
+  
+  // Finish modal animations
+  const finishModalTranslateY = useSharedValue(screenHeight);
+  const finishModalOpacity = useSharedValue(0);
 
   // Initialize animations
   useEffect(() => {
@@ -212,6 +227,28 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       helpModalTranslateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
     }
   }, [showHelpModal, isHelpModalClosing]);
+
+  // Finish modal animations
+  useEffect(() => {
+    if (showFinishModal) {
+      // Entrance animation
+      finishModalOpacity.value = withTiming(1, {
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2),
+      });
+      finishModalTranslateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
+    } else {
+      // Exit animation
+      finishModalOpacity.value = withTiming(0, {
+        duration: ANIMATION_DURATIONS.QUICK,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
+      });
+      finishModalTranslateY.value = withTiming(screenHeight, {
+        duration: ANIMATION_DURATIONS.QUICK,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2),
+      });
+    }
+  }, [showFinishModal]);
 
   // Auto-generate timers from instructions if not provided
   const generateTimerFromInstruction = (instruction: string): number => {
@@ -344,6 +381,15 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     };
   }, []);
 
+  // Check if user has already rated this recipe and if it's already saved
+  useEffect(() => {
+    const isUserNotCreator = isPublicRecipe && recipe?.userId?._id !== user?.id;
+    if (isUserNotCreator) {
+      checkUserRating();
+      checkIfRecipeAlreadySaved();
+    }
+  }, [recipe, user, isPublicRecipe]);
+
   const toggleIngredient = (index: number) => {
     const newChecked = [...checkedIngredients];
     newChecked[index] = !newChecked[index];
@@ -422,7 +468,19 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   };
 
   const completeCooking = () => {
-    setShowFinishModal(true);
+    // Check if recipe has already been cooked (has cookedAt timestamp)
+    const hasBeenCookedBefore = recipe?.cookedAt;
+    
+    // Check if it's a user-generated recipe that's already been completed (has isSaved = true)
+    const isUserRecipeAlreadyCompleted = !isPublicRecipe && recipe?.isSaved === true;
+    
+    // If recipe is already saved (public) OR has been cooked before OR is a user recipe already completed, 
+    // skip the finish modal and go directly to rating/completion
+    if (isRecipeAlreadySaved || hasBeenCookedBefore || isUserRecipeAlreadyCompleted) {
+      finishCooking();
+    } else {
+      setShowFinishModal(true);
+    }
   };
 
 
@@ -491,6 +549,118 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     }
   };
 
+  const checkUserRating = async () => {
+    try {
+      const recipeId = recipe?.id || recipe?._id || '';
+      if (!recipeId) {
+        return false;
+      }
+
+      const response = await fetch(`${API_URL}/api/recipe/${recipeId}/user-rating`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const hasRating = data.success && data.data && data.data.rating;
+        setHasUserRated(hasRating);
+        return hasRating;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking user rating:', error);
+      return false;
+    }
+  };
+
+  const checkIfRecipeAlreadySaved = async () => {
+    try {
+      const recipeId = recipe?.id || recipe?._id || '';
+      if (!recipeId) {
+        return false;
+      }
+
+      // Check if recipe is already in user's saved recipes
+      const response = await fetch(`${API_URL}/api/recipe/saved`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const savedRecipes = data.data?.recipes || [];
+        
+        // Check if current recipe is already in saved recipes
+        const isAlreadySaved = savedRecipes.some((savedRecipe: any) => {
+          const savedRecipeId = savedRecipe.id || savedRecipe._id;
+          return savedRecipeId === recipeId;
+        });
+        
+        setIsRecipeAlreadySaved(isAlreadySaved);
+        return isAlreadySaved;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking if recipe is already saved:', error);
+      return false;
+    }
+  };
+
+  const handleSubmitRating = async (rating: number, comment?: string) => {
+    try {
+      setIsSubmittingRating(true);
+      
+      const recipeId = recipe?.id || recipe?._id || '';
+      if (!recipeId) {
+        throw new Error('Recipe ID not found');
+      }
+
+      const response = await fetch(`${API_URL}/api/recipe/${recipeId}/rate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rating,
+          comment,
+        }),
+      });
+
+      if (response.ok) {
+        // Mark that user has now rated this recipe
+        setHasUserRated(true);
+        
+        // Save public recipe to user's collection and mark as completed
+        await savePublicRecipeToCollection();
+        
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: safeT('rating.thankYou', 'Grazie per il tuo feedback!'),
+          message: safeT('rating.ratingSubmitted', 'La tua valutazione è stata inviata con successo'),
+        });
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to submit rating');
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      throw error; // Re-throw to let RatingModal handle the error
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   const handlePhotoModalClose = () => {
     // Allow closing even during upload since PhotoUploadModal handles its own state
     setShowPhotoModal(false);
@@ -498,6 +668,19 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const finishCooking = async () => {
     setShowFinishModal(false);
+    
+    // Check if recipe has already been cooked (has cookedAt timestamp)
+    const hasBeenCookedBefore = recipe?.cookedAt;
+    
+    // Check if this is a public recipe and user is not the creator
+    const isUserNotCreator = isPublicRecipe && recipe?.userId?._id !== user?.id;
+    
+    // Show rating modal only if:
+    // - It's a public recipe AND user is not the creator AND hasn't rated yet AND hasn't been cooked before
+    if (isUserNotCreator && !hasUserRated && !hasBeenCookedBefore) {
+      setShowRatingModal(true);
+      return;
+    }
     
     try {
       // Get current recipe data from backend to check photo count
@@ -648,31 +831,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         (recipe as any).isSaved = true;
         (recipe as any).cookedAt = new Date().toISOString();
 
-        // Show success notification
-        setNotification({
-          visible: true,
-          type: 'success',
-          title: safeT('cookingMode.recipeSaved', 'Ricetta Completata!'),
-          message: safeT('cookingMode.recipeCompleted', 'Ricetta completata con successo'),
-        });
-
-        // Animate to completed phase
-        phaseTransition.value = withSequence(
-          withTiming(0.95, { 
-            duration: ANIMATION_DURATIONS.QUICK,
-            easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
-          }),
-          withTiming(1, { 
-            duration: ANIMATION_DURATIONS.MODAL,
-            easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
-          })
-        );
-        setCurrentPhase('completed');
-
-        // After showing completion screen, go back
+        // Exit cooking mode and show success notification in the destination screen
         setTimeout(() => {
-          onFinishCooking();
-        }, 2500);
+          onFinishCooking({
+            showSuccessNotification: true,
+            title: safeT('cookingMode.recipeSaved', 'Ricetta Completata!'),
+            message: safeT('cookingMode.recipeCompleted', 'Ricetta completata con successo'),
+          });
+        }, 500);
       } else {
         const errorData = await completeResponse.text();
         throw new Error(`Failed to complete recipe: ${errorData}`);
@@ -684,6 +850,56 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         type: 'error',
         title: safeT('common.error', 'Errore'),
         message: safeT('recipe.cookingError', 'Errore nel completare la ricetta. Riprova.'),
+      });
+    }
+  };
+
+  const savePublicRecipeToCollection = async () => {
+    try {
+      const recipeId = recipe?.id || recipe?._id || '';
+      
+      if (!recipeId) {
+        throw new Error('Recipe ID not found');
+      }
+
+      // Save public recipe to user's collection
+      const saveResponse = await fetch(`${API_URL}/api/recipe/save-public/${recipeId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cookedAt: new Date().toISOString(),
+          isPublicRecipe: true, // Flag to indicate this is a saved public recipe
+        }),
+      });
+
+      if (saveResponse.ok) {
+        // Update recipe state
+        (recipe as any).isSaved = true;
+        (recipe as any).cookedAt = new Date().toISOString();
+        (recipe as any).isPublicRecipe = true;
+
+        // Exit cooking mode and show success notification in the destination screen
+        setTimeout(() => {
+          onFinishCooking({
+            showSuccessNotification: true,
+            title: safeT('cookingMode.recipeSaved', 'Ricetta Salvata!'),
+            message: safeT('cookingMode.publicRecipeSaved', 'Ricetta pubblica aggiunta ai tuoi piatti'),
+          });
+        }, 500);
+      } else {
+        const errorData = await saveResponse.text();
+        throw new Error(`Failed to save public recipe: ${errorData}`);
+      }
+    } catch (error) {
+      console.error('Error saving public recipe:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error', 'Errore'),
+        message: safeT('recipe.cookingError', 'Errore nel salvare la ricetta. Riprova.'),
       });
     }
   };
@@ -765,31 +981,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         (recipe as any).dishPhoto = dishPhotoData;
         (recipe as any).cookedAt = new Date().toISOString();
 
-        // Show success notification
-        setNotification({
-          visible: true,
-          type: 'success',
-          title: safeT('cookingMode.recipeSaved', 'Recipe Saved!'),
-          message: safeT('cookingMode.recipeAddedToCollection', 'Recipe added to your collection'),
-        });
-
-        // Animate to completed phase with enhanced transition
-        phaseTransition.value = withSequence(
-          withTiming(0.95, { 
-            duration: ANIMATION_DURATIONS.QUICK,
-            easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
-          }),
-          withTiming(1, { 
-            duration: ANIMATION_DURATIONS.MODAL,
-            easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
-          })
-        );
-        setCurrentPhase('completed');
-
-        // After showing completion screen, go back to saved recipes
+        // Exit cooking mode and show success notification in the destination screen
         setTimeout(() => {
-          onFinishCooking();
-        }, 2500);
+          onFinishCooking({
+            showSuccessNotification: true,
+            title: safeT('cookingMode.recipeSaved', 'Ricetta Salvata!'),
+            message: safeT('cookingMode.recipeAddedToCollection', 'Ricetta aggiunta alla tua collezione'),
+          });
+        }, 500);
       } else {
         const errorData = await addToDishesResponse.text();
         throw new Error(`Failed to add recipe to your dishes: ${errorData}`);
@@ -1403,26 +1602,45 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         animationType="none"
         onRequestClose={() => setShowFinishModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{safeT('cookingMode.finishTitle', 'Complete cooking')}</Text>
-            <Text style={styles.modalMessage}>{safeT('cookingMode.finishMessage', 'Congratulations! You finished cooking. Do you want to save this recipe to your dishes?')}</Text>
-            <View style={styles.modalButtons}>
+        <Animated.View style={[styles.finishModalOverlay, { opacity: finishModalOpacity }]}>
+          <TouchableOpacity
+            style={styles.finishModalOverlayTouchable}
+            activeOpacity={1}
+            onPress={() => setShowFinishModal(false)}
+          />
+          <Animated.View style={[styles.finishModalContainer, { transform: [{ translateY: finishModalTranslateY }] }]}>
+            <View style={styles.finishModalHandle} />
+            
+            <View style={styles.finishModalHeader}>
+              <Text style={styles.finishModalTitle}>
+                {safeT('cookingMode.finishTitle', 'Completa la cottura')}
+              </Text>
+              <Text style={styles.finishModalSubtitle}>
+                {safeT('cookingMode.finishMessage', 'Complimenti! Hai finito di cucinare. Vuoi salvare questa ricetta nei tuoi piatti?')}
+              </Text>
+            </View>
+
+            <View style={styles.finishModalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSecondary]}
+                style={[styles.finishModalButton, styles.finishModalButtonSecondary]}
                 onPress={() => setShowFinishModal(false)}
               >
-                <Text style={styles.modalButtonTextSecondary}>{safeT('common.cancel', 'Cancel')}</Text>
+                <Text style={[styles.finishModalButtonText, styles.finishModalButtonTextSecondary]}>
+                  {safeT('common.cancel', 'Annulla')}
+                </Text>
               </TouchableOpacity>
+              
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
+                style={[styles.finishModalButton, styles.finishModalButtonPrimary]}
                 onPress={finishCooking}
               >
-                <Text style={styles.modalButtonTextPrimary}>{safeT('cookingMode.finishConfirm', 'Save to my dishes')}</Text>
+                <Text style={[styles.finishModalButtonText, styles.finishModalButtonTextPrimary]}>
+                  {safeT('cookingMode.finishConfirm', 'Salva nei miei piatti')}
+                </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
 
       {/* Photo Upload Modal */}
@@ -1434,6 +1652,15 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         recipeId={recipe?.id || recipe?._id}
         onUploadComplete={handlePhotoUploadComplete}
         onUploadError={handlePhotoUploadError}
+      />
+
+      {/* Rating Modal */}
+      <RatingModal
+        visible={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+        onSubmitRating={handleSubmitRating}
+        recipeName={recipe?.title || ''}
+        isSubmitting={isSubmittingRating}
       />
       {/* Auto Timer Notification Modal */}
       <NotificationModal
@@ -1932,6 +2159,89 @@ const getStyles = (colors: any) => StyleSheet.create({
   modalButtonTextPrimary: {
     fontSize: 16,
     fontWeight: '600',
+    color: colors.buttonText,
+  },
+
+  // Finish Modal Bottom Sheet Styles
+  finishModalOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  finishModalOverlayTouchable: {
+    flex: 1,
+  },
+  finishModalContainer: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 34,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    minHeight: 200,
+  },
+  finishModalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+    opacity: 0.6,
+  },
+  finishModalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  finishModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  finishModalSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  finishModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  finishModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  finishModalButtonSecondary: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  finishModalButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  finishModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    numberOfLines: 1,
+  },
+  finishModalButtonTextSecondary: {
+    color: colors.text,
+  },
+  finishModalButtonTextPrimary: {
     color: colors.buttonText,
   },
 

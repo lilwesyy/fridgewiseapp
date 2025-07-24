@@ -19,11 +19,10 @@ export const rateRecipe = async (req: AuthRequest, res: Response<APIResponse<any
       return;
     }
 
-    // Check if recipe exists and is public (cooked/saved)
+    // Check if recipe exists and is public (has photos or has been cooked)
     const recipe = await Recipe.findOne({ 
       _id: recipeId, 
       isDeleted: false,
-      isSaved: true,
       $or: [
         { dishPhotos: { $exists: true, $ne: [] } },
         { cookedAt: { $exists: true, $ne: null } }

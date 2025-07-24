@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { Recipe } from '../models/Recipe';
+import { SavedPublicRecipe } from '../models/SavedPublicRecipe';
+import { Rating } from '../models/Rating';
 import { GeminiService } from '../services/geminiService';
 import { cloudinaryService } from '../services/cloudinaryService';
 import { DailyUsage } from '../models/DailyUsage';
@@ -475,41 +477,97 @@ export const getSavedRecipes = async (req: AuthRequest, res: Response<APIRespons
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    const filter: any = { 
+    // Get user's own saved recipes
+    const ownRecipesFilter: any = { 
       userId: user._id,
       isSaved: true, // Only saved recipes
       isDeleted: false // Exclude soft-deleted recipes
     };
 
     if (req.query.difficulty) {
-      filter.difficulty = req.query.difficulty;
+      ownRecipesFilter.difficulty = req.query.difficulty;
     }
     
     if (req.query.dietaryTags) {
       const tags = (req.query.dietaryTags as string).split(',');
-      filter.dietaryTags = { $in: tags };
+      ownRecipesFilter.dietaryTags = { $in: tags };
     }
 
     if (req.query.search) {
       const searchTerm = req.query.search as string;
-      filter.$or = [
+      ownRecipesFilter.$or = [
         { title: { $regex: searchTerm, $options: 'i' } },
         { description: { $regex: searchTerm, $options: 'i' } },
         { originalIngredients: { $regex: searchTerm, $options: 'i' } }
       ];
     }
 
-    const recipes = await Recipe.find(filter)
+    // Get user's own recipes
+    const ownRecipes = await Recipe.find(ownRecipesFilter)
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      .lean();
 
-    const total = await Recipe.countDocuments(filter);
+    // Get saved public recipes
+    const savedPublicRecipes = await SavedPublicRecipe.find({ userId: user._id })
+      .populate({
+        path: 'recipeId',
+        match: { isDeleted: false },
+        populate: {
+          path: 'userId',
+          select: 'name email avatar'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Filter out null populated recipes and transform saved public recipes
+    const transformedPublicRecipes = savedPublicRecipes
+      .filter(saved => saved.recipeId) // Remove null populated recipes
+      .map(saved => ({
+        ...(saved.recipeId as any),
+        isPublicRecipe: true,
+        savedAt: saved.createdAt,
+        cookedAt: saved.cookedAt,
+        userRating: saved.rating,
+        userComment: saved.comment,
+        originalCreator: (saved.recipeId as any).userId
+      }));
+
+    // Apply filters to public recipes if needed
+    let filteredPublicRecipes = transformedPublicRecipes;
+    
+    if (req.query.difficulty) {
+      filteredPublicRecipes = filteredPublicRecipes.filter(recipe => recipe.difficulty === req.query.difficulty);
+    }
+    
+    if (req.query.dietaryTags) {
+      const tags = (req.query.dietaryTags as string).split(',');
+      filteredPublicRecipes = filteredPublicRecipes.filter(recipe => 
+        recipe.dietaryTags.some((tag: string) => tags.includes(tag))
+      );
+    }
+
+    if (req.query.search) {
+      const searchTerm = (req.query.search as string).toLowerCase();
+      filteredPublicRecipes = filteredPublicRecipes.filter(recipe =>
+        recipe.title.toLowerCase().includes(searchTerm) ||
+        recipe.description.toLowerCase().includes(searchTerm) ||
+        recipe.originalIngredients.some((ingredient: string) => ingredient.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    // Combine and sort all recipes
+    const allRecipes = [...ownRecipes, ...filteredPublicRecipes]
+      .sort((a, b) => new Date(b.createdAt || b.savedAt).getTime() - new Date(a.createdAt || a.savedAt).getTime());
+
+    // Apply pagination
+    const paginatedRecipes = allRecipes.slice(skip, skip + limit);
+    const total = allRecipes.length;
 
     res.status(200).json({
       success: true,
       data: {
-        recipes,
+        recipes: paginatedRecipes,
         pagination: {
           page,
           limit,
@@ -590,6 +648,72 @@ export const unsaveRecipe = async (req: AuthRequest, res: Response<APIResponse<a
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to remove recipe from saved'
+    });
+  }
+};
+
+export const savePublicRecipe = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+    const { cookedAt, rating, comment } = req.body || {};
+
+    // Validate cookedAt timestamp if provided
+    if (cookedAt) {
+      const cookedDate = new Date(cookedAt);
+      if (isNaN(cookedDate.getTime()) || cookedDate > new Date()) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid cooked date - must be a valid date not in the future'
+        });
+        return;
+      }
+    }
+
+    // Find the public recipe (not owned by current user)
+    const publicRecipe = await Recipe.findOne({ 
+      _id: id, 
+      userId: { $ne: user._id }, // Not owned by current user
+      isDeleted: false,
+      $or: [
+        { dishPhotos: { $exists: true, $ne: [] } },
+        { cookedAt: { $exists: true, $ne: null } }
+      ]
+    });
+    
+    if (!publicRecipe) {
+      res.status(404).json({
+        success: false,
+        error: 'Public recipe not found'
+      });
+      return;
+    }
+
+    // Create or update saved public recipe record
+    const savedPublicRecipe = await SavedPublicRecipe.findOneAndUpdate(
+      { userId: user._id, recipeId: id },
+      { 
+        cookedAt: cookedAt ? new Date(cookedAt) : new Date(),
+        rating,
+        comment
+      },
+      { new: true, upsert: true }
+    );
+
+    // Populate the recipe details
+    await savedPublicRecipe.populate('recipeId');
+    await savedPublicRecipe.populate('userId', 'name email avatar');
+
+    res.status(200).json({
+      success: true,
+      message: 'Public recipe saved to your collection successfully',
+      data: savedPublicRecipe
+    });
+  } catch (error: any) {
+    console.error('Error saving public recipe:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to save public recipe'
     });
   }
 };
@@ -918,10 +1042,9 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
 
     const skip = (Number(page) - 1) * Number(limit);
     
-    // Build query for public recipes (cooked/saved recipes)
+    // Build query for public recipes (recipes with photos or that have been cooked)
     const query: any = { 
       isDeleted: false,
-      isSaved: true, // Only show recipes that have been cooked/saved
       $or: [
         { dishPhotos: { $exists: true, $ne: [] } }, // Has photos
         { cookedAt: { $exists: true, $ne: null } } // Has been cooked
@@ -1010,7 +1133,7 @@ export const getUsersWhoCookedRecipe = async (req: Request, res: Response<APIRes
       return;
     }
 
-    // Find all users who have cooked this recipe (recipes with same title/ingredients but different userIds)
+    // Find the original recipe
     const originalRecipe = await Recipe.findById(recipeId).lean();
     
     if (!originalRecipe) {
@@ -1021,7 +1144,23 @@ export const getUsersWhoCookedRecipe = async (req: Request, res: Response<APIRes
       return;
     }
 
-    // Find recipes with same title that have been cooked by different users (excluding the original creator)
+    // Get users who saved this public recipe (from SavedPublicRecipe model)
+    console.log('🔍 Looking for SavedPublicRecipe with recipeId:', recipeId);
+    
+    // First, let's see all SavedPublicRecipe records to debug
+    const allSavedRecipes = await SavedPublicRecipe.find({}).lean();
+    console.log('📋 All SavedPublicRecipe records:', allSavedRecipes.length, allSavedRecipes);
+    
+    const savedPublicRecipes = await SavedPublicRecipe
+      .find({ recipeId })
+      .populate('userId', 'name email avatar')
+      .sort({ cookedAt: -1 })
+      .limit(Number(limit))
+      .lean();
+    
+    console.log('✅ Found SavedPublicRecipes for this recipe:', savedPublicRecipes.length, savedPublicRecipes);
+
+    // Also get users who cooked their own version of this recipe (legacy support)
     const cookedVersions = await Recipe
       .find({
         title: originalRecipe.title,
@@ -1036,15 +1175,36 @@ export const getUsersWhoCookedRecipe = async (req: Request, res: Response<APIRes
       .populate('userId', 'name email avatar')
       .select('userId cookedAt dishPhotos createdAt')
       .sort({ cookedAt: -1, createdAt: -1 })
-      .limit(Number(limit))
       .lean();
 
-    // Group by user and get unique users with their cooking info
+    // Get all ratings for this recipe from the Rating model
+    const ratings = await Rating.find({ recipeId }).lean();
+    const ratingsMap = new Map();
+    ratings.forEach(rating => {
+      ratingsMap.set(rating.userId.toString(), {
+        rating: rating.rating,
+        comment: rating.comment
+      });
+    });
+
+    // Combine users from both sources
     const userCookingMap = new Map();
     
-    cookedVersions.forEach(recipe => {
-      const userId = (recipe.userId as any)._id.toString();
-      const userData = recipe.userId as any;
+    // Add users from SavedPublicRecipe
+    console.log('Processing SavedPublicRecipes:', savedPublicRecipes.length);
+    savedPublicRecipes.forEach(saved => {
+      const userId = (saved.userId as any)._id.toString();
+      const userData = saved.userId as any;
+      
+      // Get rating from Rating model (takes precedence over SavedPublicRecipe rating)
+      const userRating = ratingsMap.get(userId) || { rating: saved.rating, comment: saved.comment };
+      
+      console.log('Adding user from SavedPublicRecipe:', {
+        userId,
+        name: userData.name,
+        rating: userRating.rating,
+        comment: userRating.comment
+      });
       
       if (!userCookingMap.has(userId)) {
         userCookingMap.set(userId, {
@@ -1054,9 +1214,36 @@ export const getUsersWhoCookedRecipe = async (req: Request, res: Response<APIRes
             email: userData.email,
             avatar: userData.avatar
           },
+          cookedAt: saved.cookedAt,
+          hasPhoto: false, // SavedPublicRecipe doesn't have photos
+          photoUrl: null,
+          rating: userRating.rating,
+          comment: userRating.comment
+        });
+      }
+    });
+    
+    // Add users from legacy cooked versions
+    cookedVersions.forEach(recipe => {
+      const userId = (recipe.userId as any)._id.toString();
+      const userData = recipe.userId as any;
+      
+      if (!userCookingMap.has(userId)) {
+        // Get rating from Rating model
+        const userRating = ratingsMap.get(userId);
+        
+        userCookingMap.set(userId, {
+          user: {
+            _id: userData._id,
+            name: userData.name,
+            email: userData.email,
+            avatar: userData.avatar
+          },
           cookedAt: recipe.cookedAt,
           hasPhoto: recipe.dishPhotos && recipe.dishPhotos.length > 0,
-          photoUrl: recipe.dishPhotos && recipe.dishPhotos.length > 0 ? recipe.dishPhotos[0].url : null
+          photoUrl: recipe.dishPhotos && recipe.dishPhotos.length > 0 ? recipe.dishPhotos[0].url : null,
+          rating: userRating?.rating,
+          comment: userRating?.comment
         });
       }
     });
