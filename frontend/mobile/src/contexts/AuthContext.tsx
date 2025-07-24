@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiService } from '../services/apiService';
 
 interface User {
   id: string;
@@ -55,25 +56,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     loadStoredAuth();
+    
+    // Set up automatic logout on 401 responses
+    apiService.setUnauthorizedCallback(() => {
+      console.log('🔄 Auto-logout triggered by API service');
+      setToken(null);
+      setUser(null);
+    });
   }, []);
 
   // Refresh user profile from server (for cross-device sync)
   const refreshProfile = async (currentToken?: string) => {
     try {
-      const authToken = currentToken || token;
-      if (!authToken) return;
+      if (!currentToken && !token) return;
 
-      const response = await fetch(`${API_URL}/api/auth/me`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const refreshedUser = addCacheBustingToAvatar(data.data);
+      const result = await apiService.get('/api/auth/me');
+      
+      if (result.success && result.data) {
+        const refreshedUser = addCacheBustingToAvatar(result.data);
         
         // Update both state and storage
         await AsyncStorage.setItem('auth_user', JSON.stringify(refreshedUser));
@@ -188,22 +188,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (updates: Partial<User>) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(updates),
-      });
+      const result = await apiService.put('/api/auth/profile', updates);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Profile update failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Profile update failed');
       }
 
-      const updatedUser = data.data;
+      const updatedUser = result.data;
       
       // Update stored user
       await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
@@ -249,22 +240,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } as any);
       }
 
-      const response = await fetch(`${API_URL}/api/upload/avatar`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
+      const result = await apiService.uploadFile('/api/upload/avatar', formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Avatar upload failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Avatar upload failed');
       }
 
-      const updatedUser = addCacheBustingToAvatar(data.data);
+      const updatedUser = addCacheBustingToAvatar(result.data);
       
       // Update stored user
       await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
@@ -279,20 +261,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const deleteAvatar = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/upload/avatar`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const result = await apiService.delete('/api/upload/avatar');
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Avatar deletion failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Avatar deletion failed');
       }
 
-      const updatedUser = addCacheBustingToAvatar(data.data);
+      const updatedUser = addCacheBustingToAvatar(result.data);
       
       // Update stored user
       await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
@@ -421,10 +396,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Auto-login user after successful verification
       if (data.data && data.data.token && data.data.user) {
         const authToken = data.data.token;
-        const userData = data.data.user;
+        const userData = addCacheBustingToAvatar(data.data.user);
         
-        await AsyncStorage.setItem('token', authToken);
-        await AsyncStorage.setItem('user', JSON.stringify(userData));
+        await AsyncStorage.setItem('auth_token', authToken);
+        await AsyncStorage.setItem('auth_user', JSON.stringify(userData));
         
         setToken(authToken);
         setUser(userData);

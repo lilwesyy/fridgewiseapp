@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
 import { connectDB } from './config/database';
+import { redisService } from './services/redisService';
 import { errorHandler } from './middleware/errorHandler';
 import { authRoutes } from './routes/auth';
 import { analysisRoutes } from './routes/analysis';
@@ -20,6 +21,7 @@ import { uploadRoutes } from './routes/upload';
 import { usageRoutes } from './routes/usage';
 import recipeCollectionRoutes from './routes/recipeCollection';
 import { ratingRoutes } from './routes/rating';
+import { cacheRoutes } from './routes/cache';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,14 +61,18 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/usage', usageRoutes);
 app.use('/api/collections', recipeCollectionRoutes);
 app.use('/api/recipe', ratingRoutes);
+app.use('/api/cache', cacheRoutes);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (req: express.Request, res: express.Response) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '1.0.0',
-    message: 'FridgeWise API is running'
+    message: 'FridgeWise API is running',
+    services: {
+      redis: redisService.isHealthy()
+    }
   });
 });
 
@@ -74,7 +80,7 @@ app.get('/health', (req, res) => {
 app.use(errorHandler);
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (req: express.Request, res: express.Response) => {
   res.status(404).json({ 
     success: false, 
     error: 'Route not found' 
@@ -85,6 +91,14 @@ app.use('*', (req, res) => {
 async function startServer() {
   try {
     await connectDB();
+    
+    // Initialize Redis connection
+    try {
+      await redisService.connect();
+      console.log('✅ Redis connected successfully');
+    } catch (error) {
+      console.warn('⚠️  Redis connection failed, caching will be disabled:', error);
+    }
     
     app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);

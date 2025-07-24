@@ -5,6 +5,7 @@ import { SavedPublicRecipe } from '../models/SavedPublicRecipe';
 import { Rating } from '../models/Rating';
 import { GeminiService } from '../services/geminiService';
 import { cloudinaryService } from '../services/cloudinaryService';
+import { CacheService } from '../services/cacheService';
 import { DailyUsage } from '../models/DailyUsage';
 import { APIResponse } from '@/types';
 
@@ -251,6 +252,9 @@ export const createRecipe = async (req: AuthRequest, res: Response<APIResponse<a
     });
 
     await newRecipe.save();
+
+    // Invalidate relevant caches
+    await CacheService.invalidateUserCache((user._id as any).toString());
 
     res.status(201).json({
       success: true,
@@ -1040,6 +1044,23 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
       sortBy = 'recent' // recent, popular, alphabetical
     } = req.query;
 
+    // Try to get from cache first
+    const cachedData = await CacheService.getPublicRecipes(
+      Number(page), 
+      Number(limit), 
+      search as string, 
+      sortBy as string
+    );
+
+    if (cachedData) {
+      console.log('Serving public recipes from cache');
+      res.json({
+        success: true,
+        data: cachedData
+      });
+      return;
+    }
+
     const skip = (Number(page) - 1) * Number(limit);
     
     // Build query for public recipes (recipes with photos or that have been cooked)
@@ -1092,6 +1113,25 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
 
     const total = await Recipe.countDocuments(query);
 
+    const responseData = {
+      recipes,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / Number(limit))
+      }
+    };
+
+    // Cache the result
+    await CacheService.setPublicRecipes(
+      Number(page), 
+      Number(limit), 
+      responseData, 
+      search as string, 
+      sortBy as string
+    );
+
     console.log('Public recipes with ratings:', recipes.map(r => ({ 
       title: r.title, 
       averageRating: r.averageRating, 
@@ -1100,15 +1140,7 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
 
     res.json({
       success: true,
-      data: {
-        recipes,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-      }
+      data: responseData
     });
   } catch (error: any) {
     console.error('Error fetching public recipes:', error);

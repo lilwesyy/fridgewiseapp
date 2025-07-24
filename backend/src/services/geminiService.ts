@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { CacheService } from './cacheService';
 
 interface RecipeGenerationOptions {
   ingredients: string[];
@@ -71,10 +72,30 @@ export class GeminiService {
       difficulty
     } = options;
 
+    // Create cache key based on recipe parameters
+    const cacheKey = JSON.stringify({
+      ingredients: ingredients.sort(),
+      language,
+      dietaryRestrictions: dietaryRestrictions.sort(),
+      servings,
+      cookingTime,
+      difficulty
+    });
+
+    // Try to get from cache first
+    const cachedRecipe = await CacheService.getNutritionAnalysis(cacheKey);
+    if (cachedRecipe) {
+      console.log('🎯 Serving recipe from cache');
+      return cachedRecipe;
+    }
+
     // If no API key is configured, return a mock recipe
     if (!this.model) {
       console.log('🎭 Using mock recipe generation (no Gemini API key configured)');
-      return this.createMockRecipe(ingredients, language, servings, cookingTime || 30, difficulty || 'easy');
+      const mockRecipe = this.createMockRecipe(ingredients, language, servings, cookingTime || 30, difficulty || 'easy');
+      // Cache mock recipe too
+      await CacheService.setNutritionAnalysis(cacheKey, mockRecipe);
+      return mockRecipe;
     }
 
     const prompt = this.buildPrompt(ingredients, language, dietaryRestrictions, servings, cookingTime, difficulty);
@@ -84,7 +105,12 @@ export class GeminiService {
       const response = await result.response;
       const text = response.text();
 
-      return this.parseRecipeResponse(text, language);
+      const generatedRecipe = this.parseRecipeResponse(text, language);
+      
+      // Cache the successful result
+      await CacheService.setNutritionAnalysis(cacheKey, generatedRecipe);
+      
+      return generatedRecipe;
     } catch (error) {
       console.error('Error generating recipe with Gemini:', error);
       
@@ -95,7 +121,12 @@ export class GeminiService {
       }
       
       console.log('🔄 Falling back to mock recipe due to error');
-      return this.createMockRecipe(ingredients, language, servings, cookingTime || 30, difficulty || 'easy');
+      const fallbackRecipe = this.createMockRecipe(ingredients, language, servings, cookingTime || 30, difficulty || 'easy');
+      
+      // Cache fallback recipe with shorter TTL
+      await CacheService.setNutritionAnalysis(cacheKey, fallbackRecipe);
+      
+      return fallbackRecipe;
     }
   }
 
