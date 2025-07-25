@@ -332,4 +332,38 @@ router.delete('/users/:id', protect, adminMiddleware, async (req: AuthRequest, r
   }
 });
 
+// GET /api/admin/environment - Ottieni informazioni sull'ambiente (solo admin)
+router.get('/environment', protect, adminMiddleware, async (req, res) => {
+  try {
+    const { envValidator } = await import('../config/envValidation');
+    const envInfo = envValidator.getEnvInfo();
+    
+    res.json({
+      success: true,
+      data: {
+        environment: envInfo,
+        timestamp: new Date().toISOString(),
+        uptime: Math.floor(process.uptime()),
+        memory: {
+          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+          rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
+        },
+        versions: {
+          node: process.version,
+          platform: process.platform,
+          arch: process.arch
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching environment info:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error fetching environment information'
+    });
+  }
+});
+
 export default router;

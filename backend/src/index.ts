@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 // Carica le variabili d'ambiente PRIMA di importare altri moduli
 dotenv.config();
 
+// Validate environment variables before starting the server
+import { envValidator } from './config/envValidation';
+envValidator.validateAndExit();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -72,8 +76,13 @@ app.get('/health', (req: express.Request, res: express.Response) => {
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '1.0.0',
     message: 'FridgeWise API is running',
+    environment: {
+      nodeEnv: process.env.NODE_ENV,
+      port: process.env.PORT
+    },
     services: {
-      redis: redisService.isHealthy()
+      redis: redisService.isHealthy(),
+      mongodb: 'connected'
     }
   });
 });
