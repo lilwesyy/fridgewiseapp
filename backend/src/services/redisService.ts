@@ -117,19 +117,120 @@ class RedisService {
     }
   }
 
-  // Pattern-based operations
+  // Pattern-based operations (using SCAN instead of KEYS for better performance)
   async deletePattern(pattern: string): Promise<number> {
     if (!this.isConnected) return 0;
     
     try {
-      const keys = await this.client.keys(pattern);
-      if (keys.length === 0) return 0;
+      let cursor = 0;
+      let deletedCount = 0;
       
-      await this.client.del(keys);
-      return keys.length;
+      do {
+        const reply = await this.client.scan(cursor, {
+          MATCH: pattern,
+          COUNT: 100
+        });
+        cursor = reply.cursor;
+        
+        if (reply.keys.length > 0) {
+          await this.client.del(reply.keys);
+          deletedCount += reply.keys.length;
+        }
+      } while (cursor !== 0);
+      
+      return deletedCount;
     } catch (error) {
       console.error('Redis DELETE PATTERN error:', error);
       return 0;
+    }
+  }
+
+  // Cache stampede protection with distributed locking
+  async getOrSet<T>(
+    key: string, 
+    fetcher: () => Promise<T>, 
+    ttl: number,
+    lockTtl: number = 30
+  ): Promise<T> {
+    if (!this.isConnected) {
+      return await fetcher();
+    }
+
+    try {
+      // Try to get from cache
+      const cached = await this.getJSON<T>(key);
+      if (cached) return cached;
+      
+      // Try to acquire lock
+      const lockKey = `lock:${key}`;
+      const lockValue = `${Date.now()}-${Math.random()}`;
+      const acquired = await this.client.set(lockKey, lockValue, {
+        EX: lockTtl,
+        NX: true
+      });
+      
+      if (acquired) {
+        try {
+          const data = await fetcher();
+          await this.setJSON(key, data, ttl);
+          await this.client.del(lockKey);
+          return data;
+        } catch (error) {
+          await this.client.del(lockKey);
+          throw error;
+        }
+      } else {
+        // Wait for lock to release and try cache again
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const retryData = await this.getJSON<T>(key);
+        if (retryData) return retryData;
+        
+        // If still no data, fallback to direct fetch
+        return await fetcher();
+      }
+    } catch (error) {
+      console.error('Redis getOrSet error:', error);
+      return await fetcher();
+    }
+  }
+
+  // Memory usage monitoring
+  async getMemoryUsage(): Promise<any> {
+    if (!this.isConnected) return null;
+    
+    try {
+      const info = await this.client.info('memory');
+      const memoryInfo = info.split('\r\n').reduce((acc, line) => {
+        const [key, value] = line.split(':');
+        if (key && value) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+
+      const keyCount = await this.client.dbsize();
+      
+      return {
+        used_memory: parseInt(memoryInfo.used_memory || '0'),
+        used_memory_human: memoryInfo.used_memory_human,
+        used_memory_rss: parseInt(memoryInfo.used_memory_rss || '0'),
+        used_memory_rss_human: memoryInfo.used_memory_rss_human,
+        used_memory_peak: parseInt(memoryInfo.used_memory_peak || '0'),
+        used_memory_peak_human: memoryInfo.used_memory_peak_human,
+        maxmemory: parseInt(memoryInfo.maxmemory || '0'),
+        maxmemory_human: memoryInfo.maxmemory_human,
+        maxmemory_policy: memoryInfo.maxmemory_policy,
+        mem_fragmentation_ratio: parseFloat(memoryInfo.mem_fragmentation_ratio || '0'),
+        keyspace_hits: parseInt(memoryInfo.keyspace_hits || '0'),
+        keyspace_misses: parseInt(memoryInfo.keyspace_misses || '0'),
+        key_count: keyCount,
+        hit_rate: memoryInfo.keyspace_hits && memoryInfo.keyspace_misses 
+          ? (parseInt(memoryInfo.keyspace_hits) / (parseInt(memoryInfo.keyspace_hits) + parseInt(memoryInfo.keyspace_misses))) * 100
+          : 0
+      };
+    } catch (error) {
+      console.error('Redis memory usage error:', error);
+      return null;
     }
   }
 

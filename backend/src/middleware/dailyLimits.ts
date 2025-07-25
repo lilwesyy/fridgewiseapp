@@ -25,6 +25,17 @@ export const checkDailyLimit = (limitType: keyof typeof DAILY_LIMITS) => {
         });
       }
 
+      // Skip limit check for admin users
+      if (req.user.role === 'admin') {
+        (req as any).dailyUsage = {
+          current: 0,
+          limit: Number.MAX_SAFE_INTEGER,
+          remaining: Number.MAX_SAFE_INTEGER,
+          limitType
+        };
+        return next();
+      }
+
       const usage = await DailyUsage.getTodayUsage(req.user.id);
       const currentUsage = usage[limitType];
       const limit = DAILY_LIMITS[limitType];
@@ -96,9 +107,31 @@ export const incrementDailyUsage = (limitType: keyof typeof DAILY_LIMITS) => {
 };
 
 // Utility function to get user's current daily usage
-export const getUserDailyUsage = async (userId: string) => {
+export const getUserDailyUsage = async (userId: string, userRole?: string) => {
   try {
     const usage = await DailyUsage.getTodayUsage(userId);
+    
+    // For admin users, return infinite limits
+    if (userRole === 'admin') {
+      return {
+        recipeGenerations: {
+          used: usage.recipeGenerations,
+          limit: Number.MAX_SAFE_INTEGER,
+          remaining: Number.MAX_SAFE_INTEGER
+        },
+        aiChatMessages: {
+          used: usage.aiChatMessages,
+          limit: Number.MAX_SAFE_INTEGER,
+          remaining: Number.MAX_SAFE_INTEGER
+        },
+        imageAnalyses: {
+          used: usage.imageAnalyses,
+          limit: Number.MAX_SAFE_INTEGER,
+          remaining: Number.MAX_SAFE_INTEGER
+        },
+        date: usage.date
+      };
+    }
     
     return {
       recipeGenerations: {

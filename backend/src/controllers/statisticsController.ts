@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Recipe } from '../models/Recipe';
 import { Analysis } from '../models/Analysis';
 import { IUser } from '../models/User';
+import { CacheService } from '../services/cacheService';
 
 interface AuthenticatedRequest extends Request {
   user?: IUser;
@@ -25,55 +26,63 @@ export const getUserStatistics = async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Get all statistics in parallel for better performance
-    const [
-      recipesCreated,
-      favoriteRecipes,
-      completedAnalyses,
-      ingredientsScannedResult,
-      lastAnalysis,
-      lastRecipe
-    ] = await Promise.all([
-      // Count total recipes created by user
-      Recipe.countDocuments({ userId }),
-      
-      // Count saved/favorite recipes
-      Recipe.countDocuments({ userId, isSaved: true }),
-      
-      // Count completed analyses
-      Analysis.countDocuments({ userId, status: 'completed' }),
-      
-      // Count total unique ingredients scanned
-      Analysis.aggregate([
-        { $match: { userId, status: 'completed' } },
-        { $unwind: '$ingredients' },
-        { $group: { _id: '$ingredients.name' } },
-        { $count: 'uniqueIngredients' }
-      ]),
-      
-      // Get last analysis date
-      Analysis.findOne(
-        { userId, status: 'completed' },
-        { createdAt: 1 },
-        { sort: { createdAt: -1 } }
-      ),
-      
-      // Get last recipe date
-      Recipe.findOne(
-        { userId },
-        { createdAt: 1 },
-        { sort: { createdAt: -1 } }
-      )
-    ]);
+    // Try to get from cache first
+    let statistics = await CacheService.getUserStatistics(userId.toString());
+    
+    if (!statistics) {
+      // Compute statistics if not in cache
+      const [
+        recipesCreated,
+        favoriteRecipes,
+        completedAnalyses,
+        ingredientsScannedResult,
+        lastAnalysis,
+        lastRecipe
+      ] = await Promise.all([
+        // Count total recipes created by user
+        Recipe.countDocuments({ userId }),
+        
+        // Count saved/favorite recipes
+        Recipe.countDocuments({ userId, isSaved: true }),
+        
+        // Count completed analyses
+        Analysis.countDocuments({ userId, status: 'completed' }),
+        
+        // Count total unique ingredients scanned
+        Analysis.aggregate([
+          { $match: { userId, status: 'completed' } },
+          { $unwind: '$ingredients' },
+          { $group: { _id: '$ingredients.name' } },
+          { $count: 'uniqueIngredients' }
+        ]),
+        
+        // Get last analysis date
+        Analysis.findOne(
+          { userId, status: 'completed' },
+          { createdAt: 1 },
+          { sort: { createdAt: -1 } }
+        ),
+        
+        // Get last recipe date
+        Recipe.findOne(
+          { userId },
+          { createdAt: 1 },
+          { sort: { createdAt: -1 } }
+        )
+      ]);
 
-    const statistics: UserStatistics = {
-      recipesCreated,
-      favoriteRecipes,
-      ingredientsScanned: ingredientsScannedResult[0]?.uniqueIngredients || 0,
-      totalAnalyses: completedAnalyses,
-      lastAnalysisDate: lastAnalysis?.createdAt,
-      lastRecipeDate: lastRecipe?.createdAt
-    };
+      statistics = {
+        recipesCreated,
+        favoriteRecipes,
+        ingredientsScanned: ingredientsScannedResult[0]?.uniqueIngredients || 0,
+        totalAnalyses: completedAnalyses,
+        lastAnalysisDate: lastAnalysis?.createdAt,
+        lastRecipeDate: lastRecipe?.createdAt
+      };
+
+      // Cache the result for 1 hour
+      await CacheService.setUserStatistics(userId.toString(), statistics);
+    }
 
     res.json(statistics);
   } catch (error) {

@@ -7,7 +7,7 @@ export const getDailyUsage = async (req: AuthRequest, res: Response<APIResponse<
   try {
     const user = req.user!;
     
-    const usage = await getUserDailyUsage(user.id);
+    const usage = await getUserDailyUsage(user.id, user.role);
     
     res.status(200).json({
       success: true,

@@ -26,7 +26,7 @@ export const useDailyUsage = () => {
   const [usage, setUsage] = useState<DailyUsageData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const fetchUsage = async () => {
     if (!token) return;
@@ -69,9 +69,11 @@ export const useDailyUsage = () => {
     fetchUsage();
   };
 
-  const canGenerateRecipe = usage ? usage.recipeGenerations.remaining > 0 : true;
-  const canUseAiChat = usage ? usage.aiChatMessages.remaining > 0 : true;
-  const canAnalyzeImage = usage ? usage.imageAnalyses.remaining > 0 : true;
+  // Admin users have infinite limits
+  const isAdmin = user?.role === 'admin';
+  const canGenerateRecipe = isAdmin || (usage ? usage.recipeGenerations.remaining > 0 : true);
+  const canUseAiChat = isAdmin || (usage ? usage.aiChatMessages.remaining > 0 : true);
+  const canAnalyzeImage = isAdmin || (usage ? usage.imageAnalyses.remaining > 0 : true);
 
   return {
     usage,

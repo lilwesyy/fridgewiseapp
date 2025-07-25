@@ -33,12 +33,15 @@ router.get('/stats', protect, async (req: AuthRequest, res: Response<APIResponse
       return;
     }
 
-    // Get some basic Redis info (this would need to be implemented in redisService)
+    // Get detailed Redis memory and performance stats
+    const memoryUsage = await redisService.getMemoryUsage();
+    
     res.json({
       success: true,
       data: {
         status: 'connected',
         healthy: isHealthy,
+        memory: memoryUsage,
         message: 'Redis cache is operational'
       }
     });

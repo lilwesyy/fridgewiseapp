@@ -1044,95 +1044,80 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
       sortBy = 'recent' // recent, popular, alphabetical
     } = req.query;
 
-    // Try to get from cache first
-    const cachedData = await CacheService.getPublicRecipes(
-      Number(page), 
-      Number(limit), 
-      search as string, 
-      sortBy as string
-    );
+    // Use cache stampede protection
+    const responseData = await CacheService.getPublicRecipesProtected(
+      Number(page),
+      Number(limit),
+      search as string,
+      sortBy as string,
+      async () => {
+        console.log('Computing public recipes from database (cache miss)');
+        
+        const skip = (Number(page) - 1) * Number(limit);
+        
+        // Build query for public recipes (recipes with photos or that have been cooked)
+        const query: any = { 
+          isDeleted: false,
+          $or: [
+            { dishPhotos: { $exists: true, $ne: [] } }, // Has photos
+            { cookedAt: { $exists: true, $ne: null } } // Has been cooked
+          ]
+        };
+        
+        // Search in title and description
+        if (search) {
+          query.$and = query.$and || [];
+          query.$and.push({
+            $or: [
+              { title: { $regex: search as string, $options: 'i' } },
+              { description: { $regex: search as string, $options: 'i' } }
+            ]
+          });
+        }
 
-    if (cachedData) {
-      console.log('Serving public recipes from cache');
-      res.json({
-        success: true,
-        data: cachedData
-      });
-      return;
-    }
+        // Build sort criteria
+        let sort: any = {};
+        switch (sortBy) {
+          case 'popular':
+            // Sort by average rating, then by number of ratings, then by dish photos
+            sort = { averageRating: -1, totalRatings: -1, 'dishPhotos.length': -1, createdAt: -1 };
+            break;
+          case 'recent':
+            sort = { cookedAt: -1, createdAt: -1 };
+            break;
+          case 'alphabetical':
+            sort = { title: 1 };
+            break;
+          case 'rating':
+            sort = { averageRating: -1, totalRatings: -1 };
+            break;
+          default:
+            sort = { cookedAt: -1, createdAt: -1 };
+        }
 
-    const skip = (Number(page) - 1) * Number(limit);
-    
-    // Build query for public recipes (recipes with photos or that have been cooked)
-    const query: any = { 
-      isDeleted: false,
-      $or: [
-        { dishPhotos: { $exists: true, $ne: [] } }, // Has photos
-        { cookedAt: { $exists: true, $ne: null } } // Has been cooked
-      ]
-    };
-    
-    // Search in title and description
-    if (search) {
-      query.$and = query.$and || [];
-      query.$and.push({
-        $or: [
-          { title: { $regex: search as string, $options: 'i' } },
-          { description: { $regex: search as string, $options: 'i' } }
-        ]
-      });
-    }
+        const recipes = await Recipe
+          .find(query)
+          .populate('userId', 'name email avatar')
+          .sort(sort)
+          .skip(skip)
+          .limit(Number(limit))
+          .lean();
 
-    // Build sort criteria
-    let sort: any = {};
-    switch (sortBy) {
-      case 'popular':
-        // Sort by average rating, then by number of ratings, then by dish photos
-        sort = { averageRating: -1, totalRatings: -1, 'dishPhotos.length': -1, createdAt: -1 };
-        break;
-      case 'recent':
-        sort = { cookedAt: -1, createdAt: -1 };
-        break;
-      case 'alphabetical':
-        sort = { title: 1 };
-        break;
-      case 'rating':
-        sort = { averageRating: -1, totalRatings: -1 };
-        break;
-      default:
-        sort = { cookedAt: -1, createdAt: -1 };
-    }
+        const total = await Recipe.countDocuments(query);
 
-    const recipes = await Recipe
-      .find(query)
-      .populate('userId', 'name email avatar')
-      .sort(sort)
-      .skip(skip)
-      .limit(Number(limit))
-      .lean();
-
-    const total = await Recipe.countDocuments(query);
-
-    const responseData = {
-      recipes,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit))
+        return {
+          recipes,
+          pagination: {
+            page: Number(page),
+            limit: Number(limit),
+            total,
+            pages: Math.ceil(total / Number(limit))
+          }
+        };
       }
-    };
-
-    // Cache the result
-    await CacheService.setPublicRecipes(
-      Number(page), 
-      Number(limit), 
-      responseData, 
-      search as string, 
-      sortBy as string
     );
 
-    console.log('Public recipes with ratings:', recipes.map(r => ({ 
+    console.log('Public recipes with ratings:', responseData.recipes.map(r => ({ 
       title: r.title, 
       averageRating: r.averageRating, 
       totalRatings: r.totalRatings 

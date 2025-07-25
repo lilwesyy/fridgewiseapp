@@ -23,7 +23,7 @@ const makeAdmin = async () => {
 
     // Trova e aggiorna l'utente
     const user = await User.findOneAndUpdate(
-      { email: 'carpmirco02@gmail.com' },
+      { email: 'mirco.carp@icloud.com' },
       { role: 'admin' },
       { new: true }
     );

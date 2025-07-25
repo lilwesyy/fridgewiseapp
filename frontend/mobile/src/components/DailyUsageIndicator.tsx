@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDailyUsage } from '../hooks/useDailyUsage';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
 
 interface DailyUsageIndicatorProps {
   type?: 'recipeGeneration' | 'aiChat' | 'imageAnalysis';
@@ -15,6 +16,7 @@ export const DailyUsageIndicator: React.FC<DailyUsageIndicatorProps> = ({
 }) => {
   const { colors } = useTheme();
   const { usage, isLoading } = useDailyUsage();
+  const { user } = useAuth();
   const { t } = useTranslation();
 
   if (isLoading || !usage) {
@@ -39,28 +41,39 @@ export const DailyUsageIndicator: React.FC<DailyUsageIndicatorProps> = ({
       break;
   }
 
-  const percentage = (usageData.used / usageData.limit) * 100;
-  const isNearLimit = percentage > 80;
-  const isAtLimit = usageData.remaining === 0;
+  const isAdmin = user?.role === 'admin';
+  const percentage = isAdmin ? 0 : (usageData.used / usageData.limit) * 100;
+  const isNearLimit = !isAdmin && percentage > 80;
+  const isAtLimit = !isAdmin && usageData.remaining === 0;
 
-  const styles = getStyles(colors, isNearLimit, isAtLimit);
+  const styles = getStyles(colors, isNearLimit, isAtLimit, isAdmin);
 
   return (
     <View style={styles.container}>
       {showText && (
         <Text style={styles.label}>
-          {label}: {usageData.used}/{usageData.limit}
+          {isAdmin 
+            ? `${label}: ${t('usage.unlimited', 'Unlimited')} (Admin)`
+            : `${label}: ${usageData.used}/${usageData.limit}`
+          }
         </Text>
       )}
-      <View style={styles.progressBar}>
-        <View 
-          style={[
-            styles.progressFill,
-            { width: `${Math.min(percentage, 100)}%` }
-          ]} 
-        />
-      </View>
-      {showText && usageData.remaining > 0 && (
+      {!isAdmin && (
+        <View style={styles.progressBar}>
+          <View 
+            style={[
+              styles.progressFill,
+              { width: `${Math.min(percentage, 100)}%` }
+            ]} 
+          />
+        </View>
+      )}
+      {isAdmin && (
+        <View style={styles.adminBadge}>
+          <Text style={styles.adminText}>∞</Text>
+        </View>
+      )}
+      {showText && !isAdmin && usageData.remaining > 0 && (
         <Text style={styles.remaining}>
           {usageData.remaining} {t('usage.remaining')}
         </Text>
@@ -74,14 +87,14 @@ export const DailyUsageIndicator: React.FC<DailyUsageIndicatorProps> = ({
   );
 };
 
-const getStyles = (colors: any, isNearLimit: boolean, isAtLimit: boolean) => StyleSheet.create({
+const getStyles = (colors: any, isNearLimit: boolean, isAtLimit: boolean, isAdmin?: boolean) => StyleSheet.create({
   container: {
     marginVertical: 8,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
+    color: isAdmin ? colors.primary : colors.text,
     marginBottom: 4,
   },
   progressBar: {
@@ -98,6 +111,21 @@ const getStyles = (colors: any, isNearLimit: boolean, isAtLimit: boolean) => Sty
         ? colors.warning || '#f59e0b'
         : colors.success || '#10b981',
     borderRadius: 3,
+  },
+  adminBadge: {
+    height: 6,
+    backgroundColor: colors.primary,
+    borderRadius: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  adminText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.buttonText || '#fff',
+    textAlign: 'center',
   },
   remaining: {
     fontSize: 12,

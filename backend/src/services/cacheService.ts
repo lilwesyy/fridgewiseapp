@@ -10,7 +10,7 @@ export class CacheService {
 
   static async setPublicRecipes(page: number, limit: number, data: any, search?: string, sortBy?: string): Promise<void> {
     const key = `${cacheKeys.publicRecipes(page, limit)}:${search || 'all'}:${sortBy || 'recent'}`;
-    await redisService.setJSON(key, data, 300); // 5 minutes TTL
+    await redisService.setJSON(key, data, 900); // 15 minutes TTL (optimized from 5 minutes)
   }
 
   static async getUserRecipes(userId: string): Promise<any | null> {
@@ -35,7 +35,7 @@ export class CacheService {
   }
 
   static async setNutritionAnalysis(ingredients: string, data: any): Promise<void> {
-    await redisService.setJSON(cacheKeys.nutritionAnalysis(ingredients), data, 3600); // 1 hour TTL
+    await redisService.setJSON(cacheKeys.nutritionAnalysis(ingredients), data, 7200); // 2 hours TTL (optimized from 1 hour - static data)
   }
 
   // Dish recognition caching
@@ -53,7 +53,7 @@ export class CacheService {
   }
 
   static async setUserIngredients(userId: string, data: any): Promise<void> {
-    await redisService.setJSON(cacheKeys.ingredients(userId), data, 900); // 15 minutes TTL
+    await redisService.setJSON(cacheKeys.ingredients(userId), data, 300); // 5 minutes TTL (optimized from 15 minutes - high update frequency)
   }
 
   // Cache invalidation methods
@@ -81,5 +81,144 @@ export class CacheService {
 
   static async invalidateRecognitionCache(): Promise<void> {
     await redisService.deletePattern(`recognition:*`);
+  }
+
+  // User statistics caching
+  static async getUserStatistics(userId: string): Promise<any> {
+    const key = `user:${userId}:statistics`;
+    return await redisService.getJSON(key);
+  }
+
+  static async setUserStatistics(userId: string, data: any): Promise<void> {
+    const key = `user:${userId}:statistics`;
+    await redisService.setJSON(key, data, 3600); // 1 hour TTL
+  }
+
+  // Cache stampede protected method for public recipes
+  static async getPublicRecipesProtected(
+    page: number,
+    limit: number,
+    search: string = '',
+    sortBy: string = 'recent',
+    fetcher: () => Promise<any>
+  ): Promise<any> {
+    const key = `${cacheKeys.publicRecipes(page, limit)}:${search || 'all'}:${sortBy || 'recent'}`;
+    return await redisService.getOrSet(key, fetcher, 900); // 15 minutes TTL
+  }
+
+  // Selective cache invalidation
+  static async invalidateUserCacheSelective(userId: string, changedData: string[]): Promise<void> {
+    const invalidationPromises = [];
+    
+    if (changedData.includes('recipes')) {
+      invalidationPromises.push(redisService.del(cacheKeys.userRecipes(userId)));
+    }
+    
+    if (changedData.includes('ingredients')) {
+      invalidationPromises.push(redisService.del(cacheKeys.ingredients(userId)));
+    }
+
+    if (changedData.includes('statistics')) {
+      invalidationPromises.push(redisService.del(`user:${userId}:statistics`));
+    }
+    
+    // Only invalidate public recipes if user made a public recipe change
+    if (changedData.includes('publicRecipe')) {
+      invalidationPromises.push(redisService.deletePattern('public:recipes:*'));
+    }
+    
+    await Promise.all(invalidationPromises);
+  }
+
+  // Cache warming methods
+  static async warmCache(): Promise<void> {
+    console.log('🔥 Starting cache warming...');
+    
+    try {
+      const warmingPromises = [];
+
+      // Pre-load popular public recipes (first page)
+      warmingPromises.push(
+        CacheService.getPublicRecipesProtected(1, 20, '', 'popular', async () => {
+          // This will only execute if cache is empty
+          const { Recipe } = await import('../models/Recipe');
+          const recipes = await Recipe
+            .find({ 
+              isDeleted: false,
+              $or: [
+                { dishPhotos: { $exists: true, $ne: [] } },
+                { cookedAt: { $exists: true, $ne: null } }
+              ]
+            })
+            .populate('userId', 'name email avatar')
+            .sort({ averageRating: -1, totalRatings: -1, 'dishPhotos.length': -1, createdAt: -1 })
+            .limit(20)
+            .lean();
+
+          const total = await Recipe.countDocuments({
+            isDeleted: false,
+            $or: [
+              { dishPhotos: { $exists: true, $ne: [] } },
+              { cookedAt: { $exists: true, $ne: null } }
+            ]
+          });
+
+          return {
+            recipes,
+            pagination: {
+              page: 1,
+              limit: 20,
+              total,
+              pages: Math.ceil(total / 20)
+            }
+          };
+        })
+      );
+
+      // Pre-load recent recipes
+      warmingPromises.push(
+        CacheService.getPublicRecipesProtected(1, 20, '', 'recent', async () => {
+          const { Recipe } = await import('../models/Recipe');
+          const recipes = await Recipe
+            .find({ 
+              isDeleted: false,
+              $or: [
+                { dishPhotos: { $exists: true, $ne: [] } },
+                { cookedAt: { $exists: true, $ne: null } }
+              ]
+            })
+            .populate('userId', 'name email avatar')
+            .sort({ cookedAt: -1, createdAt: -1 })
+            .limit(20)
+            .lean();
+
+          const total = await Recipe.countDocuments({
+            isDeleted: false,
+            $or: [
+              { dishPhotos: { $exists: true, $ne: [] } },
+              { cookedAt: { $exists: true, $ne: null } }
+            ]
+          });
+
+          return {
+            recipes,
+            pagination: {
+              page: 1,
+              limit: 20,
+              total,
+              pages: Math.ceil(total / 20)
+            }
+          };
+        })
+      );
+
+      // Wait for all warming operations to complete
+      await Promise.all(warmingPromises);
+      
+      console.log('✅ Cache warming completed successfully');
+    } catch (error) {
+      console.error('❌ Cache warming failed:', error);
+      // Don't throw error - warming is optional
+    }
   }
 }

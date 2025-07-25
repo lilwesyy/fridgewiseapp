@@ -96,6 +96,13 @@ async function startServer() {
     try {
       await redisService.connect();
       console.log('✅ Redis connected successfully');
+      
+      // Start cache warming in background (don't wait for it)
+      setTimeout(async () => {
+        const { CacheService } = await import('./services/cacheService');
+        await CacheService.warmCache();
+      }, 5000); // Wait 5 seconds after server start
+      
     } catch (error) {
       console.warn('⚠️  Redis connection failed, caching will be disabled:', error);
     }
