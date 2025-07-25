@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { ensureIndexes } from './indexes';
+import { queryMonitor } from '../middleware/queryMonitoring';
 
 export const connectDB = async (): Promise<void> => {
   try {
@@ -17,6 +18,11 @@ export const connectDB = async (): Promise<void> => {
     });
 
     console.log('✅ MongoDB connected successfully');
+    
+    // Initialize query monitoring
+    if (queryMonitor.isMonitoringEnabled()) {
+      console.log('📊 Database query monitoring enabled');
+    }
     
     // Ensure all required indexes exist
     await ensureIndexes();

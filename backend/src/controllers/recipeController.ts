@@ -1117,7 +1117,7 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
       }
     );
 
-    console.log('Public recipes with ratings:', responseData.recipes.map(r => ({ 
+    console.log('Public recipes with ratings:', responseData.recipes.map((r: any) => ({ 
       title: r.title, 
       averageRating: r.averageRating, 
       totalRatings: r.totalRatings 

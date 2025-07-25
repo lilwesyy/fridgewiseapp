@@ -122,7 +122,7 @@ class RedisService {
     if (!this.isConnected) return 0;
     
     try {
-      let cursor = 0;
+      let cursor = '0';
       let deletedCount = 0;
       
       do {
@@ -136,7 +136,7 @@ class RedisService {
           await this.client.del(reply.keys);
           deletedCount += reply.keys.length;
         }
-      } while (cursor !== 0);
+      } while (cursor !== '0');
       
       return deletedCount;
     } catch (error) {
@@ -208,7 +208,7 @@ class RedisService {
         return acc;
       }, {} as Record<string, string>);
 
-      const keyCount = await this.client.dbsize();
+      const keyCount = await this.client.dbSize();
       
       return {
         used_memory: parseInt(memoryInfo.used_memory || '0'),

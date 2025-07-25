@@ -15,13 +15,11 @@
   1. Sicurezza (Priorità ALTA)
 
   - Password reset insicura: Codice 6 cifre → token crittografici
-  - Credenziali esposte: File .env.example contiene credenziali reali
   - Policy password debole: Minimo 6 caratteri → 8+ con complessità
   - JWT secret: Manca validazione startup variabili ambiente
 
   2. Performance & Scalabilità
 
-  - Manca caching: Implementare Redis per dati frequenti
   - Componenti troppo grandi: RecipeScreen (1600+ righe) va scomposto
   - Bundle optimization: Manca code splitting e lazy loading
   - Database: Aggiungere monitoring query performance
@@ -45,14 +43,12 @@
   Fase 1 - Sicurezza Critica (1-2 settimane)
 
   1. Rimuovere credenziali reali da .env.example
-  2. Implementare password reset sicuro con token crittografici
   3. Aumentare requisiti password (8+ caratteri, complessità)
   4. Aggiungere validazione JWT_SECRET all'avvio
   5. Aggiornare dipendenze vulnerabili (npm audit fix)
 
   Fase 2 - Performance & UX (2-3 settimane)
 
-  1. Implementare Redis caching per API frequenti
   2. Scomporre componenti grandi (RecipeScreen, HomeScreen)
   3. Aggiungere error boundaries React
   4. Implementare Content Security Policy

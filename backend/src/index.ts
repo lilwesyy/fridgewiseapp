@@ -22,6 +22,7 @@ import { usageRoutes } from './routes/usage';
 import recipeCollectionRoutes from './routes/recipeCollection';
 import { ratingRoutes } from './routes/rating';
 import { cacheRoutes } from './routes/cache';
+import databaseMonitoringRoutes from './routes/databaseMonitoring';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,6 +63,7 @@ app.use('/api/usage', usageRoutes);
 app.use('/api/collections', recipeCollectionRoutes);
 app.use('/api/recipe', ratingRoutes);
 app.use('/api/cache', cacheRoutes);
+app.use('/api/database-monitoring', databaseMonitoringRoutes);
 
 // Health check endpoint
 app.get('/health', (req: express.Request, res: express.Response) => {

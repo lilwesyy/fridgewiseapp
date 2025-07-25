@@ -19,7 +19,7 @@ router.get('/:id', cache({ ttl: 1800, keyGenerator: (req) => `collection:${req.p
 // Protected routes (authentication required)
 router.post('/:id/follow', protect, toggleFollowCollection);
 router.post('/', protect, createCollection);
-router.get('/user/my-collections', protect, cache({ ttl: 600, keyGenerator: (req) => `user:${req.user?._id}:collections` }), getUserCollections);
+router.get('/user/my-collections', protect, cache({ ttl: 600, keyGenerator: (req: any) => `user:${req.user?._id}:collections` }), getUserCollections);
 router.post('/:collectionId/recipes/:recipeId', protect, addRecipeToCollection);
 
 export default router;
