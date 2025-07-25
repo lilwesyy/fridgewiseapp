@@ -4,6 +4,19 @@ import { protect } from '../middleware/auth';
 const router = Router();
 
 /**
+ * CSP Report endpoint info (GET for testing)
+ */
+router.get('/csp-report', (req: Request, res: Response): void => {
+  res.json({
+    success: true,
+    message: 'CSP Report endpoint is active',
+    method: 'POST',
+    usage: 'This endpoint receives CSP violation reports via POST requests',
+    timestamp: new Date().toISOString()
+  });
+});
+
+/**
  * CSP Violation Report endpoint
  * Receives and logs Content Security Policy violations
  */
