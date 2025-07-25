@@ -21,8 +21,6 @@
     "startOver": "Ricomincia",
     "remove": "Rimuovi",
     "skip": "Salta",
-    "back": "Indietro",
-    "next": "Avanti", 
     "start": "Inizia",
     "allTags": "Tutti i tag",
     "all": "Tutti",
@@ -389,7 +387,6 @@
     "youHaveCompleted": "Hai completato",
     "theRecipe": "la ricetta",
     "recipeCompleted": "Hai completato con successo {{title}}!",
-    "recipeSaved": "Ricetta Completata!",
     "recipeAddedToCollection": "Ricetta aggiunta alla tua collezione",
     "recipeCompletedSuccess": "Hai completato con successo la ricetta!",
     "dishSavedToCollection": "Piatto salvato nella tua collezione con successo!",
@@ -412,7 +409,7 @@
     "noTips": "Nessun consiglio disponibile per questo passaggio.",
     "tipTypes": {
       "technique": "Tecnica",
-      "timing": "Tempistiche", 
+      "timing": "Tempistiche",
       "ingredient": "Ingredienti",
       "temperature": "Temperatura",
       "safety": "Sicurezza"
@@ -453,9 +450,7 @@
     "cookingMasterpiece": "Capolavoro culinario completato!",
     "dishReadyToEnjoy": "Il tuo piatto è pronto da gustare!",
     "successfulCooking": "Cottura riuscita alla perfezione!",
-    "recipeAddedToCollection": "Ricetta aggiunta alla tua collezione",
     "publicRecipeSaved": "Ricetta pubblica aggiunta ai tuoi piatti",
-    "photoUploaded": "Foto caricata con successo",
     "photoLimit": {
       "title": "Limite foto raggiunto",
       "message": "Questa ricetta ha già il massimo di 3 foto. Completamento ricetta senza aggiungere nuove foto."
@@ -544,7 +539,7 @@
     "preferences": "Preferenze App",
     "dietaryPreferences": "Preferenze Alimentari",
     "supportLegal": "Supporto e Legale",
-    "admin": "Amministrazione",
+    "adminSection": "Amministrazione",
     "name": "Nome",
     "email": "Email",
     "enterName": "Inserisci il tuo nome",
@@ -954,7 +949,13 @@
     "promote": "Promuovi ad Admin",
     "justNow": "Proprio ora",
     "minutesAgo": "min fa",
-    "hoursAgo": "ore fa"
+    "hoursAgo": "ore fa",
+    "systemInformation": "Informazioni Sistema",
+    "nodeVersion": "Versione Node.js",
+    "platform": "Piattaforma",
+    "uptime": "Tempo di Attività",
+    "memoryUsage": "Utilizzo Memoria",
+    "serverTime": "Ora Server"
   },
   "maintenance": {
     "serverStatus": "Stato Server",
@@ -991,7 +992,7 @@
     "getStarted": "Inizia",
     "ingredients": {
       "tomato": "Pomodoro",
-      "garlic": "Aglio", 
+      "garlic": "Aglio",
       "basil": "Basilico"
     },
     "demoRecipes": {
@@ -1015,7 +1016,7 @@
     },
     "usage": {
       "recipeGenerations": "Generazioni Ricette",
-      "aiChatMessages": "Messaggi IA", 
+      "aiChatMessages": "Messaggi IA",
       "imageAnalyses": "Analisi Immagini",
       "remaining": "rimanenti oggi",
       "limitReached": "Limite giornaliero raggiunto"
@@ -1023,7 +1024,7 @@
   },
   "usage": {
     "recipeGenerations": "Generazioni Ricette",
-    "aiChatMessages": "Messaggi IA", 
+    "aiChatMessages": "Messaggi IA",
     "imageAnalyses": "Analisi Immagini",
     "remaining": "rimanenti oggi",
     "limitReached": "Limite giornaliero raggiunto"

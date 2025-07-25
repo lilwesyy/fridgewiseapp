@@ -27,8 +27,6 @@
     "pullToRefresh": "Pull to refresh",
     "refreshError": "Failed to refresh data",
     "skip": "Skip",
-    "back": "Back",
-    "next": "Next", 
     "start": "Start"
   },
   "auth": {
@@ -142,7 +140,7 @@
     "welcome": "Welcome to FridgeWise",
     "subtitle": "Analyze your fridge contents and get recipe suggestions",
     "goodMorning": "Good morning",
-    "goodAfternoon": "Good afternoon", 
+    "goodAfternoon": "Good afternoon",
     "goodEvening": "Good evening",
     "user": "User",
     "bannerSubtitle": "What's cooking today? Let's discover delicious recipes with your ingredients!",
@@ -170,7 +168,7 @@
       "recipes": "Get personalized recipes"
     },
     "recipesCreated": "Recipes\nCreated",
-    "ingredientsScanned": "Ingredients\nScanned", 
+    "ingredientsScanned": "Ingredients\nScanned",
     "favoriteRecipes": "Favorite\nRecipes",
     "recentRecipes": "Recent Cooked Recipes",
     "quote1": "Cooking is love made visible",
@@ -393,7 +391,6 @@
     "dishReadyToEnjoy": "Your dish is ready to enjoy!",
     "successfulCooking": "Cooking completed successfully!",
     "recipeAddedToCollection": "Recipe added to your collection",
-    "photoUploaded": "Photo uploaded successfully",
     "wellDone": "Well done!",
     "perfectlyCooked": "Perfectly cooked!",
     "enjoyMeal": "Enjoy your meal and bon appétit!",
@@ -409,7 +406,7 @@
       "technique": "Technique",
       "timing": "Timing",
       "ingredient": "Ingredient",
-      "temperature": "Temperature", 
+      "temperature": "Temperature",
       "safety": "Safety"
     },
     "exitTitle": "Exit cooking?",
@@ -519,7 +516,7 @@
     "preferences": "App Preferences",
     "dietaryPreferences": "Dietary Preferences",
     "supportLegal": "Support & Legal",
-    "admin": "Administration",
+    "adminSection": "Administration",
     "name": "Name",
     "email": "Email",
     "enterName": "Enter your name",
@@ -929,7 +926,13 @@
     "promote": "Promote to Admin",
     "justNow": "Just now",
     "minutesAgo": "m ago",
-    "hoursAgo": "h ago"
+    "hoursAgo": "h ago",
+    "systemInformation": "System Information",
+    "nodeVersion": "Node.js Version",
+    "platform": "Platform",
+    "uptime": "Uptime",
+    "memoryUsage": "Memory Usage",
+    "serverTime": "Server Time"
   },
   "maintenance": {
     "serverStatus": "Server Status",
@@ -966,7 +969,7 @@
     "getStarted": "Get Started",
     "ingredients": {
       "tomato": "Tomato",
-      "garlic": "Garlic", 
+      "garlic": "Garlic",
       "basil": "Basil"
     },
     "demoRecipes": {
@@ -990,18 +993,11 @@
     },
     "usage": {
       "recipeGenerations": "Recipe Generations",
-      "aiChatMessages": "AI Messages", 
+      "aiChatMessages": "AI Messages",
       "imageAnalyses": "Image Analyses",
       "remaining": "remaining today",
       "limitReached": "Daily limit reached"
     }
-  },
-  "usage": {
-    "recipeGenerations": "Recipe Generations",
-    "aiChatMessages": "AI Messages", 
-    "imageAnalyses": "Image Analyses",
-    "remaining": "remaining today",
-    "limitReached": "Daily limit reached"
   },
   "nutrition": {
     "calories": "Calories",

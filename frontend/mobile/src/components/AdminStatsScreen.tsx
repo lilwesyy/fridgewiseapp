@@ -25,9 +25,9 @@ import { ANIMATION_DURATIONS, EASING_CURVES, ANIMATION_DELAYS } from '../constan
 import Svg, { Path, Circle } from 'react-native-svg';
 
 // Stats Icons
-const UsersIcon: React.FC<{ size?: number; color?: string }> = ({ 
-  size = 24, 
-  color 
+const UsersIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 24,
+  color
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -41,22 +41,22 @@ const UsersIcon: React.FC<{ size?: number; color?: string }> = ({
   </Svg>
 );
 
-const RecipeIcon: React.FC<{ size?: number; color?: string }> = ({ 
-  size = 24, 
-  color 
+const RecipeIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 24,
+  color
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M8.1 13.34L10.83 10.61C11.22 10.22 11.22 9.59 10.83 9.2C10.44 8.81 9.81 8.81 9.42 9.2L6.69 11.93C6.31 12.31 6.31 12.92 6.69 13.31L9.42 16.04C9.61 16.23 9.86 16.32 10.11 16.32C10.36 16.32 10.61 16.23 10.8 16.04C11.19 15.65 11.19 15.02 10.8 14.63L8.1 13.34Z"
       fill={color}
     />
-    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none" />
   </Svg>
 );
 
-const AnalysisIcon: React.FC<{ size?: number; color?: string }> = ({ 
-  size = 24, 
-  color 
+const AnalysisIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 24,
+  color
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -76,22 +76,22 @@ const AnalysisIcon: React.FC<{ size?: number; color?: string }> = ({
   </Svg>
 );
 
-const CameraIcon: React.FC<{ size?: number; color?: string }> = ({ 
-  size = 24, 
-  color 
+const CameraIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 24,
+  color
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M9 2L7.17 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4H16.83L15 2H9Z"
       fill={color}
     />
-    <Circle cx="12" cy="12" r="4" fill="white"/>
+    <Circle cx="12" cy="12" r="4" fill="white" />
   </Svg>
 );
 
-const SecurityIcon: React.FC<{ size?: number; color?: string }> = ({ 
-  size = 24, 
-  color 
+const SecurityIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 24,
+  color
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -249,7 +249,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
     headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing });
     contentOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
     sectionsOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_2, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
-    
+
     fetchStats();
     fetchUsers();
     fetchSecurityStats();
@@ -327,11 +327,18 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
         totalRecipes: 2340,
         totalAnalyses: 1890,
         totalIngredients: 567,
+        adminUsers: 2,
         todayUsers: 12,
         todayRecipes: 45,
         todayAnalyses: 38,
+        yesterdayUsers: 8,
+        weekUsers: 43,
+        monthUsers: 147,
         averageRecipesPerUser: 15.9,
         averageAnalysesPerUser: 12.9,
+        averageIngredientsPerAnalysis: 4.2,
+        averageProcessingTime: 1250,
+        userGrowthRate: 50.0,
         topIngredients: [
           { name: 'Tomatoes', count: 245 },
           { name: 'Onions', count: 198 },
@@ -343,7 +350,14 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
           { type: 'recipe_generated', timestamp: new Date().toISOString(), details: 'Pasta Carbonara generated' },
           { type: 'analysis_performed', timestamp: new Date(Date.now() - 300000).toISOString(), details: 'Fridge analysis completed' },
           { type: 'user_registered', timestamp: new Date(Date.now() - 600000).toISOString(), details: 'New user registration' }
-        ]
+        ],
+        systemInfo: {
+          nodeVersion: 'v18.17.0',
+          platform: 'linux',
+          uptime: 3600,
+          memoryUsage: { used: 45, total: 128 },
+          serverTime: new Date().toISOString()
+        }
       });
     } finally {
       setIsLoading(false);
@@ -364,7 +378,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return t('admin.justNow');
     if (diffMins < 60) return `${diffMins}${t('admin.minutesAgo')}`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}${t('admin.hoursAgo')}`;
@@ -592,7 +606,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
       title: t('admin.deleteUser'),
       message: t('admin.confirmDeleteUser'),
       buttons: [
-        { text: t('common.cancel'), onPress: () => {}, style: 'cancel' },
+        { text: t('common.cancel'), onPress: () => { }, style: 'cancel' },
         { text: t('common.delete'), onPress: handleDelete, style: 'destructive' }
       ]
     });
@@ -652,7 +666,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                 <Text style={styles.statLabel}>{t('admin.totalUsers')}</Text>
                 <Text style={styles.statSubtext}>+{stats?.todayUsers || 0} {t('admin.today')}</Text>
               </View>
-              
+
               <View style={styles.statCard}>
                 <RecipeIcon size={32} color={colors.success} />
                 <Text style={styles.statNumber}>{formatNumber(stats?.totalRecipes || 0)}</Text>
@@ -668,7 +682,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
               </View>
 
               <View style={styles.statCard}>
-                <CameraIcon size={32} color={colors.info} />
+                <CameraIcon size={32} color={colors.warning} />
                 <Text style={styles.statNumber}>{formatNumber(stats?.totalIngredients || 0)}</Text>
                 <Text style={styles.statLabel}>{t('admin.totalIngredients')}</Text>
                 <Text style={styles.statSubtext}>{t('admin.detected')}</Text>
@@ -712,8 +726,8 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                 <Text style={styles.statLabel}>{t('admin.thisMonth')}</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={[styles.statNumber, { color: stats?.userGrowthRate >= 0 ? colors.success : colors.error }]}>
-                  {stats?.userGrowthRate >= 0 ? '+' : ''}{stats?.userGrowthRate?.toFixed(1) || '0.0'}%
+                <Text style={[styles.statNumber, { color: (stats?.userGrowthRate ?? 0) >= 0 ? colors.success : colors.error }]}>
+                  {(stats?.userGrowthRate ?? 0) >= 0 ? '+' : ''}{stats?.userGrowthRate?.toFixed(1) || '0.0'}%
                 </Text>
                 <Text style={styles.statLabel}>{t('admin.growthRate')}</Text>
               </View>
@@ -728,8 +742,8 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
           <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{t('admin.recentUsers')}</Text>
-              <TouchableOpacity 
-                style={styles.viewAllButton} 
+              <TouchableOpacity
+                style={styles.viewAllButton}
                 onPress={() => setShowUsersModal(true)}
               >
                 <Text style={styles.viewAllText}>{t('admin.viewAll')}</Text>
@@ -764,8 +778,8 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
           <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{t('admin.securityOverview')}</Text>
-              <TouchableOpacity 
-                style={styles.viewAllButton} 
+              <TouchableOpacity
+                style={styles.viewAllButton}
                 onPress={() => {
                   setShowSecurityModal(true);
                   fetchCSPDetails();
@@ -774,7 +788,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                 <Text style={styles.viewAllText}>{t('admin.viewDetails')}</Text>
               </TouchableOpacity>
             </View>
-            
+
             {securityStats ? (
               <View style={styles.securityOverview}>
                 {/* CSP Status Card */}
@@ -787,19 +801,19 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                         {securityStats.csp.reportOnly ? t('admin.reportOnlyMode') : t('admin.enforcementMode')}
                       </Text>
                     </View>
-                    <View style={[styles.statusBadge, { 
-                      backgroundColor: securityStats.csp.enabled ? '#10B981' : '#EF4444' 
+                    <View style={[styles.statusBadge, {
+                      backgroundColor: securityStats.csp.enabled ? '#10B981' : '#EF4444'
                     }]}>
                       <Text style={styles.statusText}>
-                        {securityStats.csp.enabled ? 'ACTIVE' : 'DISABLED'}
+                        {securityStats.csp.enabled ? t('admin.active') : t('admin.disabled')}
                       </Text>
                     </View>
                   </View>
-                  
+
                   <View style={styles.cspMetrics}>
                     <View style={styles.cspMetric}>
                       <Text style={styles.cspMetricValue}>{securityStats.csp.violationsToday}</Text>
-                      <Text style={styles.cspMetricLabel}>Today</Text>
+                      <Text style={styles.cspMetricLabel}>{t('admin.today')}</Text>
                     </View>
                     <View style={styles.cspMetric}>
                       <Text style={styles.cspMetricValue}>{securityStats.csp.violationsWeek}</Text>
@@ -810,8 +824,8 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                       <Text style={styles.cspMetricLabel}>{t('admin.directives')}</Text>
                     </View>
                     <View style={styles.cspMetric}>
-                      <Text style={[styles.cspMetricValue, { 
-                        color: securityStats.csp.violationsToday === 0 ? colors.success : colors.warning 
+                      <Text style={[styles.cspMetricValue, {
+                        color: securityStats.csp.violationsToday === 0 ? colors.success : colors.warning
                       }]}>
                         {securityStats.csp.violationsToday === 0 ? '✓' : '⚠'}
                       </Text>
@@ -829,11 +843,11 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                       {securityStats.rateLimit.blockedToday}
                     </Text>
                     <Text style={styles.securityCardLabel}>{t('admin.blockedToday')}</Text>
-                    <View style={[styles.statusBadge, { 
-                      backgroundColor: securityStats.rateLimit.enabled ? '#10B981' : '#EF4444' 
+                    <View style={[styles.statusBadge, {
+                      backgroundColor: securityStats.rateLimit.enabled ? '#10B981' : '#EF4444'
                     }]}>
                       <Text style={styles.statusText}>
-                        {securityStats.rateLimit.enabled ? 'ACTIVE' : 'DISABLED'}
+                        {securityStats.rateLimit.enabled ? t('admin.active') : t('admin.disabled')}
                       </Text>
                     </View>
                   </View>
@@ -845,11 +859,11 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                       {securityStats.inputValidation.rejectedToday}
                     </Text>
                     <Text style={styles.securityCardLabel}>{t('admin.threatsBlocked')}</Text>
-                    <View style={[styles.statusBadge, { 
-                      backgroundColor: securityStats.inputValidation.enabled ? '#10B981' : '#EF4444' 
+                    <View style={[styles.statusBadge, {
+                      backgroundColor: securityStats.inputValidation.enabled ? '#10B981' : '#EF4444'
                     }]}>
                       <Text style={styles.statusText}>
-                        {securityStats.inputValidation.enabled ? 'ACTIVE' : 'DISABLED'}
+                        {securityStats.inputValidation.enabled ? t('admin.active') : t('admin.disabled')}
                       </Text>
                     </View>
                   </View>
@@ -896,30 +910,30 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
 
           {/* System Information */}
           <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
-            <Text style={styles.sectionTitle}>System Information</Text>
+            <Text style={styles.sectionTitle}>{t('admin.systemInformation')}</Text>
             <View style={styles.systemInfo}>
               <View style={styles.systemItem}>
-                <Text style={styles.systemLabel}>Node.js Version</Text>
+                <Text style={styles.systemLabel}>{t('admin.nodeVersion')}</Text>
                 <Text style={styles.systemValue}>{stats?.systemInfo?.nodeVersion || 'N/A'}</Text>
               </View>
               <View style={styles.systemItem}>
-                <Text style={styles.systemLabel}>Platform</Text>
+                <Text style={styles.systemLabel}>{t('admin.platform')}</Text>
                 <Text style={styles.systemValue}>{stats?.systemInfo?.platform || 'N/A'}</Text>
               </View>
               <View style={styles.systemItem}>
-                <Text style={styles.systemLabel}>Uptime</Text>
+                <Text style={styles.systemLabel}>{t('admin.uptime')}</Text>
                 <Text style={styles.systemValue}>
                   {stats?.systemInfo?.uptime ? `${Math.floor(stats.systemInfo.uptime / 3600)}h ${Math.floor((stats.systemInfo.uptime % 3600) / 60)}m` : 'N/A'}
                 </Text>
               </View>
               <View style={styles.systemItem}>
-                <Text style={styles.systemLabel}>Memory Usage</Text>
+                <Text style={styles.systemLabel}>{t('admin.memoryUsage')}</Text>
                 <Text style={styles.systemValue}>
                   {stats?.systemInfo?.memoryUsage ? `${stats.systemInfo.memoryUsage.used}MB / ${stats.systemInfo.memoryUsage.total}MB` : 'N/A'}
                 </Text>
               </View>
               <View style={styles.systemItem}>
-                <Text style={styles.systemLabel}>Server Time</Text>
+                <Text style={styles.systemLabel}>{t('admin.serverTime')}</Text>
                 <Text style={styles.systemValue}>
                   {stats?.systemInfo?.serverTime ? new Date(stats.systemInfo.serverTime).toLocaleString() : 'N/A'}
                 </Text>
@@ -941,8 +955,8 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity 
-              style={styles.modalCloseButton} 
+            <TouchableOpacity
+              style={styles.modalCloseButton}
               onPress={() => setShowUsersModal(false)}
             >
               <Text style={styles.modalCloseText}>×</Text>
@@ -950,7 +964,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
             <Text style={styles.modalTitle}>{t('admin.allUsers')}</Text>
             <View style={styles.placeholder} />
           </View>
-          
+
           <ScrollView style={styles.modalContent}>
             {users.map((user, index) => (
               <View key={user._id} style={styles.modalUserItem}>
@@ -999,14 +1013,14 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
           <View style={styles.modalHeader}>
             <View style={styles.placeholder} />
             <Text style={styles.modalTitle}>{t('admin.securityDetails')}</Text>
-            <TouchableOpacity 
-              style={styles.modalCloseButton} 
+            <TouchableOpacity
+              style={styles.modalCloseButton}
               onPress={() => setShowSecurityModal(false)}
             >
               <Text style={styles.modalCloseText}>×</Text>
             </TouchableOpacity>
           </View>
-          
+
           <ScrollView style={styles.modalContent}>
 
             {/* Top Violations */}
