@@ -174,6 +174,19 @@ class ApiService {
       };
     }
   }
+
+  // Security-related methods
+  async getSecurityPolicyInfo(): Promise<ApiResponse<any>> {
+    return this.get('/api/security/policy-info');
+  }
+
+  async getCSPStats(): Promise<ApiResponse<any>> {
+    return this.get('/api/security/csp-stats');
+  }
+
+  async getSecurityHeaders(): Promise<ApiResponse<any>> {
+    return this.get('/api/security/headers-test');
+  }
 }
 
 // Export singleton instance

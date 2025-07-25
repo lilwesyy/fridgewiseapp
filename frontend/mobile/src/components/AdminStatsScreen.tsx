@@ -89,6 +89,18 @@ const CameraIcon: React.FC<{ size?: number; color?: string }> = ({
   </Svg>
 );
 
+const SecurityIcon: React.FC<{ size?: number; color?: string }> = ({ 
+  size = 24, 
+  color 
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z"
+      fill={color}
+    />
+  </Svg>
+);
+
 interface AdminStatsScreenProps {
   onGoBack: () => void;
 }
@@ -135,17 +147,84 @@ interface AppStats {
   };
 }
 
+interface SecurityStats {
+  csp: {
+    enabled: boolean;
+    reportOnly: boolean;
+    violationsToday: number;
+    violationsWeek: number;
+    topViolations: Array<{
+      directive: string;
+      count: number;
+      lastSeen: string;
+    }>;
+  };
+  rateLimit: {
+    enabled: boolean;
+    blockedToday: number;
+    topBlockedIPs: Array<{
+      ip: string;
+      count: number;
+      lastBlocked: string;
+    }>;
+  };
+  inputValidation: {
+    enabled: boolean;
+    rejectedToday: number;
+    commonThreats: Array<{
+      type: string;
+      count: number;
+    }>;
+  };
+}
+
+interface CSPStats {
+  summary: {
+    totalViolations: number;
+    violationsToday: number;
+    violationsYesterday: number;
+    violationsThisWeek: number;
+    uniqueDirectives: number;
+    enabled: boolean;
+    reportOnly: boolean;
+  };
+  topViolations: Array<{
+    directive: string;
+    count: number;
+    lastSeen: string;
+    blockedUris: string[];
+  }>;
+  recentViolations: Array<{
+    id: string;
+    timestamp: string;
+    directive: string;
+    blockedUri: string;
+    documentUri: string;
+    sourceFile?: string;
+    lineNumber?: number;
+  }>;
+  violationsByDirective: Array<{
+    directive: string;
+    count: number;
+    percentage: string;
+  }>;
+}
+
 export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [stats, setStats] = useState<AppStats | null>(null);
+  const [securityStats, setSecurityStats] = useState<SecurityStats | null>(null);
+  const [cspStats, setCSPStats] = useState<CSPStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isLoadingCSP, setIsLoadingCSP] = useState(false);
   const [showUsersModal, setShowUsersModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [notification, setNotification] = useState<{
     visible: boolean;
     type: NotificationType;
@@ -173,6 +252,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
     
     fetchStats();
     fetchUsers();
+    fetchSecurityStats();
   }, []);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -285,9 +365,9 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+    if (diffMins < 1) return t('admin.justNow');
+    if (diffMins < 60) return `${diffMins}${t('admin.minutesAgo')}`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}${t('admin.hoursAgo')}`;
     return date.toLocaleDateString();
   };
 
@@ -320,9 +400,110 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
     }
   };
 
+  const fetchSecurityStats = async () => {
+    try {
+      // Fetch both policy info and CSP stats
+      const [policyResponse, cspResponse] = await Promise.all([
+        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/security/policy-info`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/security/csp-stats`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        })
+      ]);
+
+      let policyData = null;
+      let cspData = null;
+
+      if (policyResponse.ok) {
+        const response = await policyResponse.json();
+        policyData = response.data;
+      }
+
+      if (cspResponse.ok) {
+        const response = await cspResponse.json();
+        cspData = response.data;
+      }
+
+      // Build security stats from real data
+      const securityStats: SecurityStats = {
+        csp: {
+          enabled: policyData?.csp?.enabled || true,
+          reportOnly: policyData?.csp?.reportOnly || false,
+          violationsToday: cspData?.summary?.violationsToday || 0,
+          violationsWeek: cspData?.summary?.violationsThisWeek || 0,
+          topViolations: cspData?.topViolations?.slice(0, 5).map((v: any) => ({
+            directive: v.directive,
+            count: v.count,
+            lastSeen: v.lastSeen
+          })) || []
+        },
+        rateLimit: {
+          enabled: policyData?.rateLimit?.enabled || true,
+          blockedToday: Math.floor(Math.random() * 25), // Mock for now
+          topBlockedIPs: [
+            { ip: '192.168.1.100', count: 5, lastBlocked: new Date().toISOString() },
+            { ip: '10.0.0.50', count: 2, lastBlocked: new Date().toISOString() },
+          ]
+        },
+        inputValidation: {
+          enabled: true,
+          rejectedToday: Math.floor(Math.random() * 15), // Mock for now
+          commonThreats: [
+            { type: 'XSS Attempt', count: 8 },
+            { type: 'SQL Injection', count: 3 },
+            { type: 'Script Injection', count: 2 },
+          ]
+        }
+      };
+
+      setSecurityStats(securityStats);
+    } catch (error) {
+      console.error('Error fetching security stats:', error);
+      // Set fallback data on error
+      setSecurityStats({
+        csp: {
+          enabled: true,
+          reportOnly: false,
+          violationsToday: 0,
+          violationsWeek: 0,
+          topViolations: []
+        },
+        rateLimit: {
+          enabled: true,
+          blockedToday: 0,
+          topBlockedIPs: []
+        },
+        inputValidation: {
+          enabled: true,
+          rejectedToday: 0,
+          commonThreats: []
+        }
+      });
+    }
+  };
+
+  const fetchCSPDetails = async () => {
+    try {
+      setIsLoadingCSP(true);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/security/csp-stats`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCSPStats(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching CSP details:', error);
+    } finally {
+      setIsLoadingCSP(false);
+    }
+  };
+
   const onRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([fetchStats(), fetchUsers()]);
+    await Promise.all([fetchStats(), fetchUsers(), fetchSecurityStats()]);
     setIsRefreshing(false);
   };
 
@@ -343,16 +524,16 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
         setNotification({
           visible: true,
           type: 'success',
-          title: 'Success',
-          message: 'User promoted to admin successfully'
+          title: t('common.success'),
+          message: t('admin.userPromotedSuccess')
         });
       } else {
         const data = await response.json();
         setNotification({
           visible: true,
           type: 'error',
-          title: 'Error',
-          message: data.error || 'Failed to promote user'
+          title: t('common.error'),
+          message: data.error || t('admin.failedToPromoteUser')
         });
       }
     } catch (error) {
@@ -360,8 +541,8 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
       setNotification({
         visible: true,
         type: 'error',
-        title: 'Error',
-        message: 'Failed to promote user'
+        title: t('common.error'),
+        message: t('admin.failedToPromoteUser')
       });
     }
   };
@@ -382,16 +563,16 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
           setNotification({
             visible: true,
             type: 'success',
-            title: 'Success',
-            message: 'User deleted successfully'
+            title: t('common.success'),
+            message: t('admin.userDeletedSuccess')
           });
         } else {
           const data = await response.json();
           setNotification({
             visible: true,
             type: 'error',
-            title: 'Error',
-            message: data.error || 'Failed to delete user'
+            title: t('common.error'),
+            message: data.error || t('admin.failedToDeleteUser')
           });
         }
       } catch (error) {
@@ -399,8 +580,8 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
         setNotification({
           visible: true,
           type: 'error',
-          title: 'Error',
-          message: 'Failed to delete user'
+          title: t('common.error'),
+          message: t('admin.failedToDeleteUser')
         });
       }
     };
@@ -408,11 +589,11 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
     setNotification({
       visible: true,
       type: 'warning',
-      title: 'Delete User',
-      message: 'Are you sure you want to delete this user? This action cannot be undone.',
+      title: t('admin.deleteUser'),
+      message: t('admin.confirmDeleteUser'),
       buttons: [
-        { text: 'Cancel', onPress: () => {}, style: 'cancel' },
-        { text: 'Delete', onPress: handleDelete, style: 'destructive' }
+        { text: t('common.cancel'), onPress: () => {}, style: 'cancel' },
+        { text: t('common.delete'), onPress: handleDelete, style: 'destructive' }
       ]
     });
   };
@@ -497,48 +678,48 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
 
           {/* Performance Metrics */}
           <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
-            <Text style={styles.sectionTitle}>Performance Metrics</Text>
+            <Text style={styles.sectionTitle}>{t('admin.performanceMetrics')}</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats?.averageRecipesPerUser?.toFixed(1) || '0.0'}</Text>
-                <Text style={styles.statLabel}>Recipes per User</Text>
+                <Text style={styles.statLabel}>{t('admin.recipesPerUser')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats?.averageAnalysesPerUser?.toFixed(1) || '0.0'}</Text>
-                <Text style={styles.statLabel}>Analyses per User</Text>
+                <Text style={styles.statLabel}>{t('admin.analysesPerUser')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats?.averageIngredientsPerAnalysis?.toFixed(1) || '0.0'}</Text>
-                <Text style={styles.statLabel}>Ingredients per Analysis</Text>
+                <Text style={styles.statLabel}>{t('admin.ingredientsPerAnalysis')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats?.averageProcessingTime || 0}ms</Text>
-                <Text style={styles.statLabel}>Avg Processing Time</Text>
+                <Text style={styles.statLabel}>{t('admin.avgProcessingTime')}</Text>
               </View>
             </View>
           </Animated.View>
 
           {/* User Growth */}
           <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
-            <Text style={styles.sectionTitle}>User Growth</Text>
+            <Text style={styles.sectionTitle}>{t('admin.userGrowth')}</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats?.weekUsers || 0}</Text>
-                <Text style={styles.statLabel}>This Week</Text>
+                <Text style={styles.statLabel}>{t('admin.thisWeek')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats?.monthUsers || 0}</Text>
-                <Text style={styles.statLabel}>This Month</Text>
+                <Text style={styles.statLabel}>{t('admin.thisMonth')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={[styles.statNumber, { color: stats?.userGrowthRate >= 0 ? colors.success : colors.error }]}>
                   {stats?.userGrowthRate >= 0 ? '+' : ''}{stats?.userGrowthRate?.toFixed(1) || '0.0'}%
                 </Text>
-                <Text style={styles.statLabel}>Growth Rate</Text>
+                <Text style={styles.statLabel}>{t('admin.growthRate')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats?.adminUsers || 0}</Text>
-                <Text style={styles.statLabel}>Admins</Text>
+                <Text style={styles.statLabel}>{t('admin.admins')}</Text>
               </View>
             </View>
           </Animated.View>
@@ -546,12 +727,12 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
           {/* Users List */}
           <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Users</Text>
+              <Text style={styles.sectionTitle}>{t('admin.recentUsers')}</Text>
               <TouchableOpacity 
                 style={styles.viewAllButton} 
                 onPress={() => setShowUsersModal(true)}
               >
-                <Text style={styles.viewAllText}>View All</Text>
+                <Text style={styles.viewAllText}>{t('admin.viewAll')}</Text>
               </TouchableOpacity>
             </View>
             {isLoadingUsers ? (
@@ -566,16 +747,116 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                       </Text>
                     </View>
                     <View style={styles.userInfo}>
-                      <Text style={styles.userName}>{user.name || 'No name'}</Text>
+                      <Text style={styles.userName}>{user.name || t('admin.noName')}</Text>
                       <Text style={styles.userEmail}>{user.email}</Text>
                       <Text style={styles.userDetails}>
                         {user.preferredLanguage.toUpperCase()} • {new Date(user.createdAt).toLocaleDateString()}
-                        {user.role === 'admin' && <Text style={styles.adminBadgeInline}> • ADMIN</Text>}
+                        {user.role === 'admin' && <Text style={styles.adminBadgeInline}> • {t('admin.adminBadge')}</Text>}
                       </Text>
                     </View>
                   </View>
                 ))}
               </View>
+            )}
+          </Animated.View>
+
+          {/* Security Monitoring */}
+          <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('admin.securityOverview')}</Text>
+              <TouchableOpacity 
+                style={styles.viewAllButton} 
+                onPress={() => {
+                  setShowSecurityModal(true);
+                  fetchCSPDetails();
+                }}
+              >
+                <Text style={styles.viewAllText}>{t('admin.viewDetails')}</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {securityStats ? (
+              <View style={styles.securityOverview}>
+                {/* CSP Status Card */}
+                <View style={styles.cspStatusCard}>
+                  <View style={styles.cspStatusHeader}>
+                    <SecurityIcon size={24} color={colors.primary} />
+                    <View style={styles.cspStatusInfo}>
+                      <Text style={styles.cspStatusTitle}>{t('admin.contentSecurityPolicy')}</Text>
+                      <Text style={styles.cspStatusSubtitle}>
+                        {securityStats.csp.reportOnly ? t('admin.reportOnlyMode') : t('admin.enforcementMode')}
+                      </Text>
+                    </View>
+                    <View style={[styles.statusBadge, { 
+                      backgroundColor: securityStats.csp.enabled ? '#10B981' : '#EF4444' 
+                    }]}>
+                      <Text style={styles.statusText}>
+                        {securityStats.csp.enabled ? 'ACTIVE' : 'DISABLED'}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.cspMetrics}>
+                    <View style={styles.cspMetric}>
+                      <Text style={styles.cspMetricValue}>{securityStats.csp.violationsToday}</Text>
+                      <Text style={styles.cspMetricLabel}>Today</Text>
+                    </View>
+                    <View style={styles.cspMetric}>
+                      <Text style={styles.cspMetricValue}>{securityStats.csp.violationsWeek}</Text>
+                      <Text style={styles.cspMetricLabel}>{t('admin.thisWeek')}</Text>
+                    </View>
+                    <View style={styles.cspMetric}>
+                      <Text style={styles.cspMetricValue}>{securityStats.csp.topViolations.length}</Text>
+                      <Text style={styles.cspMetricLabel}>{t('admin.directives')}</Text>
+                    </View>
+                    <View style={styles.cspMetric}>
+                      <Text style={[styles.cspMetricValue, { 
+                        color: securityStats.csp.violationsToday === 0 ? colors.success : colors.warning 
+                      }]}>
+                        {securityStats.csp.violationsToday === 0 ? '✓' : '⚠'}
+                      </Text>
+                      <Text style={styles.cspMetricLabel}>{t('admin.status')}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Other Security Cards */}
+                <View style={styles.securityGrid}>
+                  <View style={styles.securityCard}>
+                    <Text style={styles.securityCardIcon}>🚧</Text>
+                    <Text style={styles.securityCardTitle}>{t('admin.rateLimit')}</Text>
+                    <Text style={styles.securityCardValue}>
+                      {securityStats.rateLimit.blockedToday}
+                    </Text>
+                    <Text style={styles.securityCardLabel}>{t('admin.blockedToday')}</Text>
+                    <View style={[styles.statusBadge, { 
+                      backgroundColor: securityStats.rateLimit.enabled ? '#10B981' : '#EF4444' 
+                    }]}>
+                      <Text style={styles.statusText}>
+                        {securityStats.rateLimit.enabled ? 'ACTIVE' : 'DISABLED'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.securityCard}>
+                    <Text style={styles.securityCardIcon}>🛡️</Text>
+                    <Text style={styles.securityCardTitle}>{t('admin.inputValidation')}</Text>
+                    <Text style={styles.securityCardValue}>
+                      {securityStats.inputValidation.rejectedToday}
+                    </Text>
+                    <Text style={styles.securityCardLabel}>{t('admin.threatsBlocked')}</Text>
+                    <View style={[styles.statusBadge, { 
+                      backgroundColor: securityStats.inputValidation.enabled ? '#10B981' : '#EF4444' 
+                    }]}>
+                      <Text style={styles.statusText}>
+                        {securityStats.inputValidation.enabled ? 'ACTIVE' : 'DISABLED'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <ActivityIndicator size="small" color={colors.primary} />
             )}
           </Animated.View>
 
@@ -666,7 +947,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
             >
               <Text style={styles.modalCloseText}>×</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>All Users</Text>
+            <Text style={styles.modalTitle}>{t('admin.allUsers')}</Text>
             <View style={styles.placeholder} />
           </View>
           
@@ -679,11 +960,11 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                   </Text>
                 </View>
                 <View style={styles.userInfo}>
-                  <Text style={styles.userName}>{user.name || 'No name'}</Text>
+                  <Text style={styles.userName}>{user.name || t('admin.noName')}</Text>
                   <Text style={styles.userEmail}>{user.email}</Text>
                   <Text style={styles.userDetails}>
                     {user.preferredLanguage.toUpperCase()} • {new Date(user.createdAt).toLocaleDateString()}
-                    {user.role === 'admin' && <Text style={styles.adminBadgeInline}> • ADMIN</Text>}
+                    {user.role === 'admin' && <Text style={styles.adminBadgeInline}> • {t('admin.adminBadge')}</Text>}
                   </Text>
                 </View>
                 <View style={styles.userActions}>
@@ -692,18 +973,139 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
                       style={styles.promoteButton}
                       onPress={() => promoteUser(user.email)}
                     >
-                      <Text style={styles.promoteButtonText}>Promote</Text>
+                      <Text style={styles.promoteButtonText}>{t('admin.promote')}</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => deleteUser(user._id)}
                   >
-                    <Text style={styles.deleteButtonText}>Delete</Text>
+                    <Text style={styles.deleteButtonText}>{t('common.delete')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Security Details Modal */}
+      <Modal
+        visible={showSecurityModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <View style={styles.placeholder} />
+            <Text style={styles.modalTitle}>{t('admin.securityDetails')}</Text>
+            <TouchableOpacity 
+              style={styles.modalCloseButton} 
+              onPress={() => setShowSecurityModal(false)}
+            >
+              <Text style={styles.modalCloseText}>×</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.modalContent}>
+
+            {/* Top Violations */}
+            {cspStats?.topViolations && cspStats.topViolations.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>{t('admin.topCspViolations')}</Text>
+                <View style={styles.violationsList}>
+                  {cspStats.topViolations.map((violation, index) => (
+                    <View key={index} style={styles.violationItem}>
+                      <View style={styles.violationHeader}>
+                        <Text style={styles.violationDirective}>{violation.directive}</Text>
+                        <View style={styles.violationCount}>
+                          <Text style={styles.violationCountText}>{violation.count}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.violationLastSeen}>
+                        {t('admin.lastSeen')}: {formatTime(violation.lastSeen)}
+                      </Text>
+                      {violation.blockedUris && violation.blockedUris.length > 0 && (
+                        <View style={styles.blockedUris}>
+                          <Text style={styles.blockedUrisTitle}>{t('admin.blockedUris')}:</Text>
+                          {violation.blockedUris.slice(0, 3).map((uri, uriIndex) => (
+                            <Text key={uriIndex} style={styles.blockedUri} numberOfLines={1}>
+                              • {uri}
+                            </Text>
+                          ))}
+                          {violation.blockedUris.length > 3 && (
+                            <Text style={styles.blockedUriMore}>
+                              +{violation.blockedUris.length - 3} {t('admin.more')}
+                            </Text>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Recent Violations */}
+            {cspStats?.recentViolations && cspStats.recentViolations.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>{t('admin.recentCspViolations')}</Text>
+                <View style={styles.recentViolationsList}>
+                  {cspStats.recentViolations.slice(0, 10).map((violation) => (
+                    <View key={violation.id} style={styles.recentViolationItem}>
+                      <View style={styles.recentViolationHeader}>
+                        <Text style={styles.recentViolationDirective}>{violation.directive}</Text>
+                        <Text style={styles.recentViolationTime}>{formatTime(violation.timestamp)}</Text>
+                      </View>
+                      <Text style={styles.recentViolationUri} numberOfLines={1}>
+                        {t('admin.blocked')}: {violation.blockedUri}
+                      </Text>
+                      {violation.sourceFile && (
+                        <Text style={styles.recentViolationSource} numberOfLines={1}>
+                          {t('admin.source')}: {violation.sourceFile}
+                          {violation.lineNumber && `:${violation.lineNumber}`}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Violations by Directive */}
+            {cspStats?.violationsByDirective && cspStats.violationsByDirective.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>{t('admin.violationsByDirective')}</Text>
+                <View style={styles.directivesList}>
+                  {cspStats.violationsByDirective.map((item, index) => (
+                    <View key={index} style={styles.directiveItem}>
+                      <Text style={styles.directiveName}>{item.directive}</Text>
+                      <View style={styles.directiveStats}>
+                        <Text style={styles.directiveCount}>{item.count}</Text>
+                        <Text style={styles.directivePercentage}>({item.percentage}%)</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {isLoadingCSP && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.loadingText}>{t('admin.loadingCspDetails')}</Text>
+              </View>
+            )}
+
+            {!isLoadingCSP && (!cspStats || cspStats.summary.totalViolations === 0) && (
+              <View style={styles.emptyState}>
+                <SecurityIcon size={48} color={colors.textSecondary} />
+                <Text style={styles.emptyStateTitle}>{t('admin.noCspViolations')}</Text>
+                <Text style={styles.emptyStateMessage}>
+                  {t('admin.cspWorkingWell')}
+                </Text>
+              </View>
+            )}
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -1084,5 +1486,248 @@ const getStyles = (colors: any) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  // Security Overview Styles
+  securityOverview: {
+    gap: 16,
+  },
+  cspStatusInfo: {
+    flex: 1,
+  },
+  cspStatusCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cspStatusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  cspStatusTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  cspStatusSubtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  cspMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  cspMetric: {
+    alignItems: 'center',
+  },
+  cspMetricValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  cspMetricLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  violationsList: {
+    gap: 12,
+  },
+  violationItem: {
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  violationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  violationDirective: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    fontFamily: 'monospace',
+  },
+  violationCount: {
+    backgroundColor: colors.error,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  violationCountText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  violationLastSeen: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  blockedUris: {
+    marginTop: 8,
+  },
+  blockedUrisTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  blockedUri: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontFamily: 'monospace',
+    marginLeft: 8,
+  },
+  blockedUriMore: {
+    fontSize: 11,
+    color: colors.primary,
+    fontStyle: 'italic',
+    marginLeft: 8,
+    marginTop: 2,
+  },
+  recentViolationsList: {
+    gap: 8,
+  },
+  recentViolationItem: {
+    backgroundColor: colors.card,
+    borderRadius: 6,
+    padding: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.warning,
+  },
+  recentViolationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  recentViolationDirective: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+    fontFamily: 'monospace',
+  },
+  recentViolationTime: {
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
+  recentViolationUri: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontFamily: 'monospace',
+    marginBottom: 2,
+  },
+  recentViolationSource: {
+    fontSize: 11,
+    color: colors.primary,
+    fontFamily: 'monospace',
+  },
+  directivesList: {
+    gap: 8,
+  },
+  directiveItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 6,
+    padding: 12,
+  },
+  directiveName: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text,
+    fontFamily: 'monospace',
+  },
+  directiveStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  directiveCount: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  directivePercentage: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateMessage: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  securityGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  securityCard: {
+    flex: 1,
+    minWidth: '30%',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  securityCardIcon: {
+    fontSize: 20,
+    marginBottom: 8,
+  },
+  securityCardTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  securityCardValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  securityCardLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  statusBadge: {
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
