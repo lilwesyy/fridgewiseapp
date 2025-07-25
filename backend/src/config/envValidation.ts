@@ -100,6 +100,22 @@ const OPTIONAL_ENV_VARS: OptionalEnvVar[] = [
     defaultValue: ''
   },
   {
+    name: 'CSP_REPORT_URI',
+    description: 'Content Security Policy report URI',
+    defaultValue: '',
+    validator: (value: string) => !value || value.startsWith('http://') || value.startsWith('https://')
+  },
+  {
+    name: 'FRONTEND_DOMAIN',
+    description: 'Frontend domain for CSP',
+    defaultValue: ''
+  },
+  {
+    name: 'API_DOMAIN',
+    description: 'API domain for CSP',
+    defaultValue: ''
+  },
+  {
     name: 'ENABLE_QUERY_MONITORING',
     description: 'Enable database query performance monitoring',
     defaultValue: 'false',

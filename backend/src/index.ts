@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
 import { sanitizeRequest, securityHeaders } from './middleware/inputValidation';
+import { cspMiddleware } from './middleware/contentSecurityPolicy';
 import { connectDB } from './config/database';
 import { redisService } from './services/redisService';
 import { errorHandler } from './middleware/errorHandler';
@@ -28,12 +29,19 @@ import recipeCollectionRoutes from './routes/recipeCollection';
 import { ratingRoutes } from './routes/rating';
 import { cacheRoutes } from './routes/cache';
 import databaseMonitoringRoutes from './routes/databaseMonitoring';
+import { securityRoutes } from './routes/security';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  // Disable CSP in helmet since we use our custom implementation
+  contentSecurityPolicy: false,
+  // Disable HSTS in helmet since we handle it in securityHeaders
+  hsts: false
+}));
+app.use(cspMiddleware);
 app.use(securityHeaders);
 app.use(cors({
   origin: process.env.NODE_ENV === 'development' ? true : process.env.CORS_ORIGIN?.split(',') || [
@@ -107,6 +115,7 @@ app.use('/api/collections', recipeCollectionRoutes);
 app.use('/api/recipe', ratingRoutes);
 app.use('/api/cache', cacheRoutes);
 app.use('/api/database-monitoring', databaseMonitoringRoutes);
+app.use('/api/security', securityRoutes);
 
 // Health check endpoint
 app.get('/health', (req: express.Request, res: express.Response) => {
@@ -122,6 +131,13 @@ app.get('/health', (req: express.Request, res: express.Response) => {
     services: {
       redis: redisService.isHealthy(),
       mongodb: 'connected'
+    },
+    security: {
+      csp: 'enabled',
+      cors: 'configured',
+      rateLimit: 'active',
+      inputValidation: 'active',
+      headers: 'secure'
     }
   });
 });

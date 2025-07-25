@@ -190,7 +190,7 @@ export const validationRules = {
 };
 
 // Validation result handler
-export const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
+export const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
   const errors = validationResult(req);
   
   if (!errors.isEmpty()) {
@@ -202,18 +202,19 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
 
     console.warn('🚨 Input validation failed:', formattedErrors);
     
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: 'Invalid input data',
       details: formattedErrors
     });
+    return;
   }
   
   next();
 };
 
 // Sanitization middleware
-export const sanitizeRequest = (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeRequest = (req: Request, res: Response, next: NextFunction): void => {
   try {
     // Sanitize query parameters
     if (req.query) {
@@ -243,6 +244,7 @@ export const sanitizeRequest = (req: Request, res: Response, next: NextFunction)
       success: false,
       error: 'Invalid request data'
     });
+    return;
   }
 };
 
@@ -250,7 +252,7 @@ export const sanitizeRequest = (req: Request, res: Response, next: NextFunction)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 export const createRateLimit = (maxRequests: number, windowMs: number) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
     const now = Date.now();
     
@@ -265,21 +267,24 @@ export const createRateLimit = (maxRequests: number, windowMs: number) => {
     
     if (!entry) {
       rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
-      return next();
+      next();
+      return;
     }
     
     if (now > entry.resetTime) {
       entry.count = 1;
       entry.resetTime = now + windowMs;
-      return next();
+      next();
+      return;
     }
     
     if (entry.count >= maxRequests) {
-      return res.status(429).json({
+      res.status(429).json({
         success: false,
         error: 'Too many requests',
         retryAfter: Math.ceil((entry.resetTime - now) / 1000)
       });
+      return;
     }
     
     entry.count++;
@@ -287,30 +292,20 @@ export const createRateLimit = (maxRequests: number, windowMs: number) => {
   };
 };
 
-// Security headers middleware
-export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
-  // Prevent clickjacking
-  res.setHeader('X-Frame-Options', 'DENY');
+// Basic security headers middleware (CSP moved to dedicated middleware)
+export const securityHeaders = (req: Request, res: Response, next: NextFunction): void => {
+  // Additional security headers are now handled by the CSP middleware
+  // This middleware is kept for backwards compatibility and basic headers
   
-  // Prevent MIME type sniffing
-  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Strict Transport Security (HSTS) for HTTPS enforcement
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
   
-  // Enable XSS protection
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  
-  // Referrer policy
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // Content Security Policy
-  res.setHeader('Content-Security-Policy', 
-    "default-src 'self'; " +
-    "script-src 'self'; " +
-    "style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' data: https:; " +
-    "font-src 'self'; " +
-    "connect-src 'self' https:; " +
-    "frame-ancestors 'none';"
-  );
+  // Expect-CT for certificate transparency
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Expect-CT', 'max-age=86400, enforce');
+  }
   
   next();
 };

@@ -453,7 +453,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           {/* App Information */}
           <View style={styles.footerSection}>
             <Text style={styles.appVersion}>
-              FridgeWise v1.0.0
+              FridgeWise v{process.env.EXPO_PUBLIC_APP_VERSION || '1.0.0'}
             </Text>
           </View>
         </Animated.View>

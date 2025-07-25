@@ -33,7 +33,6 @@
 
   2. Scomporre componenti grandi (RecipeScreen, HomeScreen)
   3. Aggiungere error boundaries React
-  4. Implementare Content Security Policy
   5. Migliorare accessibilità (aria-labels, focus management)
 
   Fase 3 - Testing & Monitoring (1-2 settimane)
