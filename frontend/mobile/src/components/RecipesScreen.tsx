@@ -352,8 +352,11 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   // Public collections state
   const [activeTab, setActiveTab] = useState<'my-recipes' | 'explore'>('my-recipes');
   const [publicRecipes, setPublicRecipes] = useState<any[]>([]);
+  const [filteredPublicRecipes, setFilteredPublicRecipes] = useState<any[]>([]);
   const [collectionsLoading, setCollectionsLoading] = useState(false);
   const [collectionsSearchQuery, setCollectionsSearchQuery] = useState('');
+  const [publicDifficultyFilter, setPublicDifficultyFilter] = useState<string>('');
+  const [publicTagFilter, setPublicTagFilter] = useState<string>('');
   
   const dietaryTags = [
     'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'
@@ -443,6 +446,10 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   }, [searchQuery, recipes, difficultyFilter, tagFilter]);
 
   useEffect(() => {
+    filterPublicRecipes();
+  }, [collectionsSearchQuery, publicRecipes, publicDifficultyFilter, publicTagFilter]);
+
+  useEffect(() => {
     if (activeTab === 'explore') {
       const timeoutId = setTimeout(() => {
         fetchPublicRecipes();
@@ -520,6 +527,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         if (response.status === 404) {
           console.log('Recipes endpoint not available yet');
           setPublicRecipes([]);
+          setFilteredPublicRecipes([]);
           return;
         }
         throw new Error(`HTTP ${response.status}`);
@@ -527,13 +535,16 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
 
       const data = await response.json();
       console.log('Public recipes data:', data.data?.recipes || []);
-      setPublicRecipes(data.data?.recipes || []);
+      const recipes = data.data?.recipes || [];
+      setPublicRecipes(recipes);
+      setFilteredPublicRecipes(recipes);
     } catch (error) {
       console.error('Error fetching public recipes:', error);
       
       // Always show empty state for network errors, but log them
       console.log('Network error - showing empty state:', error instanceof Error ? error.message : String(error));
       setPublicRecipes([]);
+      setFilteredPublicRecipes([]);
     } finally {
       setCollectionsLoading(false);
     }
@@ -557,6 +568,26 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
       filtered = filtered.filter(recipe => recipe.dietaryTags.includes(tagFilter));
     }
     setFilteredRecipes(filtered);
+  };
+
+  const filterPublicRecipes = () => {
+    let filtered = publicRecipes;
+    if (collectionsSearchQuery.trim()) {
+      filtered = filtered.filter(recipe =>
+        recipe.title.toLowerCase().includes(collectionsSearchQuery.toLowerCase()) ||
+        recipe.description.toLowerCase().includes(collectionsSearchQuery.toLowerCase()) ||
+        recipe.ingredients.some((ingredient: any) =>
+          ingredient.name.toLowerCase().includes(collectionsSearchQuery.toLowerCase())
+        )
+      );
+    }
+    if (publicDifficultyFilter) {
+      filtered = filtered.filter(recipe => recipe.difficulty === publicDifficultyFilter);
+    }
+    if (publicTagFilter) {
+      filtered = filtered.filter(recipe => recipe.dietaryTags.includes(publicTagFilter));
+    }
+    setFilteredPublicRecipes(filtered);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -727,38 +758,52 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
             autoCorrect={false}
           />
         </Animated.View>
-        {activeTab === 'my-recipes' && (
-          <Animated.View style={filtersAnimatedStyle}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
-            {/* Difficoltà */}
+        {/* Filters for both tabs */}
+        <Animated.View style={filtersAnimatedStyle}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
+          {/* Difficoltà */}
+          <TouchableOpacity activeOpacity={0.7}
+            style={[styles.filterBadge, { 
+              backgroundColor: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.primary : colors.card, 
+              borderColor: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.primary : 'transparent' 
+            }]}
+            onPress={() => activeTab === 'my-recipes' ? setDifficultyFilter('') : setPublicDifficultyFilter('')}
+          >
+            <Text style={[styles.filterBadgeText, { 
+              color: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.buttonText : colors.text 
+            }]}>{t('common.all')}</Text>
+          </TouchableOpacity>
+          {['easy', 'medium', 'hard'].map(diff => (
             <TouchableOpacity activeOpacity={0.7}
-              style={[styles.filterBadge, { backgroundColor: !difficultyFilter ? colors.primary : colors.card, borderColor: !difficultyFilter ? colors.primary : 'transparent' }]}
-              onPress={() => setDifficultyFilter('')}
+              key={diff}
+              style={[styles.filterBadge, { 
+                backgroundColor: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.primary : colors.card, 
+                borderColor: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.primary : 'transparent' 
+              }]}
+              onPress={() => activeTab === 'my-recipes' ? setDifficultyFilter(diff) : setPublicDifficultyFilter(diff)}
             >
-              <Text style={[styles.filterBadgeText, { color: !difficultyFilter ? colors.buttonText : colors.text }]}>{t('common.all')}</Text>
+              <Text style={[styles.filterBadgeText, { 
+                color: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.buttonText : colors.text 
+              }]}>{t(`recipes.difficulty.${diff}`)}</Text>
             </TouchableOpacity>
-            {['easy', 'medium', 'hard'].map(diff => (
-              <TouchableOpacity activeOpacity={0.7}
-                key={diff}
-                style={[styles.filterBadge, { backgroundColor: difficultyFilter === diff ? colors.primary : colors.card, borderColor: difficultyFilter === diff ? colors.primary : 'transparent' }]}
-                onPress={() => setDifficultyFilter(diff)}
-              >
-                <Text style={[styles.filterBadgeText, { color: difficultyFilter === diff ? colors.buttonText : colors.text }]}>{t(`recipes.difficulty.${diff}`)}</Text>
-              </TouchableOpacity>
-            ))}
-            {/* Tag dietetici */}
-            {dietaryTags.map(tag => (
-              <TouchableOpacity activeOpacity={0.7}
-                key={tag}
-                style={[styles.filterBadge, { backgroundColor: tagFilter === tag ? colors.primary : colors.card, borderColor: tagFilter === tag ? colors.primary : 'transparent' }]}
-                onPress={() => setTagFilter(tag)}
-              >
-                <Text style={[styles.filterBadgeText, { color: tagFilter === tag ? colors.buttonText : colors.text }]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          </Animated.View>
-        )}
+          ))}
+          {/* Tag dietetici */}
+          {dietaryTags.map(tag => (
+            <TouchableOpacity activeOpacity={0.7}
+              key={tag}
+              style={[styles.filterBadge, { 
+                backgroundColor: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.primary : colors.card, 
+                borderColor: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.primary : 'transparent' 
+              }]}
+              onPress={() => activeTab === 'my-recipes' ? setTagFilter(tag) : setPublicTagFilter(tag)}
+            >
+              <Text style={[styles.filterBadgeText, { 
+                color: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.buttonText : colors.text 
+              }]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        </Animated.View>
       </Animated.View>
 
       {activeTab === 'my-recipes' ? (
@@ -819,7 +864,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
           <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('recipes.loadingCollections')}</Text>
           </Animated.View>
-        ) : publicRecipes.length === 0 ? (
+        ) : filteredPublicRecipes.length === 0 ? (
           <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
             <View style={{ marginBottom: 16 }}>
               <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
@@ -831,16 +876,16 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
               </Svg>
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {collectionsSearchQuery ? t('recipes.noPublicRecipes') : t('recipes.noPublicRecipes')}
+              {collectionsSearchQuery || publicDifficultyFilter || publicTagFilter ? t('recipes.noResults') : t('recipes.noPublicRecipes')}
             </Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-              {collectionsSearchQuery ? t('recipes.tryDifferentCollectionSearch') : t('recipes.noPublicRecipesDesc')}
+              {collectionsSearchQuery || publicDifficultyFilter || publicTagFilter ? t('recipes.tryDifferentSearch') : t('recipes.noPublicRecipesDesc')}
             </Text>
           </Animated.View>
         ) : (
           <Animated.View style={[{ flex: 1 }, listAnimatedStyle]}>
             <FlatList
-              data={publicRecipes}
+              data={filteredPublicRecipes}
               renderItem={({ item, index }) => renderPublicRecipe({ item, index })}
               keyExtractor={(item) => item._id}
               style={styles.recipesList}
