@@ -3,6 +3,12 @@ import { analyzeImage, getAnalyses, getAnalysis, deleteAnalysis, upload } from '
 import { protect } from '../middleware/auth';
 import { USDARecognizeService } from '../services/usdaRecognizeService';
 import { rateLimits } from '../middleware/rateLimiter';
+import { 
+  validationRules, 
+  handleValidationErrors, 
+  createRateLimit 
+} from '../middleware/inputValidation';
+import { query } from 'express-validator';
 
 const router = Router();
 
@@ -29,7 +35,16 @@ router.get('/health', async (req, res) => {
 });
 
 // Search ingredients endpoint (no auth required for basic search)
-router.get('/search-ingredients', rateLimits.ingredientSearch, async (req, res) => {
+router.get('/search-ingredients', 
+  ...validationRules.search,
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Limit must be between 1 and 50'),
+  handleValidationErrors,
+  createRateLimit(30, 60000), // 30 searches per minute
+  rateLimits.ingredientSearch, 
+  async (req, res) => {
   try {
     const { query, limit } = req.query;
     
@@ -64,9 +79,28 @@ router.get('/search-ingredients', rateLimits.ingredientSearch, async (req, res) 
 // All routes require authentication
 router.use(protect);
 
-router.post('/image', rateLimits.imageAnalysis, upload.single('image'), analyzeImage);
-router.get('/', getAnalyses);
-router.get('/:id', getAnalysis);
-router.delete('/:id', deleteAnalysis);
+router.post('/image', 
+  ...validationRules.fileUpload,
+  handleValidationErrors,
+  createRateLimit(10, 60000), // 10 image analyses per minute
+  rateLimits.imageAnalysis, 
+  upload.single('image'), 
+  analyzeImage
+);
+router.get('/', 
+  ...validationRules.pagination,
+  handleValidationErrors,
+  getAnalyses
+);
+router.get('/:id', 
+  ...validationRules.mongoId,
+  handleValidationErrors,
+  getAnalysis
+);
+router.delete('/:id', 
+  ...validationRules.mongoId,
+  handleValidationErrors,
+  deleteAnalysis
+);
 
 export { router as analysisRoutes };

@@ -12,6 +12,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+import { sanitizeRequest, securityHeaders } from './middleware/inputValidation';
 import { connectDB } from './config/database';
 import { redisService } from './services/redisService';
 import { errorHandler } from './middleware/errorHandler';
@@ -33,6 +34,7 @@ const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
+app.use(securityHeaders);
 app.use(cors({
   origin: process.env.NODE_ENV === 'development' ? true : process.env.CORS_ORIGIN?.split(',') || [
     'http://localhost:3000', 
@@ -48,9 +50,46 @@ app.use(cors({
 // Logging middleware
 app.use(morgan('combined'));
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parsing middleware with enhanced DoS protection
+app.use(express.json({ 
+  limit: '10mb',
+  strict: true,
+  type: 'application/json'
+}));
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '10mb',
+  parameterLimit: 100, // Limit number of parameters
+  type: 'application/x-www-form-urlencoded'
+}));
+
+// Request timeout middleware to prevent DoS
+app.use((req, res, next) => {
+  // Set timeout for all requests (30 seconds)
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      res.status(408).json({
+        success: false,
+        error: 'Request timeout'
+      });
+    }
+  }, 30000);
+
+  // Clear timeout when response finishes
+  res.on('finish', () => {
+    clearTimeout(timeout);
+  });
+
+  // Clear timeout when response closes
+  res.on('close', () => {
+    clearTimeout(timeout);
+  });
+
+  next();
+});
+
+// Input sanitization middleware
+app.use(sanitizeRequest);
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

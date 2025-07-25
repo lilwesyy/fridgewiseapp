@@ -4,21 +4,40 @@ import { protect } from '../middleware/auth';
 import { rateLimits } from '../middleware/rateLimiter';
 import { checkDailyLimit, incrementDailyUsage } from '../middleware/dailyLimits';
 import { cache } from '../middleware/cache';
+import { 
+  validationRules, 
+  handleValidationErrors, 
+  createRateLimit 
+} from '../middleware/inputValidation';
 
 const router = Router();
 
 // Public routes (no authentication required)
-router.get('/public', cache({ 
-  ttl: 300, // 5 minutes
-  keyGenerator: (req) => `public:recipes:${req.url}`,
-  condition: (req) => !req.query.search // Don't cache search results
-}), getPublicRecipes);
+router.get('/public', 
+  ...validationRules.pagination,
+  ...validationRules.recipeFilters,
+  ...validationRules.search,
+  handleValidationErrors,
+  cache({ 
+    ttl: 300, // 5 minutes
+    keyGenerator: (req) => `public:recipes:${req.url}`,
+    condition: (req) => !req.query.search // Don't cache search results
+  }), 
+  getPublicRecipes
+);
 router.get('/:recipeId/cooked-by', cache({ ttl: 600 }), getUsersWhoCookedRecipe);
 
 // All other routes require authentication
 router.use(protect);
 
-router.post('/generate', checkDailyLimit('recipeGenerations'), rateLimits.recipeGeneration, generateRecipe);
+router.post('/generate', 
+  ...validationRules.recipeCreation,
+  handleValidationErrors,
+  createRateLimit(5, 60000), // 5 requests per minute
+  checkDailyLimit('recipeGenerations'), 
+  rateLimits.recipeGeneration, 
+  generateRecipe
+);
 router.post('/', rateLimits.recipeCreation, createRecipe); // Create recipe without saving to collection
 router.get('/', getRecipes);
 router.get('/saved', getSavedRecipes);

@@ -1,4 +1,4 @@
-import FormData from 'form-data';
+import { SecureFormData as FormData } from '../utils/secureFormData';
 import fetch from 'node-fetch';
 import fs from 'fs';
 import path from 'path';
