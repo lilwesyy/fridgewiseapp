@@ -243,6 +243,17 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   };
 
   const addIngredientFromUSDA = (usdaIngredient: USDAIngredient) => {
+    // Clear search timeout to prevent interference
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+      setSearchTimeout(null);
+    }
+    
+    // Clear search state first
+    setShowSuggestions(false);
+    setSearchResults([]);
+    setNewIngredient('');
+    
     const ingredient: Ingredient = {
       name: usdaIngredient.name,
       nameIt: usdaIngredient.nameIt,
@@ -251,9 +262,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       usdaId: usdaIngredient.usdaId,
     };
     setIngredients([...ingredients, ingredient]);
-    setNewIngredient('');
-    setShowSuggestions(false);
-    setSearchResults([]);
+    
     Keyboard.dismiss();
   };
 
@@ -641,7 +650,6 @@ const getStyles = (colors: any) => StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    position: 'relative',
   },
   textInput: {
     flex: 1,
@@ -685,49 +693,56 @@ const getStyles = (colors: any) => StyleSheet.create({
     zIndex: 1,
   },
   suggestionsContainer: {
-    marginTop: 10,
+    marginTop: 8,
     backgroundColor: colors.surface,
-    borderRadius: 8,
+    borderRadius: 12,
     shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    maxHeight: 200,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    maxHeight: 240,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
   },
   suggestionsList: {
-    maxHeight: 200,
+    flexGrow: 0,
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   suggestionContent: {
     flex: 1,
+    marginRight: 12,
   },
   suggestionName: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.text,
+    marginBottom: 2,
   },
   suggestionCategory: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
-    marginTop: 2,
     textTransform: 'capitalize',
+    fontWeight: '500',
   },
   suggestionSource: {
-    fontSize: 10,
-    color: colors.primary,
-    fontWeight: '600',
-    backgroundColor: colors.card,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    fontSize: 11,
+    color: 'white',
+    fontWeight: '700',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   ingredientsList: {
     flex: 1,

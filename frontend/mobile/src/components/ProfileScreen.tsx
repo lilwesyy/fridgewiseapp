@@ -24,6 +24,7 @@ import { DietaryPreferencesModal } from './DietaryPreferencesModal';
 import { AvatarEditModal } from './AvatarEditModal';
 import { PrivacyPolicyModal } from './PrivacyPolicyModal';
 import { TermsOfServiceModal } from './TermsOfServiceModal';
+import { AdminStatsModal } from './AdminStatsModal';
 import Svg, { Path, Circle, G } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -37,7 +38,6 @@ import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS } 
 
 interface ProfileScreenProps {
   onLogout: () => void;
-  onShowAdminStats?: () => void;
 }
 
 
@@ -75,9 +75,8 @@ const SupportIcon = () => (
 
 const AdminIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path d="M12 15C16.4183 15 20 18.5817 20 23H4C4 18.5817 7.58172 15 12 15Z" stroke="rgb(22, 163, 74)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="rgb(22, 163, 74)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
     <Circle cx={12} cy={7} r={4} stroke="rgb(22, 163, 74)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-    <Path d="M14 2L16 4L20 0" stroke="rgb(22, 163, 74)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
   </Svg>
 );
 
@@ -121,8 +120,7 @@ const LogoutIcon = () => (
 );
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ 
-  onLogout, 
-  onShowAdminStats 
+  onLogout
 }) => {
   const { t, i18n } = useTranslation();
   const { user, updateProfile, uploadAvatar, deleteAvatar } = useAuth();
@@ -148,6 +146,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showAdminStatsModal, setShowAdminStatsModal] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [notification, setNotification] = useState<{
     visible: boolean;
@@ -424,7 +423,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </Section>
 
           {/* Admin Section (conditional) */}
-          {user?.role === 'admin' && onShowAdminStats && (
+          {user?.role === 'admin' && (
             <Section>
               <SectionHeader 
                 title={safeT('profile.admin', 'Administration')} 
@@ -433,7 +432,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <SettingRow 
                 title={safeT('admin.statsTitle', 'App Statistics')}
                 subtitle={safeT('admin.statsDesc', 'View app usage statistics and analytics')}
-                onPress={onShowAdminStats}
+                onPress={() => setShowAdminStatsModal(true)}
               >
                 <ChevronIcon />
               </SettingRow>
@@ -496,6 +495,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <TermsOfServiceModal
         visible={showTermsModal}
         onClose={() => setShowTermsModal(false)}
+      />
+      
+      <AdminStatsModal
+        visible={showAdminStatsModal}
+        onClose={() => setShowAdminStatsModal(false)}
       />
       
       <NotificationModal

@@ -16,7 +16,6 @@ import { RecipeScreen } from './src/components/RecipeScreen';
 import { RecipesScreen } from './src/components/RecipesScreen';
 import { SavedScreen } from './src/components/SavedScreen';
 import { ProfileScreen } from './src/components/ProfileScreen';
-import { AdminStatsScreen } from './src/components/AdminStatsScreen';
 import { HomeScreen } from './src/components/HomeScreen';
 import { CookingModeScreen } from './src/components/CookingModeScreen';
 import { OnboardingScreen } from './src/components/OnboardingScreen';
@@ -29,7 +28,7 @@ import { checkBackendAvailability, BackendHealthMonitor } from './src/utils/heal
 import Svg, { Path, G, Circle } from 'react-native-svg';
 import './src/i18n';
 
-type Screen = 'home' | 'camera' | 'ingredients' | 'recipe' | 'recipes' | 'saved' | 'profile' | 'cooking' | 'admin-stats';
+type Screen = 'home' | 'camera' | 'ingredients' | 'recipe' | 'recipes' | 'saved' | 'profile' | 'cooking';
 
 interface AppState {
   currentScreen: Screen;
@@ -1701,13 +1700,6 @@ const AppContent: React.FC = () => {
   }
   
   
-  if (appState.currentScreen === 'admin-stats') {
-    return (
-      <AdminStatsScreen
-        onGoBack={() => setAppState({ ...appState, currentScreen: 'profile' })}
-      />
-    );
-  }
 
   // Main app screens with bottom navigation
   const renderMainContent = () => {
@@ -1740,7 +1732,6 @@ const AppContent: React.FC = () => {
         return (
           <ProfileScreen
             onLogout={handleLogout}
-            onShowAdminStats={() => setAppState({ ...appState, currentScreen: 'admin-stats' })}
           />
         );
       

@@ -29,7 +29,8 @@
       "mcp__serena__find_file",
       "Bash(npm audit:*)",
       "Bash(npm outdated)",
-      "mcp__serena__read_memory"
+      "mcp__serena__read_memory",
+      "mcp__serena__replace_regex"
     ],
     "deny": []
   }

@@ -101,8 +101,9 @@ const SecurityIcon: React.FC<{ size?: number; color?: string }> = ({
   </Svg>
 );
 
-interface AdminStatsScreenProps {
-  onGoBack: () => void;
+interface AdminStatsModalProps {
+  visible: boolean;
+  onClose: () => void;
 }
 
 interface User {
@@ -210,7 +211,7 @@ interface CSPStats {
   }>;
 }
 
-export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) => {
+export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClose }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
@@ -244,16 +245,18 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
   const sectionsOpacity = useSharedValue(0);
 
   useEffect(() => {
-    // iOS-style entrance animations
-    const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-    headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing });
-    contentOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
-    sectionsOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_2, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+    if (visible) {
+      // iOS-style entrance animations
+      const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+      headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing });
+      contentOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+      sectionsOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_2, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
 
-    fetchStats();
-    fetchUsers();
-    fetchSecurityStats();
-  }, []);
+      fetchStats();
+      fetchUsers();
+      fetchSecurityStats();
+    }
+  }, [visible]);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -623,24 +626,35 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>{t('admin.loadingStats')}</Text>
-        </View>
-      </SafeAreaView>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>{t('admin.loadingStats')}</Text>
+          </View>
+        </SafeAreaView>
+      </Modal>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Animated.View style={[styles.header, headerAnimatedStyle]}>
-        <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>{t('admin.statsTitle')}</Text>
-        <View style={styles.placeholder} />
-      </Animated.View>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+    >
+      <SafeAreaView style={styles.container}>
+        <Animated.View style={[styles.header, headerAnimatedStyle]}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
+            <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>{t('admin.statsTitle')}</Text>
+          <View style={styles.headerRight} />
+        </Animated.View>
 
       <Animated.View style={[styles.content, contentAnimatedStyle]}>
         <ScrollView
@@ -1133,6 +1147,7 @@ export const AdminStatsScreen: React.FC<AdminStatsScreenProps> = ({ onGoBack }) 
         onClose={() => setNotification({ ...notification, visible: false })}
       />
     </SafeAreaView>
+    </Modal>
   );
 };
 
@@ -1175,10 +1190,24 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: colors.text,
+    textAlign: 'center',
+    flex: 1,
   },
   placeholder: {
+    width: 44,
+  },
+  cancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  headerRight: {
     width: 44,
   },
   content: {
