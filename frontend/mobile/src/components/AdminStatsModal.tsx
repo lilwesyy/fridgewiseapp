@@ -1025,14 +1025,11 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <View style={styles.placeholder} />
-            <Text style={styles.modalTitle}>{t('admin.securityDetails')}</Text>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setShowSecurityModal(false)}
-            >
-              <Text style={styles.modalCloseText}>×</Text>
+            <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={() => setShowSecurityModal(false)}>
+              <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
+            <Text style={styles.modalTitle}>{t('admin.securityDetails')}</Text>
+            <View style={styles.headerRight} />
           </View>
 
           <ScrollView style={styles.modalContent}>

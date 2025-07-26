@@ -21,6 +21,7 @@ import Animated, {
   withSpring,
   Easing,
 } from 'react-native-reanimated';
+import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -49,40 +50,32 @@ export const RatingModal: React.FC<RatingModalProps> = ({
   const modalTranslateY = useSharedValue(screenHeight);
   const modalOpacity = useSharedValue(0);
 
-  // Reset state when modal opens
+  // Reset state when modal opens - using ShareModal animations
   useEffect(() => {
     if (visible) {
       setRating(0);
       setComment('');
       setShowCommentInput(false);
       
-      // Entrance animation
-      modalOpacity.value = withTiming(1, {
-        duration: 300,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      // iOS sheet presentation timing
+      modalOpacity.value = withTiming(1, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
       });
-      modalTranslateY.value = withSpring(0, {
-        damping: 20,
-        stiffness: 100,
+      modalTranslateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
+    } else {
+      // iOS sheet dismissal - faster opacity, slower slide for natural feel
+      modalOpacity.value = withTiming(0, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+      });
+      modalTranslateY.value = withSpring(screenHeight, {
+        damping: 35,
+        stiffness: 400,
+        mass: 1
       });
     }
   }, [visible]);
-
-  const handleClose = () => {
-    // Exit animation
-    modalOpacity.value = withTiming(0, {
-      duration: 250,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-    });
-    modalTranslateY.value = withTiming(screenHeight, {
-      duration: 250,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-    });
-    
-    setTimeout(() => {
-      onClose();
-    }, 250);
-  };
 
   const handleSubmit = async () => {
     if (rating === 0) {
@@ -96,7 +89,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
 
     try {
       await onSubmitRating(rating, comment.trim() || undefined);
-      handleClose();
+      onClose();
     } catch (error) {
       console.error('Error submitting rating:', error);
       Alert.alert(
@@ -113,15 +106,19 @@ export const RatingModal: React.FC<RatingModalProps> = ({
     setShowCommentInput(newRating <= 3);
   };
 
-  const modalAnimatedStyle = useAnimatedStyle(() => ({
+  // Separate animated styles like ShareModal
+  const backdropStyle = useAnimatedStyle(() => ({
     opacity: modalOpacity.value,
+  }));
+
+  const modalStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: modalTranslateY.value }],
   }));
 
   const styles = StyleSheet.create({
     modalOverlay: {
       flex: 1,
-      backgroundColor: colors.overlay,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'flex-end',
     },
     modalContainer: {
@@ -289,10 +286,10 @@ export const RatingModal: React.FC<RatingModalProps> = ({
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={handleClose}
+      onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <Animated.View style={[styles.modalContainer, modalAnimatedStyle]}>
+      <Animated.View style={[styles.modalOverlay, backdropStyle]}>
+        <Animated.View style={[styles.modalContainer, modalStyle]}>
           <View style={styles.modalHandle} />
           
           <View style={styles.modalHeader}>
@@ -350,7 +347,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
-              onPress={handleClose}
+              onPress={onClose}
               disabled={isSubmitting}
             >
               <Text style={[styles.buttonText, styles.cancelButtonText]}>
@@ -377,7 +374,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </View>
+      </Animated.View>
     </Modal>
   );
 };

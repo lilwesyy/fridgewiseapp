@@ -9,6 +9,7 @@ import {
   Switch,
   ActivityIndicator,
   SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,9 +20,13 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  withSpring,
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../constants/animations';
+import { imageCacheService } from '../services/imageCacheService';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 interface AppPreferencesModalProps {
   visible: boolean;
@@ -34,6 +39,8 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
   const { isDarkMode, themeMode, setThemeMode, colors } = useTheme();
   const styles = getStyles(colors);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isClearingCache, setIsClearingCache] = useState(false);
+  const [showClearCacheModal, setShowClearCacheModal] = useState(false);
   const [preferences, setPreferences] = useState({
     preferredLanguage: user?.preferredLanguage || 'en',
     notifications: true,
@@ -51,6 +58,10 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
   const headerOpacity = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
   const sectionsOpacity = useSharedValue(0);
+  
+  // Clear cache modal animation values
+  const clearCacheModalTranslateY = useSharedValue(screenHeight);
+  const clearCacheModalOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
@@ -69,6 +80,29 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
     }
   }, [visible]);
 
+  // Clear cache modal animations - using ShareModal style
+  useEffect(() => {
+    if (showClearCacheModal) {
+      // iOS sheet presentation timing
+      clearCacheModalOpacity.value = withTiming(1, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      });
+      clearCacheModalTranslateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
+    } else {
+      // iOS sheet dismissal - faster opacity, slower slide for natural feel
+      clearCacheModalOpacity.value = withTiming(0, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+      });
+      clearCacheModalTranslateY.value = withSpring(screenHeight, {
+        damping: 35,
+        stiffness: 400,
+        mass: 1
+      });
+    }
+  }, [showClearCacheModal]);
+
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -80,6 +114,15 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
 
   const sectionsAnimatedStyle = useAnimatedStyle(() => ({
     opacity: sectionsOpacity.value,
+  }));
+
+  // Clear cache modal animated styles - separate like ShareModal
+  const clearCacheBackdropStyle = useAnimatedStyle(() => ({
+    opacity: clearCacheModalOpacity.value,
+  }));
+
+  const clearCacheModalStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: clearCacheModalTranslateY.value }],
   }));
 
   const safeT = (key: string, fallback?: string) => {
@@ -124,6 +167,41 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
     setPreferences(updates);
     i18n.changeLanguage(language);
     debouncedSave({ preferredLanguage: language });
+  };
+
+  const handleClearCacheRequest = () => {
+    setShowClearCacheModal(true);
+  };
+
+  const handleClearCache = async () => {
+    setShowClearCacheModal(false);
+    setIsClearingCache(true);
+    try {
+      // Get cache stats before clearing
+      const stats = await imageCacheService.getCacheStats();
+      
+      // Clear the image cache
+      await imageCacheService.clearCache();
+      
+      // Show success notification with stats
+      const sizeInMB = (stats.totalSize / (1024 * 1024)).toFixed(1);
+      setNotification({
+        visible: true,
+        type: 'success',
+        title: safeT('common.success'),
+        message: safeT('profile.cacheCleared', `Cache cancellata con successo! Liberati ${sizeInMB}MB di spazio.`),
+      });
+    } catch (error) {
+      console.error('Failed to clear cache:', error);
+      setNotification({
+        visible: true,
+        type: 'error',
+        title: safeT('common.error'),
+        message: safeT('profile.cacheClearError', 'Impossibile cancellare la cache. Riprova.'),
+      });
+    } finally {
+      setIsClearingCache(false);
+    }
   };
 
   const PreferenceRow: React.FC<{
@@ -323,22 +401,34 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
                 {safeT('profile.dataStorage', 'Data & Storage')}
               </Text>
               
-              <TouchableOpacity activeOpacity={0.7} style={styles.actionRow} disabled>
-                <Text style={[styles.actionText, styles.disabledText]}>
-                  {safeT('profile.clearCache', 'Clear Cache')}
-                </Text>
-                <Text style={styles.actionSubtext}>
-                  {safeT('profile.comingSoon', 'Coming soon')}
-                </Text>
+              <TouchableOpacity 
+                activeOpacity={0.7} 
+                style={styles.actionRow} 
+                onPress={handleClearCacheRequest}
+                disabled={isClearingCache}
+              >
+                <View style={styles.actionRowContent}>
+                  <Text style={[styles.actionText, isClearingCache && styles.disabledText]}>
+                    {safeT('profile.clearCache', 'Cancella Cache')}
+                  </Text>
+                  <Text style={styles.actionSubtext}>
+                    {safeT('profile.clearCacheDesc', 'Libera spazio di archiviazione cancellando i dati temporanei')}
+                  </Text>
+                </View>
+                {isClearingCache && (
+                  <ActivityIndicator size="small" color={colors.primary} style={styles.actionLoader} />
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity activeOpacity={0.7} style={styles.actionRow} disabled>
-                <Text style={[styles.actionText, styles.disabledText]}>
-                  {safeT('profile.exportData', 'Export My Data')}
-                </Text>
-                <Text style={styles.actionSubtext}>
-                  {safeT('profile.comingSoon', 'Coming soon')}
-                </Text>
+                <View style={styles.actionRowContent}>
+                  <Text style={[styles.actionText, styles.disabledText]}>
+                    {safeT('profile.exportData', 'Export My Data')}
+                  </Text>
+                  <Text style={styles.actionSubtext}>
+                    {safeT('profile.comingSoon', 'Coming soon')}
+                  </Text>
+                </View>
               </TouchableOpacity>
             </Animated.View>
 
@@ -359,6 +449,52 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
         message={notification.message}
         onClose={() => setNotification({ ...notification, visible: false })}
       />
+
+      {/* Clear Cache Confirmation Modal */}
+      <Modal
+        visible={showClearCacheModal}
+        transparent
+        animationType="none"
+        onRequestClose={() => setShowClearCacheModal(false)}
+      >
+        <Animated.View style={[styles.confirmModalOverlay, clearCacheBackdropStyle]}>
+          <Animated.View style={[styles.confirmModalContainer, clearCacheModalStyle]}>
+            <View style={styles.confirmModalHandle} />
+            
+            <View style={styles.confirmModalHeader}>
+              <Text style={styles.confirmModalTitle}>
+                {safeT('profile.clearCacheConfirm', 'Cancella Cache')}
+              </Text>
+              <Text style={styles.confirmModalMessage}>
+                {safeT('profile.clearCacheMessage', 'Sei sicuro di voler cancellare tutti i dati temporanei? Questa azione non può essere annullata.')}
+              </Text>
+            </View>
+
+            <View style={styles.confirmModalButtons}>
+              <TouchableOpacity
+                style={[styles.confirmModalButton, styles.confirmModalCancelButton]}
+                onPress={() => setShowClearCacheModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.confirmModalButtonText, styles.confirmModalCancelText]}>
+                  {safeT('common.cancel', 'Annulla')}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.confirmModalButton, styles.confirmModalConfirmButton]}
+                onPress={handleClearCache}
+                activeOpacity={0.7}
+                disabled={isClearingCache}
+              >
+                <Text style={[styles.confirmModalButtonText, styles.confirmModalConfirmText]}>
+                  {isClearingCache ? safeT('profile.clearing', 'Cancellando...') : safeT('profile.clearCache', 'Cancella')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
     </Modal>
   );
 };
@@ -453,19 +589,28 @@ const getStyles = (colors: any) => StyleSheet.create({
     color: colors.textSecondary,
   },
   actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.divider,
   },
+  actionRowContent: {
+    flex: 1,
+  },
   actionText: {
     fontSize: 16,
-    color: colors.primary,
+    color: colors.text,
     marginBottom: 4,
     fontWeight: '500',
   },
   actionSubtext: {
     fontSize: 12,
     color: colors.textSecondary,
+  },
+  actionLoader: {
+    marginLeft: 12,
   },
   noticeContainer: {
     backgroundColor: colors.card,
@@ -550,5 +695,83 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 18,
+  },
+  // Clear Cache Confirmation Modal Styles (matching ShareModal design)
+  confirmModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  confirmModalContainer: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    minHeight: 200,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 34,
+  },
+  confirmModalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+    opacity: 0.6,
+  },
+  confirmModalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  confirmModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  confirmModalMessage: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  confirmModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  confirmModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  confirmModalCancelButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  confirmModalConfirmButton: {
+    backgroundColor: colors.error,
+  },
+  confirmModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmModalCancelText: {
+    color: colors.text,
+  },
+  confirmModalConfirmText: {
+    color: colors.buttonText,
   },
 });
