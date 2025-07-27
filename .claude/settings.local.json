@@ -30,7 +30,11 @@
       "Bash(npm audit:*)",
       "Bash(npm outdated)",
       "mcp__serena__read_memory",
-      "mcp__serena__replace_regex"
+      "mcp__serena__replace_regex",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(true)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

@@ -10,20 +10,22 @@ import { Switch } from 'react-native';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
-import { CameraScreen } from './src/components/CameraScreen';
-import { IngredientsScreen } from './src/components/IngredientsScreen';
-import { RecipeScreen } from './src/components/RecipeScreen';
-import { RecipesScreen } from './src/components/RecipesScreen';
-import { SavedScreen } from './src/components/SavedScreen';
-import { ProfileScreen } from './src/components/ProfileScreen';
-import { HomeScreen } from './src/components/HomeScreen';
-import { CookingModeScreen } from './src/components/CookingModeScreen';
-import { OnboardingScreen } from './src/components/OnboardingScreen';
-import { BottomNavigation, TabName } from './src/components/BottomNavigation';
-import { NotificationModal, NotificationType } from './src/components/NotificationModal';
-import { MaintenanceScreen } from './src/components/MaintenanceScreen';
-import { OTPInput } from './src/components/OTPInput';
-import { AnimatedContainer } from './src/components/AnimatedContainer';
+import { 
+  CameraScreen,
+  IngredientsScreen,
+  RecipeScreen,
+  RecipesScreen,
+  SavedScreen,
+  ProfileScreen,
+  HomeScreen,
+  CookingModeScreen,
+  OnboardingScreen,
+  MaintenanceScreen
+} from './src/components/screens';
+import { BottomNavigation } from './src/components/navigation';
+import type { TabName } from './src/components/navigation';
+import { NotificationModal, NotificationType } from './src/components/modals';
+import { OTPInput, AnimatedContainer } from './src/components/ui';
 import { checkBackendAvailability, BackendHealthMonitor } from './src/utils/healthCheck';
 import Svg, { Path, G, Circle } from 'react-native-svg';
 import './src/i18n';
