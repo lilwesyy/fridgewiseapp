@@ -172,7 +172,7 @@ export const generateRecipe = async (req: AuthRequest, res: Response<APIResponse
       ...generatedRecipe,
       ingredients: cleanedIngredients,
       userId: user._id,
-      originalIngredients: ingredients,
+      originalIngredients: ingredients.map((ing: any) => ing.name || ing),
       language: language || 'en',
       isSaved: false,
       // Normalize dietary tags to ensure they match the validation schema
@@ -340,6 +340,9 @@ export const saveRecipe = async (req: AuthRequest, res: Response<APIResponse<any
         }
         
         await recipe.save();
+
+        // Invalidate public recipes cache since this recipe might now be public
+        await CacheService.invalidatePublicRecipesCache();
 
         res.status(200).json({
           success: true,
@@ -869,6 +872,9 @@ export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse
     recipe.completionCount = (recipe.completionCount || 0) + 1;
     
     await recipe.save();
+
+    // Invalidate public recipes cache since this recipe is now public (cooked)
+    await CacheService.invalidatePublicRecipesCache();
 
     res.status(200).json({
       success: true,

@@ -10,7 +10,7 @@ export class CacheService {
 
   static async setPublicRecipes(page: number, limit: number, data: any, search?: string, sortBy?: string): Promise<void> {
     const key = `${cacheKeys.publicRecipes(page, limit)}:${search || 'all'}:${sortBy || 'recent'}`;
-    await redisService.setJSON(key, data, 900); // 15 minutes TTL (optimized from 5 minutes)
+    await redisService.setJSON(key, data, 300); // 5 minutes TTL (reduced for fresh content)
   }
 
   static async getUserRecipes(userId: string): Promise<any | null> {
@@ -103,7 +103,7 @@ export class CacheService {
     fetcher: () => Promise<any>
   ): Promise<any> {
     const key = `${cacheKeys.publicRecipes(page, limit)}:${search || 'all'}:${sortBy || 'recent'}`;
-    return await redisService.getOrSet(key, fetcher, 900); // 15 minutes TTL
+    return await redisService.getOrSet(key, fetcher, 300); // 5 minutes TTL
   }
 
   // Selective cache invalidation

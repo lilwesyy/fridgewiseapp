@@ -91,7 +91,7 @@ class ApiService {
         data: data.data || data,
       };
     } catch (error: any) {
-      console.error('API request failed:', error);
+      // console.error('API request failed:', error);
       return {
         success: false,
         error: error.message || 'Network error occurred',

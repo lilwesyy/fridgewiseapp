@@ -29,7 +29,7 @@ export const sanitizeInput = {
   },
 
   // Sanitize array input
-  array: (value: any, maxItems: number = 100): string[] => {
+  array: (value: any, maxItems: number = 100): any[] => {
     if (!Array.isArray(value)) {
       if (typeof value === 'string') {
         value = value.split(',');
@@ -39,8 +39,24 @@ export const sanitizeInput = {
     }
     return value
       .slice(0, maxItems)
-      .map((item: any) => sanitizeInput.string(item))
-      .filter((item: string) => item.length > 0);
+      .map((item: any) => {
+        if (typeof item === 'string') {
+          return sanitizeInput.string(item);
+        } else if (typeof item === 'object' && item !== null) {
+          return sanitizeInput.object(item);
+        } else if (typeof item === 'number') {
+          return item;
+        } else if (typeof item === 'boolean') {
+          return item;
+        }
+        return item;
+      })
+      .filter((item: any) => {
+        if (typeof item === 'string') {
+          return item.length > 0;
+        }
+        return item !== null && item !== undefined;
+      });
   },
 
   // Sanitize object to prevent prototype pollution

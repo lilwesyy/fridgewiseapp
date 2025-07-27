@@ -11,7 +11,9 @@
     "test": "jest",
     "create-indexes": "node src/scripts/createIndexes.js",
     "optimize-db": "node src/scripts/optimizeDatabase.js",
-    "rebuild-indexes": "node src/scripts/rebuildIndexes.js"
+    "rebuild-indexes": "node src/scripts/rebuildIndexes.js",
+    "cache:check": "ts-node src/scripts/cache-monitor.ts",
+    "cache:fix": "ts-node src/scripts/cache-monitor.ts --fix"
   },
   "keywords": [],
   "author": "",
