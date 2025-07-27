@@ -15,18 +15,6 @@ FridgeWise è un'applicazione mobile React Native sviluppata con Expo che utiliz
 
 ### ⚠️ Colli di Bottiglia delle Prestazioni
 
-**Ottimizzazione delle Dimensioni del Bundle**
-```javascript
-// Dipendenze attuali che potrebbero essere ottimizzate:
-- react-native-svg: Considerare l'uso di react-native-vector-icons invece
-- Moduli Expo multipli: Valutare se tutti sono necessari
-- File di costanti di animazione di grandi dimensioni
-```
-
-**Gestione della Memoria**
-- Nessun memory leak apparente nel codice rivisto
-- Pulizia appropriata negli hooks useEffect
-- Il caching degli avatar con cache-busting potrebbe essere migliorato
 
 **Duplicazione del Codice**
 - Pattern di styling simili ripetuti tra i componenti
@@ -99,7 +87,6 @@ accessible={true}
 **Linee Guida App Store**
 - Necessari video di anteprima dell'app
 - Manca configurazione rating per età
-- Nessuna configurazione in-app purchase (se necessaria)
 - Necessario verificare conformità alle linee guida sui contenuti
 
 **Requisiti di Sicurezza**

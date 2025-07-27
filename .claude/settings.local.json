@@ -34,7 +34,8 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(true)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__serena__replace_symbol_body"
     ],
     "deny": []
   }

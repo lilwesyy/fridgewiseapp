@@ -735,51 +735,137 @@
     "lastUpdated": "Ultimo aggiornamento",
     "dataCollection": {
       "title": "Raccolta Dati",
-      "content": "Raccogliamo informazioni per fornire e migliorare i nostri servizi. Questo include:",
-      "account": "Informazioni account (email, nome, preferenze)",
-      "ingredients": "Foto degli ingredienti e dati di riconoscimento",
-      "recipes": "Preferenze ricette e ricette salvate",
-      "preferences": "Restrizioni dietetiche e preferenze di cucina",
-      "usage": "Statistiche di utilizzo app e analisi"
+      "content": "FridgeWise raccoglie informazioni necessarie per fornire raccomandazioni di ricette personalizzate e migliorare i nostri servizi di riconoscimento ingredienti basati su IA. Questo include:",
+      "account": "Informazioni account: indirizzo email, nome visualizzato, preferenze dietetiche e livello di competenza culinaria",
+      "ingredients": "Foto degli ingredienti (elaborate localmente, solo dati anonimizzati inviati ai server), risultati di riconoscimento e feedback di validazione",
+      "recipes": "Preferenze ricette, ricette salvate, cronologia di cottura, valutazioni e modifiche alle ricette",
+      "preferences": "Restrizioni dietetiche, informazioni su allergeni, preferenze culinarie e impostazioni di accessibilità",
+      "usage": "Analisi dell'uso dell'app, dati di interazione con le funzionalità, log degli errori e metriche delle prestazioni (anonimizzati)",
+      "device": "Tipo di dispositivo, versione del sistema operativo, versione dell'app e identificatori del dispositivo (solo per analisi)",
+      "location": "Posizione approssimativa (città/regione) per suggerimenti regionali di ricette (opzionale, può essere disabilitata)"
     },
     "dataUse": {
       "title": "Come Utilizziamo i Tuoi Dati",
-      "content": "Le tue informazioni vengono utilizzate per:",
-      "personalization": "Personalizzare raccomandazioni di ricette",
-      "aiAnalysis": "Migliorare il riconoscimento IA degli ingredienti",
-      "improvement": "Migliorare funzionalità e prestazioni dell'app",
-      "support": "Fornire supporto clienti"
+      "content": "Le tue informazioni personali sono utilizzate esclusivamente per i seguenti scopi:",
+      "personalization": "Personalizzare raccomandazioni di ricette basate sulle tue preferenze dietetiche, ingredienti disponibili e cronologia di cottura",
+      "aiAnalysis": "Migliorare la precisione del riconoscimento IA degli ingredienti attraverso machine learning (utilizzando solo dati anonimizzati)",
+      "improvement": "Migliorare le funzionalità dell'app, ottimizzazione delle prestazioni e miglioramenti dell'esperienza utente",
+      "support": "Fornire supporto clienti, risolvere problemi tecnici e rispondere alle tue richieste",
+      "security": "Rilevare e prevenire attività fraudolente, garantire la sicurezza dell'account e mantenere l'integrità della piattaforma",
+      "legal": "Rispettare gli obblighi legali e far rispettare i nostri Termini di Servizio",
+      "communication": "Inviare aggiornamenti importanti del servizio, notifiche di sicurezza e comunicazioni relative all'account"
     },
     "dataSharing": {
-      "title": "Condivisione Dati",
-      "content": "Potremmo condividere dati limitati con:",
-      "ai": "Fornitori servizi IA per riconoscimento ingredienti",
-      "usda": "USDA FoodData Central per validazione ingredienti",
-      "noSale": "Non vendiamo mai le tue informazioni personali"
+      "title": "Condivisione Dati con Terze Parti",
+      "content": "FridgeWise mantiene politiche rigorose di condivisione dati. Potremmo condividere dati limitati e anonimizzati con:",
+      "ai": "Fornitori di servizi IA (OpenAI, Google Vision API) per riconoscimento ingredienti - solo immagini elaborate, nessun identificatore personale",
+      "usda": "API USDA FoodData Central per validazione informazioni nutrizionali - nessun dato personale condiviso",
+      "analytics": "Fornitori di analisi (Firebase Analytics) per metriche delle prestazioni dell'app - solo dati di utilizzo anonimizzati",
+      "cloud": "Fornitori di infrastrutture cloud (AWS, Google Cloud) per archiviazione e elaborazione sicura dei dati",
+      "legal": "Autorità di polizia o regolatorie quando richiesto dalla legge o per proteggere la sicurezza degli utenti",
+      "noSale": "Non vendiamo, affittiamo o scambiamo mai le tue informazioni personali a terze parti per scopi di marketing",
+      "consent": "Qualsiasi condivisione aggiuntiva di dati richiede il tuo consenso esplicito"
     },
     "dataSecurity": {
-      "title": "Sicurezza dei Dati",
-      "content": "Implementiamo misure di sicurezza standard del settore per proteggere i tuoi dati, inclusa crittografia, server sicuri e audit di sicurezza regolari."
+      "title": "Sicurezza e Protezione dei Dati",
+      "content": "FridgeWise implementa misure di sicurezza complete per proteggere le tue informazioni personali:",
+      "encryption": "Crittografia end-to-end per la trasmissione dati e crittografia AES-256 per i dati a riposo",
+      "access": "Controlli di accesso rigorosi con permessi basati su ruoli e autenticazione multi-fattore per il nostro team",
+      "infrastructure": "Infrastruttura cloud sicura con audit di sicurezza regolari e valutazioni delle vulnerabilità",
+      "monitoring": "Monitoraggio della sicurezza 24/7 e sistemi automatizzati di rilevamento delle minacce",
+      "updates": "Aggiornamenti e patch di sicurezza regolari per mantenere i più alti standard di protezione",
+      "breach": "Protocolli di notifica immediata nell'improbabile caso di violazione dei dati",
+      "compliance": "Conformità agli standard del settore inclusi i requisiti GDPR, CCPA e COPPA"
     },
     "userRights": {
-      "title": "I Tuoi Diritti",
-      "content": "Hai il diritto di:",
-      "access": "Accedere ai tuoi dati personali",
-      "modify": "Modificare o correggere le tue informazioni",
-      "delete": "Eliminare il tuo account e dati",
-      "portability": "Esportare i tuoi dati"
+      "title": "I Tuoi Diritti sulla Privacy",
+      "content": "Secondo le leggi sulla privacy inclusi GDPR e CCPA, hai i seguenti diritti:",
+      "access": "Accedere e rivedere tutti i dati personali che abbiamo raccolto su di te",
+      "modify": "Correggere, aggiornare o modificare le tue informazioni personali in qualsiasi momento",
+      "delete": "Richiedere l'eliminazione completa del tuo account e di tutti i dati personali associati",
+      "portability": "Esportare i tuoi dati in un formato leggibile dalla macchina per trasferirli a un altro servizio",
+      "restrict": "Limitare o opporsi a certi tipi di elaborazione dati",
+      "withdraw": "Ritirare il consenso per l'elaborazione dati che richiede il tuo consenso",
+      "complain": "Presentare un reclamo presso la tua autorità locale di protezione dati",
+      "response": "Risponderemo a tutte le richieste sui diritti di privacy entro 30 giorni"
     },
     "cookies": {
-      "title": "Cookie e Tracciamento",
-      "content": "Utilizziamo un tracciamento minimo per analisi e funzionalità dell'app. Puoi gestire le preferenze nelle impostazioni del dispositivo."
+      "title": "Cookie e Tecnologie di Tracciamento",
+      "content": "FridgeWise utilizza tecnologie di tracciamento limitate per migliorare la tua esperienza:",
+      "essential": "Cookie essenziali per la funzionalità dell'app, autenticazione utente e sicurezza",
+      "analytics": "Cookie analitici per comprendere i pattern di utilizzo dell'app e migliorare le prestazioni (opt-out disponibile)",
+      "preferences": "Cookie di preferenze per ricordare le tue impostazioni e restrizioni dietetiche",
+      "advertising": "NON utilizziamo cookie pubblicitari o tracciamo utenti per scopi di marketing",
+      "control": "Puoi controllare le preferenze sui cookie nelle impostazioni del dispositivo o dell'app",
+      "thirdParty": "Il tracciamento di terze parti è limitato solo ai fornitori di servizi essenziali"
+    },
+    "dataRetention": {
+      "title": "Politica di Conservazione Dati",
+      "content": "FridgeWise conserva i tuoi dati personali solo per il tempo necessario:",
+      "account": "Dati account: conservati finché il tuo account è attivo, eliminati entro 30 giorni dalla cancellazione dell'account",
+      "recipes": "Cronologia ricette e preferenze: conservate per 3 anni dopo l'ultimo accesso per migliorare le raccomandazioni",
+      "analytics": "Dati analitici anonimizzati: conservati fino a 2 anni per il miglioramento del servizio",
+      "legal": "Dati di conformità legale: conservati come richiesto dalle leggi applicabili (tipicamente 7 anni)",
+      "inactive": "Account inattivi: automaticamente eliminati dopo 3 anni di inattività con preavviso di 60 giorni",
+      "deletion": "Alla cancellazione dell'account, tutti i dati personali vengono rimossi permanentemente entro 30 giorni"
+    },
+    "dataDeletion": {
+      "title": "Procedure di Cancellazione Dati",
+      "content": "Puoi richiedere la cancellazione dei dati attraverso diversi metodi:",
+      "account": "Cancella il tuo intero account e tutti i dati attraverso Impostazioni > Account > Elimina Account",
+      "selective": "Cancella tipi specifici di dati (ricette, foto) attraverso la sezione gestione dati dell'app",
+      "request": "Invia email a privacy@fridgewiseai.com per richiedere cancellazioni specifiche di dati",
+      "verification": "Verifica identità richiesta per richieste di cancellazione fatte fuori dall'app",
+      "timeline": "La maggior parte dei dati cancellati immediatamente; backup eliminati entro 30 giorni",
+      "irreversible": "La cancellazione dell'account è irreversibile e non può essere annullata",
+      "retention": "Alcuni dati anonimizzati potrebbero essere conservati per conformità legale e prevenzione frodi"
+    },
+    "childrens": {
+      "title": "Privacy dei Minori (Conformità COPPA)",
+      "content": "FridgeWise si impegna a proteggere la privacy dei minori:",
+      "age": "Il nostro servizio non è destinato a bambini sotto i 13 anni",
+      "collection": "Non raccogliamo consapevolmente informazioni personali da bambini sotto i 13 anni",
+      "discovery": "Se scopriamo di aver raccolto dati da un bambino sotto i 13 anni, li elimineremo immediatamente",
+      "verification": "I genitori possono contattarci per verificare, rivedere o richiedere l'eliminazione delle informazioni del loro figlio",
+      "consent": "Per utenti 13-17 anni, raccomandiamo la supervisione e il consenso dei genitori prima di utilizzare il nostro servizio"
+    },
+    "international": {
+      "title": "Trasferimenti Internazionali di Dati",
+      "content": "I tuoi dati potrebbero essere elaborati in diversi paesi:",
+      "transfers": "I dati potrebbero essere trasferiti ed elaborati negli Stati Uniti, Unione Europea e altri paesi",
+      "protection": "Tutti i trasferimenti sono protetti da garanzie appropriate incluse le Clausole Contrattuali Standard",
+      "adequacy": "Trasferiamo dati solo a paesi con livelli adeguati di protezione dati o garanzie appropriate",
+      "rights": "I tuoi diritti sulla privacy rimangono protetti indipendentemente da dove vengono elaborati i tuoi dati"
+    },
+    "updates": {
+      "title": "Aggiornamenti della Politica",
+      "content": "Questa informativa sulla privacy può essere aggiornata periodicamente:",
+      "notification": "Gli utenti saranno notificati di cambiamenti significativi via email e notifiche in-app",
+      "review": "Raccomandiamo di rivedere regolarmente questa politica per eventuali aggiornamenti",
+      "continued": "L'uso continuato dell'app dopo i cambiamenti costituisce accettazione della politica aggiornata",
+      "version": "Cronologia versioni e log dei cambiamenti sono disponibili su richiesta"
     },
     "contact": {
-      "title": "Contattaci",
-      "content": "Per domande relative alla privacy o richieste, contattaci a:"
+      "title": "Informazioni di Contatto",
+      "content": "Per domande, preoccupazioni o richieste relative alla privacy, contattaci:",
+      "email": "Email: privacy@fridgewiseai.com",
+      "response": "Rispondiamo a tutte le richieste sulla privacy entro 48 ore",
+      "dpo": "Responsabile Protezione Dati: dpo@fridgewiseai.com",
+      "address": "Indirizzo Postale: FridgeWise Privacy Team, [Il Tuo Indirizzo Aziendale]"
     },
     "disclaimer": {
-      "title": "Avviso Importante",
-      "content": "Questa app fornisce suggerimenti di ricette basati sul riconoscimento degli ingredienti. Verifica sempre la sicurezza degli ingredienti e controlla gli allergeni prima di cucinare."
+      "title": "Importanti Disclaimer",
+      "content": "Si prega di leggere questi importanti avvisi riguardo al nostro servizio:",
+      "accuracy": "I suggerimenti di ricette sono basati sul riconoscimento IA degli ingredienti, che potrebbe non essere accurato al 100%",
+      "safety": "Verifica sempre la sicurezza degli ingredienti, date di scadenza e controlla gli allergeni prima di cucinare",
+      "medical": "FridgeWise non è un servizio medico e non dovrebbe essere utilizzato per consigli dietetici medici",
+      "allergies": "Gli utenti con allergie alimentari dovrebbero prestare estrema attenzione e consultare operatori sanitari",
+      "liability": "FridgeWise non è responsabile per reazioni avverse o problemi di salute derivanti da suggerimenti di ricette",
+      "professional": "Per esigenze dietetiche specifiche o condizioni mediche, consulta professionisti della nutrizione qualificati"
+    },
+    "effective": {
+      "title": "Data di Entrata in Vigore",
+      "content": "Questa Informativa sulla Privacy è in vigore dal 1 gennaio 2024 ed è stata aggiornata l'ultima volta il [Data Corrente]."
     }
   },
   "terms": {

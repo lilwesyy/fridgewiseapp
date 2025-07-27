@@ -96,6 +96,8 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <Text style={styles.bulletItem}>• {t('privacy.dataCollection.recipes')}</Text>
                   <Text style={styles.bulletItem}>• {t('privacy.dataCollection.preferences')}</Text>
                   <Text style={styles.bulletItem}>• {t('privacy.dataCollection.usage')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataCollection.device')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataCollection.location')}</Text>
                 </View>
               </Animated.View>
 
@@ -107,6 +109,9 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <Text style={styles.bulletItem}>• {t('privacy.dataUse.aiAnalysis')}</Text>
                   <Text style={styles.bulletItem}>• {t('privacy.dataUse.improvement')}</Text>
                   <Text style={styles.bulletItem}>• {t('privacy.dataUse.support')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataUse.security')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataUse.legal')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataUse.communication')}</Text>
                 </View>
               </Animated.View>
 
@@ -116,13 +121,26 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                 <View style={styles.bulletList}>
                   <Text style={styles.bulletItem}>• {t('privacy.dataSharing.ai')}</Text>
                   <Text style={styles.bulletItem}>• {t('privacy.dataSharing.usda')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSharing.analytics')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSharing.cloud')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSharing.legal')}</Text>
                   <Text style={styles.bulletItem}>• {t('privacy.dataSharing.noSale')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSharing.consent')}</Text>
                 </View>
               </Animated.View>
 
               <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
                 <Text style={styles.sectionTitle}>{t('privacy.dataSecurity.title')}</Text>
                 <Text style={styles.sectionText}>{t('privacy.dataSecurity.content')}</Text>
+                <View style={styles.bulletList}>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSecurity.encryption')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSecurity.access')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSecurity.infrastructure')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSecurity.monitoring')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSecurity.updates')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSecurity.breach')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataSecurity.compliance')}</Text>
+                </View>
               </Animated.View>
 
               <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
@@ -133,23 +151,111 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ visible,
                   <Text style={styles.bulletItem}>• {t('privacy.userRights.modify')}</Text>
                   <Text style={styles.bulletItem}>• {t('privacy.userRights.delete')}</Text>
                   <Text style={styles.bulletItem}>• {t('privacy.userRights.portability')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.userRights.restrict')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.userRights.withdraw')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.userRights.complain')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.userRights.response')}</Text>
                 </View>
               </Animated.View>
 
               <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
                 <Text style={styles.sectionTitle}>{t('privacy.cookies.title')}</Text>
                 <Text style={styles.sectionText}>{t('privacy.cookies.content')}</Text>
+                <View style={styles.bulletList}>
+                  <Text style={styles.bulletItem}>• {t('privacy.cookies.essential')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.cookies.analytics')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.cookies.preferences')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.cookies.advertising')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.cookies.control')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.cookies.thirdParty')}</Text>
+                </View>
+              </Animated.View>
+
+              <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
+                <Text style={styles.sectionTitle}>{t('privacy.dataRetention.title')}</Text>
+                <Text style={styles.sectionText}>{t('privacy.dataRetention.content')}</Text>
+                <View style={styles.bulletList}>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataRetention.account')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataRetention.recipes')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataRetention.analytics')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataRetention.legal')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataRetention.inactive')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataRetention.deletion')}</Text>
+                </View>
+              </Animated.View>
+
+              <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
+                <Text style={styles.sectionTitle}>{t('privacy.dataDeletion.title')}</Text>
+                <Text style={styles.sectionText}>{t('privacy.dataDeletion.content')}</Text>
+                <View style={styles.bulletList}>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataDeletion.account')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataDeletion.selective')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataDeletion.request')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataDeletion.verification')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataDeletion.timeline')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataDeletion.irreversible')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.dataDeletion.retention')}</Text>
+                </View>
+              </Animated.View>
+
+              <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
+                <Text style={styles.sectionTitle}>{t('privacy.childrens.title')}</Text>
+                <Text style={styles.sectionText}>{t('privacy.childrens.content')}</Text>
+                <View style={styles.bulletList}>
+                  <Text style={styles.bulletItem}>• {t('privacy.childrens.age')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.childrens.collection')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.childrens.discovery')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.childrens.verification')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.childrens.consent')}</Text>
+                </View>
+              </Animated.View>
+
+              <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
+                <Text style={styles.sectionTitle}>{t('privacy.international.title')}</Text>
+                <Text style={styles.sectionText}>{t('privacy.international.content')}</Text>
+                <View style={styles.bulletList}>
+                  <Text style={styles.bulletItem}>• {t('privacy.international.transfers')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.international.protection')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.international.adequacy')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.international.rights')}</Text>
+                </View>
+              </Animated.View>
+
+              <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
+                <Text style={styles.sectionTitle}>{t('privacy.updates.title')}</Text>
+                <Text style={styles.sectionText}>{t('privacy.updates.content')}</Text>
+                <View style={styles.bulletList}>
+                  <Text style={styles.bulletItem}>• {t('privacy.updates.notification')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.updates.review')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.updates.continued')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.updates.version')}</Text>
+                </View>
               </Animated.View>
 
               <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
                 <Text style={styles.sectionTitle}>{t('privacy.contact.title')}</Text>
                 <Text style={styles.sectionText}>{t('privacy.contact.content')}</Text>
-                <Text style={styles.contactInfo}>Email: info@fridgewiseai.com</Text>
+                <Text style={styles.contactInfo}>{t('privacy.contact.email')}</Text>
+                <Text style={styles.contactInfo}>{t('privacy.contact.dpo')}</Text>
+                <Text style={styles.sectionText}>{t('privacy.contact.response')}</Text>
               </Animated.View>
 
               <Animated.View style={[styles.disclaimerBox, sectionsAnimatedStyle]}>
                 <Text style={styles.disclaimerTitle}>{t('privacy.disclaimer.title')}</Text>
                 <Text style={styles.disclaimerText}>{t('privacy.disclaimer.content')}</Text>
+                <View style={styles.bulletList}>
+                  <Text style={styles.bulletItem}>• {t('privacy.disclaimer.accuracy')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.disclaimer.safety')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.disclaimer.medical')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.disclaimer.allergies')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.disclaimer.liability')}</Text>
+                  <Text style={styles.bulletItem}>• {t('privacy.disclaimer.professional')}</Text>
+                </View>
+              </Animated.View>
+
+              <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
+                <Text style={styles.sectionTitle}>{t('privacy.effective.title')}</Text>
+                <Text style={styles.sectionText}>{t('privacy.effective.content')}</Text>
               </Animated.View>
             </ScrollView>
           </Animated.View>

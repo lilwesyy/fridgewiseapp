@@ -712,51 +712,137 @@
     "lastUpdated": "Last updated",
     "dataCollection": {
       "title": "Data Collection",
-      "content": "We collect information to provide and improve our services. This includes:",
-      "account": "Account information (email, name, preferences)",
-      "ingredients": "Ingredient photos and recognition data",
-      "recipes": "Recipe preferences and saved recipes",
-      "preferences": "Dietary restrictions and cooking preferences",
-      "usage": "App usage statistics and analytics"
+      "content": "FridgeWise collects information necessary to provide personalized recipe recommendations and improve our AI-powered ingredient recognition services. This includes:",
+      "account": "Account information: email address, display name, dietary preferences, and cooking skill level",
+      "ingredients": "Ingredient photos (processed locally, only anonymized data sent to servers), recognition results, and validation feedback",
+      "recipes": "Recipe preferences, saved recipes, cooking history, ratings, and recipe modifications",
+      "preferences": "Dietary restrictions, allergen information, cuisine preferences, and accessibility settings",
+      "usage": "App usage analytics, feature interaction data, error logs, and performance metrics (anonymized)",
+      "device": "Device type, operating system version, app version, and device identifiers (for analytics only)",
+      "location": "Approximate location (city/region) for regional recipe suggestions (optional, can be disabled)"
     },
     "dataUse": {
       "title": "How We Use Your Data",
-      "content": "Your information is used to:",
-      "personalization": "Personalize recipe recommendations",
-      "aiAnalysis": "Improve AI ingredient recognition",
-      "improvement": "Enhance app functionality and performance",
-      "support": "Provide customer support"
+      "content": "Your personal information is used exclusively for the following purposes:",
+      "personalization": "Personalize recipe recommendations based on your dietary preferences, available ingredients, and cooking history",
+      "aiAnalysis": "Improve AI ingredient recognition accuracy through machine learning (using anonymized data only)",
+      "improvement": "Enhance app functionality, performance optimization, and user experience improvements",
+      "support": "Provide customer support, troubleshoot technical issues, and respond to your inquiries",
+      "security": "Detect and prevent fraudulent activity, ensure account security, and maintain platform integrity",
+      "legal": "Comply with legal obligations and enforce our Terms of Service",
+      "communication": "Send important service updates, security notifications, and account-related communications"
     },
     "dataSharing": {
-      "title": "Data Sharing",
-      "content": "We may share limited data with:",
-      "ai": "AI service providers for ingredient recognition",
-      "usda": "USDA FoodData Central for ingredient validation",
-      "noSale": "We never sell your personal information"
+      "title": "Third-Party Data Sharing",
+      "content": "FridgeWise maintains strict data sharing policies. We may share limited, anonymized data with:",
+      "ai": "AI service providers (OpenAI, Google Vision API) for ingredient recognition - only processed images, no personal identifiers",
+      "usda": "USDA FoodData Central API for nutritional information validation - no personal data shared",
+      "analytics": "Analytics providers (Firebase Analytics) for app performance metrics - anonymized usage data only",
+      "cloud": "Cloud infrastructure providers (AWS, Google Cloud) for secure data storage and processing",
+      "legal": "Law enforcement or regulatory authorities when required by law or to protect user safety",
+      "noSale": "We never sell, rent, or trade your personal information to third parties for marketing purposes",
+      "consent": "Any additional data sharing requires your explicit consent"
     },
     "dataSecurity": {
-      "title": "Data Security",
-      "content": "We implement industry-standard security measures to protect your data, including encryption, secure servers, and regular security audits."
+      "title": "Data Security & Protection",
+      "content": "FridgeWise implements comprehensive security measures to protect your personal information:",
+      "encryption": "End-to-end encryption for data transmission and AES-256 encryption for data at rest",
+      "access": "Strict access controls with role-based permissions and multi-factor authentication for our team",
+      "infrastructure": "Secure cloud infrastructure with regular security audits and vulnerability assessments",
+      "monitoring": "24/7 security monitoring and automated threat detection systems",
+      "updates": "Regular security updates and patches to maintain the highest protection standards",
+      "breach": "Immediate notification protocols in the unlikely event of a data breach",
+      "compliance": "Compliance with industry standards including GDPR, CCPA, and COPPA requirements"
     },
     "userRights": {
-      "title": "Your Rights",
-      "content": "You have the right to:",
-      "access": "Access your personal data",
-      "modify": "Modify or correct your information",
-      "delete": "Delete your account and data",
-      "portability": "Export your data"
+      "title": "Your Privacy Rights",
+      "content": "Under privacy laws including GDPR and CCPA, you have the following rights:",
+      "access": "Access and review all personal data we have collected about you",
+      "modify": "Correct, update, or modify your personal information at any time",
+      "delete": "Request complete deletion of your account and all associated personal data",
+      "portability": "Export your data in a machine-readable format for transfer to another service",
+      "restrict": "Restrict or object to certain types of data processing",
+      "withdraw": "Withdraw consent for data processing that requires your consent",
+      "complain": "File a complaint with your local data protection authority",
+      "response": "We will respond to all privacy rights requests within 30 days"
     },
     "cookies": {
-      "title": "Cookies and Tracking",
-      "content": "We use minimal tracking for analytics and app functionality. You can manage preferences in your device settings."
+      "title": "Cookies and Tracking Technologies",
+      "content": "FridgeWise uses limited tracking technologies to enhance your experience:",
+      "essential": "Essential cookies for app functionality, user authentication, and security",
+      "analytics": "Analytics cookies to understand app usage patterns and improve performance (opt-out available)",
+      "preferences": "Preference cookies to remember your settings and dietary restrictions",
+      "advertising": "We do NOT use advertising cookies or track users for marketing purposes",
+      "control": "You can control cookie preferences in your device settings or app preferences",
+      "thirdParty": "Third-party tracking is limited to essential service providers only"
+    },
+    "dataRetention": {
+      "title": "Data Retention Policy",
+      "content": "FridgeWise retains your personal data only as long as necessary:",
+      "account": "Account data: Retained while your account is active, deleted within 30 days of account deletion",
+      "recipes": "Recipe history and preferences: Retained for 3 years after last login to improve recommendations",
+      "analytics": "Anonymized analytics data: Retained for up to 2 years for service improvement",
+      "legal": "Legal compliance data: Retained as required by applicable laws (typically 7 years)",
+      "inactive": "Inactive accounts: Automatically deleted after 3 years of inactivity with 60-day advance notice",
+      "deletion": "Upon account deletion, all personal data is permanently removed within 30 days"
+    },
+    "dataDeletion": {
+      "title": "Data Deletion Procedures",
+      "content": "You can request data deletion through multiple methods:",
+      "account": "Delete your entire account and all data through Settings > Account > Delete Account",
+      "selective": "Delete specific data types (recipes, photos) through the app's data management section",
+      "request": "Email privacy@fridgewiseai.com to request specific data deletion",
+      "verification": "Identity verification required for deletion requests made outside the app",
+      "timeline": "Most data deleted immediately; backups purged within 30 days",
+      "irreversible": "Account deletion is irreversible and cannot be undone",
+      "retention": "Some anonymized data may be retained for legal compliance and fraud prevention"
+    },
+    "childrens": {
+      "title": "Children's Privacy (COPPA Compliance)",
+      "content": "FridgeWise is committed to protecting children's privacy:",
+      "age": "Our service is not intended for children under 13 years of age",
+      "collection": "We do not knowingly collect personal information from children under 13",
+      "discovery": "If we discover we have collected data from a child under 13, we will delete it immediately",
+      "verification": "Parents can contact us to verify, review, or request deletion of their child's information",
+      "consent": "For users 13-17, we recommend parental guidance and consent before using our service"
+    },
+    "international": {
+      "title": "International Data Transfers",
+      "content": "Your data may be processed in different countries:",
+      "transfers": "Data may be transferred to and processed in the United States, European Union, and other countries",
+      "protection": "All transfers are protected by appropriate safeguards including Standard Contractual Clauses",
+      "adequacy": "We only transfer data to countries with adequate data protection levels or proper safeguards",
+      "rights": "Your privacy rights remain protected regardless of where your data is processed"
+    },
+    "updates": {
+      "title": "Policy Updates",
+      "content": "This privacy policy may be updated periodically:",
+      "notification": "Users will be notified of significant changes via email and in-app notifications",
+      "review": "We recommend reviewing this policy regularly for any updates",
+      "continued": "Continued use of the app after changes constitutes acceptance of the updated policy",
+      "version": "Version history and change logs are available upon request"
     },
     "contact": {
-      "title": "Contact Us",
-      "content": "For privacy-related questions or requests, contact us at:"
+      "title": "Contact Information",
+      "content": "For privacy-related questions, concerns, or requests, contact us:",
+      "email": "Email: privacy@fridgewiseai.com",
+      "response": "We respond to all privacy inquiries within 48 hours",
+      "dpo": "Data Protection Officer: dpo@fridgewiseai.com",
+      "address": "Mailing Address: FridgeWise Privacy Team, [Your Business Address]"
     },
     "disclaimer": {
-      "title": "Important Notice",
-      "content": "This app provides recipe suggestions based on ingredient recognition. Always verify ingredient safety and check for allergens before cooking."
+      "title": "Important Disclaimers",
+      "content": "Please read these important notices regarding our service:",
+      "accuracy": "Recipe suggestions are based on AI ingredient recognition, which may not be 100% accurate",
+      "safety": "Always verify ingredient safety, expiration dates, and check for allergens before cooking",
+      "medical": "FridgeWise is not a medical service and should not be used for dietary medical advice",
+      "allergies": "Users with food allergies should exercise extreme caution and consult healthcare providers",
+      "liability": "FridgeWise is not liable for adverse reactions or health issues resulting from recipe suggestions",
+      "professional": "For specific dietary needs or medical conditions, consult qualified nutrition professionals"
+    },
+    "effective": {
+      "title": "Effective Date",
+      "content": "This Privacy Policy is effective as of January 1, 2024, and was last updated on [Current Date]."
     }
   },
   "terms": {

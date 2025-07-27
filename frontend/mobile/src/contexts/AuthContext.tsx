@@ -129,7 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const { user, token } = data.data;
-      const userWithCacheBusting = addCacheBustingToAvatar(user);
+      const userWithCacheBusting = addCacheBustingToAvatar(user, true); // Force refresh on login/register
       
       // Store in AsyncStorage
       if (token) {
@@ -172,7 +172,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const { user, token } = data.data;
-      const userWithCacheBusting = addCacheBustingToAvatar(user);
+      const userWithCacheBusting = addCacheBustingToAvatar(user, true); // Force refresh on login/register
       
       // Store in AsyncStorage
       if (token) {
@@ -224,19 +224,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Helper function to add cache busting to avatar URL
-  const addCacheBustingToAvatar = (user: any) => {
+  const addCacheBustingToAvatar = (user: any, forceRefresh = false) => {
     if (user?.avatar?.url) {
-      const timestamp = Date.now();
-      return {
-        ...user,
-        avatar: {
-          ...user.avatar,
-          url: `${user.avatar.url}?v=${timestamp}`
-        }
-      };
+      // Only update cache busting when avatar actually changes or force refresh is requested
+      const shouldUpdateCache = forceRefresh || !user.avatar.cachedVersion;
+      
+      if (shouldUpdateCache) {
+        const version = user.avatar.version || Date.now();
+        return {
+          ...user,
+          avatar: {
+            ...user.avatar,
+            url: `${user.avatar.url}?v=${version}`,
+            cachedVersion: version
+          }
+        };
+      }
     }
     return user;
-  };
+  };;
 
   const uploadAvatar = async (imageUri: string) => {
     try {
@@ -264,7 +270,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(result.error || 'Avatar upload failed');
       }
 
-      const updatedUser = addCacheBustingToAvatar(result.data);
+      const updatedUser = addCacheBustingToAvatar(result.data, true); // Force refresh on avatar upload/delete
       
       // Update stored user
       await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
@@ -285,7 +291,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(result.error || 'Avatar deletion failed');
       }
 
-      const updatedUser = addCacheBustingToAvatar(result.data);
+      const updatedUser = addCacheBustingToAvatar(result.data, true); // Force refresh on avatar upload/delete
       
       // Update stored user
       await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
