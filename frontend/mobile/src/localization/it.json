@@ -315,7 +315,7 @@
     "rateLimitTitle": "Troppe Richieste di Ricette",
     "dailyLimitReached": "Limite Giornaliero Raggiunto",
     "dailyLimitMessage": "Hai raggiunto il limite giornaliero di 3 generazioni di ricette. Riprova domani!",
-    "generateRecipe": "Genera Ricetta",
+    "generateRecipe": "Genera",
     "generating": "Generando ricetta...",
     "generatingTitle": "Creando la Tua Ricetta",
     "analyzingIngredients": "Analizzando ingredienti...",
@@ -352,9 +352,14 @@
     "cookingError": "Errore nell'iniziare la cottura",
     "preferences": {
       "title": "Preferenze Ricetta",
+      "subtitle": "Personalizza la tua ricetta",
+      "servings": "Porzioni", 
+      "servingsDescription": "Per quante persone sarà questa ricetta?",
       "portions": "Porzioni",
       "difficulty": "Difficoltà",
-      "maxTime": "Tempo Massimo di Cottura"
+      "difficultyDescription": "Che livello di difficoltà preferisci per questa ricetta?",
+      "maxTime": "Tempo Massimo di Cottura",
+      "maxTimeDescription": "Qual è il tempo massimo che vuoi dedicare alla cottura?"
     },
     "aiGenerated": "Ricetta Generata da IA",
     "aiDisclaimerText": "Questa ricetta è stata generata dall'intelligenza artificiale. Verifica sempre le istruzioni di cottura, gli ingredienti e le informazioni sugli allergeni prima di preparare.",

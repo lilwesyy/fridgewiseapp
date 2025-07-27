@@ -11,6 +11,7 @@ import {
   ScrollView,
   SafeAreaView,
   Keyboard,
+  Dimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,6 +31,8 @@ import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS } 
 import { handleRateLimitError, extractErrorFromResponse } from '../utils/rateLimitHandler';
 import { DailyUsageIndicator } from './DailyUsageIndicator';
 import { useDailyUsage } from '../hooks/useDailyUsage';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 interface Ingredient {
   name: string;
@@ -124,8 +127,9 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [portions, setPortions] = useState('2');
-  const [difficulty, setDifficulty] = useState('easy');
-  const [maxTime, setMaxTime] = useState('30');
+  const [difficulty, setDifficulty] = useState('');
+  const [maxTime, setMaxTime] = useState('');
+  const [currentStep, setCurrentStep] = useState(0);
   const [searchResults, setSearchResults] = useState<USDAIngredient[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -138,6 +142,136 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   });
   
   const { canGenerateRecipe, usage, refresh: refreshUsage } = useDailyUsage();
+  
+  // Step wizard logic
+  const isLastStep = currentStep === 2;
+  const canProceedToNextStep = (() => {
+    switch (currentStep) {
+      case 0: return portions !== '';
+      case 1: return difficulty !== '';
+      case 2: return maxTime !== '';
+      default: return false;
+    }
+  })();
+  
+  const handleNext = () => {
+    if (currentStep < 2 && canProceedToNextStep) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+  
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+  
+  const resetModal = () => {
+    // Start exit animation first
+    modalOpacity.value = withTiming(0, { 
+      duration: ANIMATION_DURATIONS.MODAL,
+      easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+    });
+    modalTranslateY.value = withSpring(1000, {
+      damping: 35,
+      stiffness: 400,
+      mass: 1
+    });
+    
+    // Close modal after animation completes
+    setTimeout(() => {
+      setCurrentStep(0);
+      setPortions('2');
+      setDifficulty('');
+      setMaxTime('');
+      setShowPreferencesModal(false);
+    }, ANIMATION_DURATIONS.MODAL);
+  };
+  
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 0: return t('recipe.preferences.servings');
+      case 1: return t('recipe.preferences.difficulty');
+      case 2: return t('recipe.preferences.maxTime');
+      default: return '';
+    }
+  };
+  
+  const getStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <View style={styles.stepContent}>
+            <Text style={styles.stepDescription}>{t('recipe.preferences.servingsDescription')}</Text>
+            <View style={styles.servingsContainer}>
+              {['2', '4', '6', '8'].map((num) => (
+                <TouchableOpacity
+                  key={num}
+                  style={[
+                    styles.servingButton,
+                    portions === num && styles.servingButtonSelected
+                  ]}
+                  onPress={() => setPortions(num)}
+                >
+                  <Text style={[
+                    styles.servingButtonText,
+                    portions === num && styles.servingButtonTextSelected
+                  ]}>{num}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        );
+      case 1:
+        return (
+          <View style={styles.stepContent}>
+            <Text style={styles.stepDescription}>{t('recipe.preferences.difficultyDescription')}</Text>
+            <View style={styles.difficultyContainer}>
+              {['easy', 'medium', 'hard'].map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[
+                    styles.difficultyButton,
+                    difficulty === level && styles.difficultyButtonSelected
+                  ]}
+                  onPress={() => setDifficulty(level)}
+                >
+                  <Text style={[
+                    styles.difficultyButtonText,
+                    difficulty === level && styles.difficultyButtonTextSelected
+                  ]}>{t(`recipe.difficulty.${level}`)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        );
+      case 2:
+        return (
+          <View style={styles.stepContent}>
+            <Text style={styles.stepDescription}>{t('recipe.preferences.maxTimeDescription')}</Text>
+            <View style={styles.timeContainer}>
+              {['15', '30', '45', '60', '90', '120'].map((time) => (
+                <TouchableOpacity
+                  key={time}
+                  style={[
+                    styles.timeButton,
+                    maxTime === time && styles.timeButtonSelected
+                  ]}
+                  onPress={() => setMaxTime(time)}
+                >
+                  <Text style={[
+                    styles.timeButtonText,
+                    maxTime === time && styles.timeButtonTextSelected
+                  ]}>{time} min</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -152,6 +286,10 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   
   const footerOpacity = useSharedValue(0);
   const footerTranslateY = useSharedValue(50);
+
+  // Modal animation values (RatingModal style)
+  const modalTranslateY = useSharedValue(1000); // Start from bottom like RatingModal
+  const modalOpacity = useSharedValue(0);
 
   // Entrance animations
   useEffect(() => {
@@ -172,6 +310,23 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
     footerOpacity.value = withDelay(450, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     footerTranslateY.value = withDelay(450, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
   }, []);
+
+  // Modal animation effect (RatingModal style)
+  useEffect(() => {
+    if (showPreferencesModal) {
+      // Reset animation values and start entrance animation
+      modalTranslateY.value = 1000;
+      modalOpacity.value = 0;
+      
+      // iOS sheet presentation timing
+      modalOpacity.value = withTiming(1, { 
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      });
+      modalTranslateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
+    }
+    // Note: Exit animation is handled manually in resetModal to avoid conflicts
+  }, [showPreferencesModal]);
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -194,6 +349,15 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   const footerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: footerOpacity.value,
     transform: [{ translateY: footerTranslateY.value }],
+  }));
+
+  // Modal animated styles (RatingModal style)
+  const modalBackdropStyle = useAnimatedStyle(() => ({
+    opacity: modalOpacity.value,
+  }));
+
+  const modalStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: modalTranslateY.value }],
   }));
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
@@ -490,107 +654,92 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       )}
 
       {/* Recipe Preferences Modal */}
-      <Modal
-        visible={showPreferencesModal}
-        animationType="none"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowPreferencesModal(false)}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity activeOpacity={0.7} 
-              style={styles.modalCloseButton} 
-              onPress={() => setShowPreferencesModal(false)}
-            >
-              <Text style={styles.modalCloseText}>×</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>{t('recipe.preferences.title')}</Text>
-            <View style={styles.modalSpacer} />
-          </View>
-
-          <View style={{ flex: 1, paddingBottom: 100 }}>
-            <ScrollView 
-              style={styles.modalContent}
-              contentContainerStyle={styles.modalContentContainer}
-            >
-            {/* Portions */}
-            <View style={styles.preferenceSection}>
-              <Text style={styles.preferenceLabel}>{t('recipe.preferences.portions')}</Text>
-              <View style={styles.portionsContainer}>
-                {['1', '2', '3', '4', '6', '8'].map((num) => (
-                  <TouchableOpacity activeOpacity={0.7}
-                    key={num}
-                    style={[
-                      styles.portionButton,
-                      portions === num && styles.portionButtonSelected
-                    ]}
-                    onPress={() => setPortions(num)}
-                  >
-                    <Text style={[
-                      styles.portionButtonText,
-                      portions === num && styles.portionButtonTextSelected
-                    ]}>{num}</Text>
-                  </TouchableOpacity>
-                ))}
+      {showPreferencesModal && (
+        <Modal
+          visible={showPreferencesModal}
+          transparent
+          animationType="none"
+          onRequestClose={() => setShowPreferencesModal(false)}
+        >
+          <Animated.View style={[styles.modalOverlay, modalBackdropStyle]}>
+            <Animated.View style={[styles.modalContainer, modalStyle]}>
+              <View style={styles.modalHandle} />
+              
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {getStepTitle()}
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  {t('recipe.preferences.subtitle')}
+                </Text>
+                
+                {/* Step Indicator */}
+                <View style={styles.stepIndicator}>
+                  {[0, 1, 2].map((step) => (
+                    <View
+                      key={step}
+                      style={[
+                        styles.stepDot,
+                        currentStep >= step && styles.stepDotActive
+                      ]}
+                    />
+                  ))}
+                </View>
               </View>
-            </View>
 
-            {/* Difficulty */}
-            <View style={styles.preferenceSection}>
-              <Text style={styles.preferenceLabel}>{t('recipe.preferences.difficulty')}</Text>
-              <View style={styles.difficultyContainer}>
-                {['easy', 'medium', 'hard'].map((level) => (
-                  <TouchableOpacity activeOpacity={0.7}
-                    key={level}
-                    style={[
-                      styles.difficultyButton,
-                      difficulty === level && styles.difficultyButtonSelected
-                    ]}
-                    onPress={() => setDifficulty(level)}
+              <ScrollView 
+                style={styles.modalContent} 
+                showsVerticalScrollIndicator={false}
+              >
+                {getStepContent()}
+              </ScrollView>
+
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={resetModal}
+                  disabled={isGenerating}
+                >
+                  <Text style={[styles.buttonText, styles.cancelButtonText]}>
+                    {t('common.cancel')}
+                  </Text>
+                </TouchableOpacity>
+                
+                {currentStep > 0 && (
+                  <TouchableOpacity
+                    style={[styles.button, styles.modalBackButton]}
+                    onPress={handleBack}
+                    disabled={isGenerating}
                   >
-                    <Text style={[
-                      styles.difficultyButtonText,
-                      difficulty === level && styles.difficultyButtonTextSelected
-                    ]}>{t(`recipe.difficulty.${level}`)}</Text>
+                    <Text style={[styles.buttonText, styles.modalBackButtonText]}>
+                      {t('common.back')}
+                    </Text>
                   </TouchableOpacity>
-                ))}
+                )}
+                
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.submitButton,
+                    (!canProceedToNextStep || (isLastStep && (!canGenerateRecipe || isGenerating))) && styles.submitButtonDisabled
+                  ]}
+                  onPress={isLastStep ? generateRecipe : handleNext}
+                  disabled={!canProceedToNextStep || (isLastStep && (!canGenerateRecipe || isGenerating))}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    styles.submitButtonText,
+                    (!canProceedToNextStep || (isLastStep && (!canGenerateRecipe || isGenerating))) && styles.submitButtonTextDisabled
+                  ]}>
+                    {isLastStep ? (isGenerating ? t('recipe.generating') : t('recipe.generateRecipe')) : t('common.next')}
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </View>
-
-            {/* Max Time */}
-            <View style={styles.preferenceSection}>
-              <Text style={styles.preferenceLabel}>{t('recipe.preferences.maxTime')}</Text>
-              <View style={styles.timeContainer}>
-                {['15', '30', '45', '60', '90', '120'].map((time) => (
-                  <TouchableOpacity activeOpacity={0.7}
-                    key={time}
-                    style={[
-                      styles.timeButton,
-                      maxTime === time && styles.timeButtonSelected
-                    ]}
-                    onPress={() => setMaxTime(time)}
-                  >
-                    <Text style={[
-                      styles.timeButtonText,
-                      maxTime === time && styles.timeButtonTextSelected
-                    ]}>{time} min</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-            </ScrollView>
-          </View>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity activeOpacity={0.7}
-              style={styles.generateModalButton}
-              onPress={generateRecipe}
-            >
-              <Text style={styles.generateModalButtonText}>{t('recipe.generateRecipe')}</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </Modal>
+            </Animated.View>
+          </Animated.View>
+        </Modal>
+      )}
       
       <RecipeGenerationLoader visible={isGenerating} />
       
@@ -833,43 +982,56 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 16,
     marginTop: 10,
   },
-  modalContainer: {
+  // Modal styles (RatingModal style)
+  modalOverlay: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: screenHeight * 0.8,
+    minHeight: screenHeight * 0.5,
+    shadowColor: colors.shadow || '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 34,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+    opacity: 0.6,
   },
   modalHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  modalCloseButton: {
-    padding: 10,
-  },
-  modalCloseText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.primary,
+    marginBottom: 24,
   },
   modalTitle: {
-    flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
+    marginBottom: 8,
   },
-  modalSpacer: {
-    width: 44,
+  modalSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   modalContent: {
     flex: 1,
-  },
-  modalContentContainer: {
-    padding: 20,
+    paddingHorizontal: 24,
   },
   preferenceSection: {
     marginBottom: 30,
@@ -908,15 +1070,19 @@ const getStyles = (colors: any) => StyleSheet.create({
     color: colors.buttonText,
   },
   difficultyContainer: {
-    gap: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
   },
   difficultyButton: {
     backgroundColor: colors.surface,
     borderWidth: 2,
     borderColor: colors.inputBorder,
     borderRadius: 8,
-    paddingVertical: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     alignItems: 'center',
+    minWidth: 90,
   },
   difficultyButtonSelected: {
     borderColor: colors.success,
@@ -933,7 +1099,9 @@ const getStyles = (colors: any) => StyleSheet.create({
   timeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 10,
   },
   timeButton: {
     backgroundColor: colors.surface,
@@ -956,31 +1124,112 @@ const getStyles = (colors: any) => StyleSheet.create({
   timeButtonTextSelected: {
     color: colors.buttonText,
   },
-  modalFooter: {
-    position: 'absolute',
-    top: '85%', // Posizionato più in basso
-    left: 0,
-    right: 0,
-    padding: 20,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 999,
+  // Button styles (RatingModal style)
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
   },
-  generateModalButton: {
-    backgroundColor: colors.success,
-    borderRadius: 8,
-    paddingVertical: 15,
+  button: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  cancelButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  submitButton: {
+    backgroundColor: colors.primary,
+  },
+  submitButtonDisabled: {
+    backgroundColor: colors.border,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButtonText: {
+    color: colors.text,
+  },
+  submitButtonText: {
+    color: colors.buttonText,
+  },
+  submitButtonTextDisabled: {
+    color: colors.textSecondary,
+  },
+  // Step wizard styles
+  stepIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+  },
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+  },
+  stepDotActive: {
+    backgroundColor: colors.primary,
+  },
+  stepContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  stepDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+    paddingHorizontal: 20,
+  },
+  // Update existing servings container to match new structure
+  servingsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  servingButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  generateModalButtonText: {
-    color: colors.buttonText,
+  servingButtonSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  servingButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: colors.text,
+  },
+  servingButtonTextSelected: {
+    color: colors.buttonText,
+  },
+  // Back button styles for modal
+  modalBackButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalBackButtonText: {
+    color: colors.text,
   },
 });

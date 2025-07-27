@@ -58,7 +58,7 @@
   },
   "recipe": {
     "title": "Recipe",
-    "generateRecipe": "Generate Recipe",
+    "generateRecipe": "Generate",
     "generating": "Generating recipe...",
     "ingredients": "Ingredients",
     "instructions": "Instructions",
