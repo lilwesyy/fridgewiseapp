@@ -58,7 +58,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
   const headerOpacity = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
   const sectionsOpacity = useSharedValue(0);
-  
+
   // Clear cache modal animation values
   const clearCacheModalTranslateY = useSharedValue(screenHeight);
   const clearCacheModalOpacity = useSharedValue(0);
@@ -69,10 +69,10 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
       headerOpacity.value = 0;
       contentOpacity.value = 0;
       sectionsOpacity.value = 0;
-      
+
       // iOS easing curve
       const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-      
+
       // Entrance animations
       headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
       contentOpacity.value = withDelay(100, withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing }));
@@ -84,14 +84,14 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
   useEffect(() => {
     if (showClearCacheModal) {
       // iOS sheet presentation timing
-      clearCacheModalOpacity.value = withTiming(1, { 
+      clearCacheModalOpacity.value = withTiming(1, {
         duration: ANIMATION_DURATIONS.MODAL,
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
       });
       clearCacheModalTranslateY.value = withSpring(0, SPRING_CONFIGS.MODAL);
     } else {
       // iOS sheet dismissal - faster opacity, slower slide for natural feel
-      clearCacheModalOpacity.value = withTiming(0, { 
+      clearCacheModalOpacity.value = withTiming(0, {
         duration: ANIMATION_DURATIONS.MODAL,
         easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
       });
@@ -138,7 +138,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    
+
     saveTimeoutRef.current = setTimeout(async () => {
       setIsUpdating(true);
       try {
@@ -162,7 +162,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
     }, 1000);
   };
 
-  const handleLanguageChange = (language: string) => {
+  const handleLanguageChange = (language: 'en' | 'it') => {
     const updates = { ...preferences, preferredLanguage: language };
     setPreferences(updates);
     i18n.changeLanguage(language);
@@ -179,10 +179,10 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
     try {
       // Get cache stats before clearing
       const stats = await imageCacheService.getCacheStats();
-      
+
       // Clear the image cache
       await imageCacheService.clearCache();
-      
+
       // Show success notification with stats
       const sizeInMB = (stats.totalSize / (1024 * 1024)).toFixed(1);
       setNotification({
@@ -267,8 +267,8 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
         </Animated.View>
 
         <Animated.View style={[styles.content, contentAnimatedStyle]}>
-          <ScrollView 
-            style={styles.scrollContainer} 
+          <ScrollView
+            style={styles.scrollContainer}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -278,9 +278,9 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               <Text style={styles.sectionTitle}>
                 {safeT('profile.languageSettings', 'Language Settings')}
               </Text>
-              
-              <TouchableOpacity activeOpacity={0.7} 
-                style={styles.languageOption} 
+
+              <TouchableOpacity activeOpacity={0.7}
+                style={styles.languageOption}
                 onPress={() => handleLanguageChange('en')}
               >
                 <View style={styles.languageOptionContent}>
@@ -294,9 +294,9 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
                   {preferences.preferredLanguage === 'en' && <View style={styles.radioButtonInner} />}
                 </View>
               </TouchableOpacity>
-              
-              <TouchableOpacity activeOpacity={0.7} 
-                style={styles.languageOption} 
+
+              <TouchableOpacity activeOpacity={0.7}
+                style={styles.languageOption}
                 onPress={() => handleLanguageChange('it')}
               >
                 <View style={styles.languageOptionContent}>
@@ -317,7 +317,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               <Text style={styles.sectionTitle}>
                 {safeT('profile.notificationSettings', 'Notification Settings')}
               </Text>
-              
+
               <PreferenceRow
                 title={safeT('profile.pushNotifications', 'Push Notifications')}
                 subtitle={safeT('profile.pushNotificationsDesc', 'Receive notifications about new recipes and updates')}
@@ -325,7 +325,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               >
                 <Switch
                   value={preferences.notifications}
-                  onValueChange={() => {}}
+                  onValueChange={() => { }}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="white"
                   disabled
@@ -339,7 +339,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               >
                 <Switch
                   value={false}
-                  onValueChange={() => {}}
+                  onValueChange={() => { }}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="white"
                   disabled
@@ -352,7 +352,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               <Text style={styles.sectionTitle}>
                 {safeT('profile.appBehavior', 'App Behavior')}
               </Text>
-              
+
               <PreferenceRow
                 title={safeT('profile.autoSave', 'Auto-save Profile Changes')}
                 subtitle={safeT('profile.autoSaveDesc', 'Automatically save changes to your profile')}
@@ -372,21 +372,21 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               <Text style={styles.sectionTitle}>
                 {safeT('profile.appearance', 'Appearance')}
               </Text>
-              
+
               <ThemeOption
                 title={safeT('profile.themeAuto', 'Automatic')}
                 subtitle={safeT('profile.themeAutoDesc', 'Follow system setting')}
                 isSelected={themeMode === 'auto'}
                 onPress={() => setThemeMode('auto')}
               />
-              
+
               <ThemeOption
                 title={safeT('profile.themeLight', 'Light')}
                 subtitle={safeT('profile.themeLightDesc', 'Always use light theme')}
                 isSelected={themeMode === 'light'}
                 onPress={() => setThemeMode('light')}
               />
-              
+
               <ThemeOption
                 title={safeT('profile.themeDark', 'Dark')}
                 subtitle={safeT('profile.themeDarkDesc', 'Always use dark theme')}
@@ -400,10 +400,10 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               <Text style={styles.sectionTitle}>
                 {safeT('profile.dataStorage', 'Data & Storage')}
               </Text>
-              
-              <TouchableOpacity 
-                activeOpacity={0.7} 
-                style={styles.actionRow} 
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={styles.actionRow}
                 onPress={handleClearCacheRequest}
                 disabled={isClearingCache}
               >
@@ -460,7 +460,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
         <Animated.View style={[styles.confirmModalOverlay, clearCacheBackdropStyle]}>
           <Animated.View style={[styles.confirmModalContainer, clearCacheModalStyle]}>
             <View style={styles.confirmModalHandle} />
-            
+
             <View style={styles.confirmModalHeader}>
               <Text style={styles.confirmModalTitle}>
                 {safeT('profile.clearCacheConfirm', 'Cancella Cache')}
@@ -480,7 +480,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
                   {safeT('common.cancel', 'Annulla')}
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.confirmModalButton, styles.confirmModalConfirmButton]}
                 onPress={handleClearCache}

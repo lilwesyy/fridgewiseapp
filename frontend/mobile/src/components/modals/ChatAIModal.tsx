@@ -87,16 +87,16 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
   const [errorModal, setErrorModal] = useState({ visible: false, message: '' });
   const [successModal, setSuccessModal] = useState({ visible: false, message: '' });
   const scrollViewRef = useRef<ScrollView>(null);
-  
+
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
   // Initialize chat with welcome message
   useEffect(() => {
     if (visible && messages.length === 0) {
       setMessages([
-        { 
-          role: 'assistant', 
-          content: `Ciao! Sono il tuo assistente culinario FridgeWise. Posso aiutarti a modificare la ricetta "${recipe?.title || 'questa ricetta'}" o rispondere a qualsiasi domanda sulla cucina. Come posso aiutarti?` 
+        {
+          role: 'assistant',
+          content: `Ciao! Sono il tuo assistente culinario FridgeWise. Posso aiutarti a modificare la ricetta "${recipe?.title || 'questa ricetta'}" o rispondere a qualsiasi domanda sulla cucina. Come posso aiutarti?`
         },
       ]);
     }
@@ -119,7 +119,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
         visible: true,
         message: t('chatAI.modificationsApplied')
       });
-      
+
       setTimeout(() => {
         setSuccessModal({ visible: false, message: '' });
       }, 2500);
@@ -128,7 +128,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    
+
     setIsSending(true);
     const userMessage = input.trim();
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
@@ -155,44 +155,44 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
 
       const data = await response.json();
       let messageContent = data.response || data.message || 'Risposta ricevuta.';
-      
+
       if (data.hasModifications && data.modifications && onRecipeUpdate) {
         const updatedRecipe = data.modifications;
-        
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
+
+        setMessages(prev => [...prev, {
+          role: 'assistant',
           content: messageContent,
           hasModifications: true,
           modifications: data.modifications,
           updatedRecipe: updatedRecipe
         }]);
       } else {
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
+        setMessages(prev => [...prev, {
+          role: 'assistant',
           content: messageContent
         }]);
       }
     } catch (error) {
       console.error('AI Chat error:', error);
-      
+
       const rateLimitNotification = handleRateLimitError(
-        error, 
+        error,
         t('rateLimit.aiChatLimit'),
-        () => sendMessage(),
+        () => handleSend(),
         t
       );
-      
+
       if (rateLimitNotification.type === 'warning') {
         // For rate limit errors, show as modal
-        setErrorModal({ 
-          visible: true, 
+        setErrorModal({
+          visible: true,
           message: rateLimitNotification.message
         });
       } else {
         // For other errors, use original error message
         const errorMessage = error instanceof Error ? error.message : 'Si è verificato un errore imprevisto.';
-        setErrorModal({ 
-          visible: true, 
+        setErrorModal({
+          visible: true,
           message: errorMessage
         });
       }
@@ -220,11 +220,11 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                 <View style={styles.headerLeft}>
                   <View style={styles.iconContainer}>
                     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                      <Path 
-                        d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" 
-                        stroke="#007AFF" 
-                        strokeWidth={2} 
-                        strokeLinecap="round" 
+                      <Path
+                        d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z"
+                        stroke="#007AFF"
+                        strokeWidth={2}
+                        strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                     </Svg>
@@ -236,11 +236,11 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                 </View>
                 <TouchableOpacity activeOpacity={0.7} onPress={handleClose} style={styles.closeButton}>
                   <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Path 
-                      d="M18 6L6 18M6 6L18 18" 
-                      stroke="#6c757d" 
-                      strokeWidth={2} 
-                      strokeLinecap="round" 
+                    <Path
+                      d="M18 6L6 18M6 6L18 18"
+                      stroke="#6c757d"
+                      strokeWidth={2}
+                      strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </Svg>
@@ -252,9 +252,9 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
             <View style={styles.aiDisclaimer}>
               <View style={styles.aiDisclaimerHeader}>
                 <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
-                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-                  <Path d="M12 8V16" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-                  <Path d="M8 12H16" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M12 8V16" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M8 12H16" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
                 <Text style={styles.aiDisclaimerTitle}>AI-Generated Content</Text>
               </View>
@@ -262,7 +262,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
             </View>
 
             {/* Messages */}
-            <ScrollView 
+            <ScrollView
               ref={scrollViewRef}
               style={styles.messagesContainer}
               contentContainerStyle={[styles.messagesContent, { paddingBottom: 100 }]}
@@ -284,18 +284,18 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                     ]}>
                       {msg.content}
                     </Text>
-                    
+
                     {msg.hasModifications && msg.updatedRecipe && (
-                      <TouchableOpacity activeOpacity={0.7} 
+                      <TouchableOpacity activeOpacity={0.7}
                         style={styles.modificationButton}
                         onPress={() => handleApplyModifications(msg.updatedRecipe)}
                       >
                         <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={styles.modificationIcon}>
-                          <Path 
-                            d="M20 6L9 17L4 12" 
-                            stroke="#28a745" 
-                            strokeWidth={2} 
-                            strokeLinecap="round" 
+                          <Path
+                            d="M20 6L9 17L4 12"
+                            stroke="#28a745"
+                            strokeWidth={2}
+                            strokeLinecap="round"
                             strokeLinejoin="round"
                           />
                         </Svg>
@@ -305,7 +305,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                   </View>
                 </View>
               ))}
-              
+
               {isSending && (
                 <View style={styles.aiMessageContainer}>
                   <View style={[styles.messageBubble, styles.aiMessage, styles.typingMessageBubble]}>
@@ -329,17 +329,17 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                   returnKeyType="send"
                   onSubmitEditing={handleSend}
                 />
-                <TouchableOpacity activeOpacity={0.7} 
-                  style={[styles.sendButton, (!input.trim() || isSending) && styles.sendButtonDisabled]} 
-                  onPress={handleSend} 
+                <TouchableOpacity activeOpacity={0.7}
+                  style={[styles.sendButton, (!input.trim() || isSending) && styles.sendButtonDisabled]}
+                  onPress={handleSend}
                   disabled={isSending || !input.trim()}
                 >
                   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                    <Path 
-                      d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" 
-                      stroke="#fff" 
-                      strokeWidth={2} 
-                      strokeLinecap="round" 
+                    <Path
+                      d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"
+                      stroke="#fff"
+                      strokeWidth={2}
+                      strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </Svg>
@@ -348,7 +348,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
             </View>
           </SafeAreaView>
         </KeyboardAvoidingView>
-        
+
         {/* Notifications */}
         <NotificationModal
           visible={errorModal.visible}
@@ -357,7 +357,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
           message={errorModal.message}
           onClose={() => setErrorModal({ visible: false, message: '' })}
         />
-        
+
         <NotificationModal
           visible={successModal.visible}
           type="success"
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
-  
+
   // Header styles
   header: {
     backgroundColor: '#fff',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   // Messages styles
   messagesContainer: {
     flex: 1,
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   typingMessageBubble: {
     paddingVertical: 8,
   },
-  
+
   // Typing indicator styles
   typingContainer: {
     flexDirection: 'row',
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     marginHorizontal: 2,
   },
-  
+
   // Modification button styles
   modificationButton: {
     flexDirection: 'row',
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  
+
   // Input styles
   inputContainer: {
     backgroundColor: '#fff',

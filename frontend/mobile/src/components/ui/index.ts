@@ -5,3 +5,4 @@ export { RecipeGenerationLoader } from './RecipeGenerationLoader';
 export { DailyUsageIndicator } from './DailyUsageIndicator';
 export { AnimatedContainer } from './AnimatedContainer';
 export { OTPInput } from './OTPInput';
+export { ErrorBoundary, withErrorBoundary } from './ErrorBoundary';

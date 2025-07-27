@@ -10,6 +10,7 @@ import {
   Dimensions,
   Image,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -53,8 +54,13 @@ interface Recipe {
   language: 'en' | 'it';
   isSaved?: boolean;
   _id?: string;
-  dishPhoto?: string; // Cloudinary URL della foto del piatto
+  dishPhoto?: string; // Cloudinary URL della foto del piatto (legacy)
+  dishPhotos?: Array<{
+    url: string;
+    publicId: string;
+  }>; // Array of dish photos
   cookedAt?: string; // Data e ora in cui è stato cucinato
+  createdAt?: string; // Data e ora di creazione della ricetta
   nutrition?: {
     calories: number;
     protein: number;
@@ -640,7 +646,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   };
 
   const handleViewPhoto = (photoUrl?: string, photoIndex?: number) => {
-    if (recipe.dishPhotos?.length > 0) {
+    if (recipe.dishPhotos && recipe.dishPhotos.length > 0) {
       setPhotoViewIndex(photoIndex || 0);
       setShowImageViewer(true);
     }
@@ -680,7 +686,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         throw new Error('Recipe ID not found');
       }
 
-      const photoData = recipe.dishPhotos[photoToDelete];
+      const photoData = recipe.dishPhotos?.[photoToDelete];
       if (!photoData) {
         throw new Error('Photo not found');
       }
@@ -702,7 +708,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
       if (response.ok) {
         // Update local state by removing the photo
-        const updatedPhotos = recipe.dishPhotos.filter((_, index) => index !== photoToDelete);
+        const updatedPhotos = (recipe.dishPhotos || []).filter((_, index) => index !== photoToDelete);
         const updatedRecipe = {
           ...recipe,
           dishPhotos: updatedPhotos,
@@ -843,14 +849,14 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           {/* Dish Photos Section */}
           {(
             isPublic
-              ? (recipe.dishPhotos?.length > 0) // Per ricette pubbliche: mostra solo se ha foto
-              : (recipe.cookedAt || recipe.dishPhotos?.length > 0) // Per ricette personali: come prima
+              ? (recipe.dishPhotos && recipe.dishPhotos.length > 0) // Per ricette pubbliche: mostra solo se ha foto
+              : (recipe.cookedAt || (recipe.dishPhotos && recipe.dishPhotos.length > 0)) // Per ricette personali: come prima
           ) && (
               <View
                 key={`photos-section-${recipe.dishPhotos?.length || 0}-${forceUpdateCounter}`}
                 style={[styles.section, { backgroundColor: 'transparent', marginBottom: 8, paddingTop: 0 }]}
               >
-                {recipe.dishPhotos?.length > 0 ? (
+                {(recipe.dishPhotos?.length || 0) > 0 ? (
                   <View style={styles.photoSliderContainer}>
                     {/* Photo Slider */}
                     <ScrollView
@@ -936,7 +942,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                       ))}
 
                       {/* Add Photo Slide */}
-                      {!isPublic && !recipe.isPublicRecipe && recipe.dishPhotos.length < 3 && (
+                      {!isPublic && !recipe.isPublicRecipe && (recipe.dishPhotos?.length || 0) < 3 && (
                         <View style={styles.photoSlide}>
                           <TouchableOpacity
                             style={styles.addPhotoSlide}
@@ -1104,6 +1110,8 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
               {(() => {
                 // Use originalCreator if available (for saved public recipes), otherwise use userId
                 const creator = recipe.originalCreator || recipe.userId;
+                if (!creator) return null;
+
                 return (
                   <>
                     <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
@@ -1124,13 +1132,13 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                       </Text>
                       <Text style={[styles.userName, { color: colors.text }]}>
                         {creator.name || 'Chef'}
-                        {user && (creator._id === user.id || creator._id === user._id) && (
+                        {user && creator._id === user.id && (
                           <Text style={[styles.youLabel, { color: colors.primary }]}> ({t('common.you')})</Text>
                         )}
                       </Text>
                     </View>
                     <Text style={[styles.cookedDate, { color: colors.textSecondary }]}>
-                      {new Date(recipe.createdAt).toLocaleDateString()}
+                      {new Date(recipe.createdAt || Date.now()).toLocaleDateString()}
                     </Text>
                   </>
                 );
@@ -1258,11 +1266,11 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
               <View style={styles.dishPhotoContainer}>
                 <TouchableOpacity
                   style={styles.dishPhotoWrapper}
-                  onPress={handleViewPhoto}
+                  onPress={() => handleViewPhoto()}
                   activeOpacity={0.8}
                 >
                   <Image
-                    source={{ uri: recipe.dishPhoto.url }}
+                    source={{ uri: recipe.dishPhoto }}
                     style={[styles.dishPhotoLarge, { borderColor: colors.border }]}
                     resizeMode="cover"
                     testID="dish-photo-image"
@@ -1283,7 +1291,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                 <View style={styles.dishPhotoActions}>
                   <TouchableOpacity
                     style={[styles.photoActionButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={handleViewPhoto}
+                    onPress={() => handleViewPhoto()}
                   >
                     <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                       <Path
@@ -1405,9 +1413,9 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                     <Text style={[styles.userName, { color: colors.text }]}>
                       {userCooking.user.name || 'Chef'}
                       {(() => {
-                        const isCurrentUser = user && (userCooking.user._id === user.id || userCooking.user._id === user._id);
+                        const isCurrentUser = user && userCooking.user._id === user.id;
                         console.log('User comparison:', {
-                          currentUserId: user?.id || user?._id,
+                          currentUserId: user?.id,
                           cookingUserId: userCooking.user._id,
                           isCurrentUser
                         });
@@ -1593,10 +1601,10 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             // Update recipe with photo URL
             const updatedRecipe = {
               ...recipe,
-              dishPhoto: {
+              dishPhotos: [...(recipe.dishPhotos || []), {
                 url: result.url,
-                publicId: result.publicId
-              },
+                publicId: result.publicId || ''
+              }],
               cookedAt: recipe.cookedAt || new Date().toISOString(),
             };
             if (onRecipeUpdate) {

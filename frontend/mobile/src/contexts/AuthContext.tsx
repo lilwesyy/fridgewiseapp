@@ -13,6 +13,8 @@ interface User {
     url: string;
     publicId: string;
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthContextType {

@@ -9,11 +9,11 @@ interface OTPInputProps {
   autoFocus?: boolean;
 }
 
-export const OTPInput: React.FC<OTPInputProps> = ({ 
-  length, 
-  value, 
-  onChange, 
-  autoFocus = false 
+export const OTPInput: React.FC<OTPInputProps> = ({
+  length,
+  value,
+  onChange,
+  autoFocus = false
 }) => {
   const { colors } = useTheme();
   const [focusedIndex, setFocusedIndex] = useState<number | null>(autoFocus ? 0 : null);
@@ -34,13 +34,13 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   const handleChangeText = (text: string, index: number) => {
     // Only allow numbers
     const numericText = text.replace(/[^0-9]/g, '');
-    
+
     if (numericText.length > 1) {
       // Handle paste - distribute characters across inputs
       const pastedChars = numericText.slice(0, length);
       const newValue = pastedChars.padEnd(length, '').slice(0, length);
       onChange(newValue.replace(/ /g, ''));
-      
+
       // Focus on the next empty input after the pasted content, or last filled input
       const nextIndex = Math.min(pastedChars.length, length - 1);
       // Use setTimeout to ensure the state has updated before focusing
@@ -56,7 +56,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
       newValueArray[index] = numericText;
       const newValue = newValueArray.join('');
       onChange(newValue);
-      
+
       // Auto-focus next input
       if (numericText && index < length - 1) {
         inputs.current[index + 1]?.focus();
@@ -71,7 +71,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
         // If current input is empty, go to previous input
         inputs.current[index - 1]?.focus();
         setFocusedIndex(index - 1);
-        
+
         // Clear previous input
         const newValueArray = [...valueArray];
         newValueArray[index - 1] = '';
@@ -110,7 +110,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
       {valueArray.map((digit, index) => (
         <TextInput
           key={index}
-          ref={(ref) => (inputs.current[index] = ref)}
+          ref={(ref) => { inputs.current[index] = ref; }}
           style={[
             styles.input,
             focusedIndex === index && styles.inputFocused,

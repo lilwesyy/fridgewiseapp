@@ -91,27 +91,27 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       buttonTranslateY.value = 20;
 
       // Entrance animations with iOS timing
-      permissionOpacity.value = withTiming(1, { 
-        duration: ANIMATION_DURATIONS.MODAL, 
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      permissionOpacity.value = withTiming(1, {
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
       });
       permissionScale.value = withSpring(1, SPRING_CONFIGS.GENTLE);
-      permissionTranslateY.value = withTiming(0, { 
-        duration: ANIMATION_DURATIONS.MODAL, 
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      permissionTranslateY.value = withTiming(0, {
+        duration: ANIMATION_DURATIONS.MODAL,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
       });
-      
+
       // Icon animation with slight delay
       iconScale.value = withDelay(150, withSpring(1, SPRING_CONFIGS.BOUNCY));
-      
+
       // Buttons animation
-      buttonOpacity.value = withDelay(300, withTiming(1, { 
-        duration: ANIMATION_DURATIONS.FAST, 
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      buttonOpacity.value = withDelay(300, withTiming(1, {
+        duration: ANIMATION_DURATIONS.FAST,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
       }));
-      buttonTranslateY.value = withDelay(300, withTiming(0, { 
-        duration: ANIMATION_DURATIONS.FAST, 
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+      buttonTranslateY.value = withDelay(300, withTiming(0, {
+        duration: ANIMATION_DURATIONS.FAST,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
       }));
     }
   }, [permission, cameraError]);
@@ -122,28 +122,28 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       // Reset and animate loading state
       loadingOpacity.value = 0;
       spinnerRotation.value = 0;
-      
+
       setTimeout(() => {
         // Animate loading state
-        loadingOpacity.value = withTiming(1, { 
-          duration: ANIMATION_DURATIONS.FAST, 
-          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
+        loadingOpacity.value = withTiming(1, {
+          duration: ANIMATION_DURATIONS.FAST,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
         });
-        
+
         // Continuous spinner rotation
         spinnerRotation.value = withRepeat(
-          withTiming(360, { 
-            duration: ANIMATION_DURATIONS.LONG, 
-            easing: Easing.linear 
+          withTiming(360, {
+            duration: ANIMATION_DURATIONS.LONG,
+            easing: Easing.linear
           }),
           -1,
           false
         );
       }, 50);
     } else {
-      loadingOpacity.value = withTiming(0, { 
-        duration: ANIMATION_DURATIONS.FAST, 
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2) 
+      loadingOpacity.value = withTiming(0, {
+        duration: ANIMATION_DURATIONS.FAST,
+        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
       });
     }
   }, [permission, isCameraReady, cameraError]);
@@ -180,17 +180,17 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         <Animated.View style={[styles.permissionContent, permissionContainerStyle]}>
           <Animated.View style={[{ marginBottom: 24 }, iconAnimatedStyle]}>
             <Svg width={80} height={80} viewBox="0 0 48 48" fill="none">
-              <Rect x={8} y={12} width={32} height={24} rx={4} stroke={colors.error} strokeWidth={2.5} fill={colors.card}/>
-              <Rect x={22} y={18} width={4} height={8} rx={2} fill={colors.error}/>
-              <Rect x={22} y={28} width={4} height={4} rx={2} fill={colors.error}/>
-              <Path d="M16 12V8a8 8 0 0116 0v4" stroke={colors.error} strokeWidth={2.5} strokeLinecap="round"/>
+              <Rect x={8} y={12} width={32} height={24} rx={4} stroke={colors.error} strokeWidth={2.5} fill={colors.card} />
+              <Rect x={22} y={18} width={4} height={8} rx={2} fill={colors.error} />
+              <Rect x={22} y={28} width={4} height={4} rx={2} fill={colors.error} />
+              <Path d="M16 12V8a8 8 0 0116 0v4" stroke={colors.error} strokeWidth={2.5} strokeLinecap="round" />
             </Svg>
           </Animated.View>
           <Text style={[styles.permissionTitle, { color: colors.text }]}>{t('camera.error')}</Text>
           <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>{cameraError}</Text>
           <Animated.View style={buttonAnimatedStyle}>
-            <TouchableOpacity activeOpacity={0.7} 
-              style={[styles.permissionButton, { backgroundColor: colors.primary }]} 
+            <TouchableOpacity activeOpacity={0.7}
+              style={[styles.permissionButton, { backgroundColor: colors.primary }]}
               onPress={() => {
                 setCameraError(null);
                 setIsCameraReady(false);
@@ -198,8 +198,8 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
             >
               <Text style={[styles.permissionButtonText, { color: colors.buttonText }]}>{t('common.tryAgain')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.7} 
-              style={[styles.permissionButtonSecondary, { borderColor: colors.primary }]} 
+            <TouchableOpacity activeOpacity={0.7}
+              style={[styles.permissionButtonSecondary, { borderColor: colors.primary }]}
               onPress={onGoToManualInput}
             >
               <Text style={[styles.permissionButtonSecondaryText, { color: colors.primary }]}>{t('camera.manualInput')}</Text>
@@ -249,14 +249,14 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
           <Text style={[styles.permissionTitle, { color: colors.text }]}>{t('camera.permissionTitle')}</Text>
           <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>{t('camera.permissionMessage')}</Text>
           <Animated.View style={buttonAnimatedStyle}>
-            <TouchableOpacity activeOpacity={0.7} 
-              style={[styles.permissionButton, { backgroundColor: colors.primary }]} 
+            <TouchableOpacity activeOpacity={0.7}
+              style={[styles.permissionButton, { backgroundColor: colors.primary }]}
               onPress={requestPermission}
             >
               <Text style={[styles.permissionButtonText, { color: colors.buttonText }]}>{t('camera.enableCamera')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.7} 
-              style={[styles.permissionButtonSecondary, { borderColor: colors.primary }]} 
+            <TouchableOpacity activeOpacity={0.7}
+              style={[styles.permissionButtonSecondary, { borderColor: colors.primary }]}
               onPress={onGoToManualInput}
             >
               <Text style={[styles.permissionButtonSecondaryText, { color: colors.primary }]}>{t('camera.manualInputInstead')}</Text>
@@ -289,6 +289,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         type: 'error',
         title: 'Error',
         message: 'Camera is not ready yet. Please wait a moment.',
+        buttons: undefined,
       });
       return;
     }
@@ -303,13 +304,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       setIsCapturing(true);
       setCameraError(null);
       console.log('📸 Taking picture...');
-      
+
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
         base64: false,
         skipProcessing: false,
       });
-      
+
       if (photo && photo.uri) {
         console.log('✅ Photo captured:', photo.uri);
         setCapturedImage(photo.uri);
@@ -325,6 +326,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         type: 'error',
         title: 'Error',
         message: 'Failed to take picture. Please try again.',
+        buttons: undefined,
       });
     } finally {
       setIsCapturing(false);
@@ -343,62 +345,62 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
     if (Platform.OS !== 'web') {
       return true;
     }
-    
+
     // For web platform only
     return new Promise((resolve) => {
       if (typeof window === 'undefined' || typeof HTMLImageElement === 'undefined') {
         resolve(true);
         return;
       }
-      
+
       const image = new HTMLImageElement();
       image.crossOrigin = 'anonymous';
-      
+
       image.onload = () => {
         try {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          
+
           if (!ctx) {
             resolve(true);
             return;
           }
-          
+
           canvas.width = image.width;
           canvas.height = image.height;
           ctx.drawImage(image, 0, 0);
-          
+
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imageData.data;
-          
+
           let totalBrightness = 0;
           let pixelCount = 0;
-          
+
           for (let i = 0; i < data.length; i += 16) {
             const r = data[i];
             const g = data[i + 1];
             const b = data[i + 2];
-            
+
             const brightness = (r + g + b) / 3;
             totalBrightness += brightness;
             pixelCount++;
           }
-          
+
           const averageBrightness = totalBrightness / pixelCount;
           console.log('🔍 Image brightness analysis:', averageBrightness);
-          
+
           resolve(averageBrightness > 20);
         } catch (error) {
           console.log('⚠️ Canvas validation failed:', error);
           resolve(true);
         }
       };
-      
+
       image.onerror = () => {
         console.log('⚠️ Image load failed for validation');
         resolve(true);
       };
-      
+
       image.src = imageUri;
     });
   };
@@ -413,7 +415,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
     setIsAnalyzing(true);
     setCameraError(null);
     console.log('🔍 Starting image analysis:', uriToAnalyze);
-    
+
     // Validate image content before sending to backend
     try {
       const isValidImage = await validateImageContent(uriToAnalyze);
@@ -426,18 +428,18 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
     } catch (validationError) {
       console.log('⚠️ Image validation failed, proceeding anyway:', validationError);
     }
-    
+
     try {
       const formData = new FormData();
-      
+
       if (Platform.OS === 'web') {
         console.log('🌐 Web platform detected, converting to blob...');
-        
+
         try {
           const response = await fetch(uriToAnalyze);
           const blob = await response.blob();
           console.log('📄 Blob created:', blob.type, blob.size);
-          
+
           formData.append('image', blob, 'photo.jpg');
         } catch (blobError) {
           console.error('❌ Failed to create blob:', blobError);
@@ -467,30 +469,30 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
 
       const data = await response.json();
       const ingredients = data.data.ingredients || [];
-      
+
       // Filter out suspicious/generic results that might be false positives
       const filteredIngredients = ingredients.filter((ingredient: any) => {
         const name = ingredient.name?.toLowerCase() || '';
         const confidence = ingredient.confidence || 0;
-        
+
         // Filter out generic/suspicious ingredients with low confidence
         const suspiciousIngredients = [
           'dark chocolate', 'chocolate', 'candy', 'sweet', 'sugar',
           'brown', 'black', 'dark', 'food', 'ingredient', 'item',
           'product', 'thing', 'object', 'unknown'
         ];
-        
-        const isSuspicious = suspiciousIngredients.some(suspicious => 
+
+        const isSuspicious = suspiciousIngredients.some(suspicious =>
           name.includes(suspicious)
         );
-        
+
         // Only accept ingredients with decent confidence and not suspicious
         return confidence > 0.6 && !isSuspicious;
       });
-      
+
       console.log('🔍 Original ingredients:', ingredients.length);
       console.log('🔍 Filtered ingredients:', filteredIngredients.length);
-      
+
       if (filteredIngredients.length === 0) {
         console.log('⚠️ No valid ingredients found after filtering');
         setShowNoIngredientsModal(true);
@@ -500,9 +502,9 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
     } catch (error) {
       console.error('❌ Analysis error:', error);
       setCameraError('Analysis failed');
-      
+
       const rateLimitNotification = handleRateLimitError(
-        error, 
+        error,
         t('rateLimit.imageAnalysisLimit'),
         () => {
           setCameraError(null);
@@ -510,10 +512,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         },
         t
       );
-      
+
       // For rate limit errors, use the rate limit notification
       if (rateLimitNotification.type === 'warning') {
-        setNotification(rateLimitNotification);
+        setNotification({
+          ...rateLimitNotification,
+          buttons: rateLimitNotification.buttons || undefined,
+        });
       } else {
         // For other errors, use the original detailed notification with options
         setNotification({
@@ -554,7 +559,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   const handleCameraError = (error: any) => {
     console.error('❌ Camera error occurred:', error);
     setCameraError('Camera error occurred');
-    
+
     setNotification({
       visible: true,
       type: 'error',
@@ -571,7 +576,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
     try {
       setCameraError(null);
       console.log('📱 Opening gallery...');
-      
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
@@ -594,6 +599,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         type: 'error',
         title: 'Error',
         message: 'Failed to access gallery. Please try again or use camera.',
+        buttons: undefined,
       });
     }
   };
@@ -633,7 +639,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         <View style={styles.container}>
           <View style={styles.imageContainer}>
             <Image source={{ uri: capturedImage }} style={styles.capturedImage} />
-            
+
             {isAnalyzing && (
               <View style={styles.analysisOverlay}>
                 <ActivityIndicator size="large" color="#00C851" />
@@ -641,15 +647,15 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
               </View>
             )}
           </View>
-          
+
           {/* AI Recognition Disclaimer - Bottom Position */}
           {isAnalyzing && (
             <View style={styles.aiDisclaimerBottom}>
               <View style={styles.aiDisclaimerHeader}>
                 <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
-                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-                  <Path d="M12 8V16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-                  <Path d="M8 12H16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M12 8V16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M8 12H16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
                 <Text style={styles.aiDisclaimerTitle}>{t('camera.aiRecognition')}</Text>
               </View>
@@ -657,7 +663,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
             </View>
           )}
         </View>
-        
+
         <NoIngredientsModal
           visible={showNoIngredientsModal}
           onClose={handleCloseNoIngredientsModal}
@@ -674,106 +680,106 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
     <>
       <SafeAreaView style={styles.container}>
         <View style={styles.cameraWrapper}>
-        <CameraView
-          ref={cameraRef}
-          style={styles.camera}
-          facing={facing}
-          onCameraReady={() => {
-            console.log('📸 Camera ready callback triggered!');
-            // Non serviamo più questo callback perché settiamo isCameraReady quando i permessi sono granted
-          }}
-          onMountError={(error) => {
-            console.error('📸 Camera mount error:', error);
-            handleCameraError(error);
-          }}
-        />
-        
-        <View style={styles.overlay}>
-          <View style={styles.topBar}>
-            <TouchableOpacity activeOpacity={0.7} style={styles.backButton} onPress={onGoBack}>
-              <Text style={styles.backButtonText}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.title}>Camera</Text>
-            <TouchableOpacity activeOpacity={0.7} style={styles.manualButton} onPress={onGoToManualInput}>
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
-                  fill="white"
-                />
-              </Svg>
-            </TouchableOpacity>
-          </View>
-          
-          {!isCapturing && (
-            <View style={styles.bottomBar}>
-              <TouchableOpacity activeOpacity={0.7} style={styles.galleryButton} onPress={pickImageFromGallery}>
+          <CameraView
+            ref={cameraRef}
+            style={styles.camera}
+            facing={facing}
+            onCameraReady={() => {
+              console.log('📸 Camera ready callback triggered!');
+              // Non serviamo più questo callback perché settiamo isCameraReady quando i permessi sono granted
+            }}
+            onMountError={(error) => {
+              console.error('📸 Camera mount error:', error);
+              handleCameraError(error);
+            }}
+          />
+
+          <View style={styles.overlay}>
+            <View style={styles.topBar}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.backButton} onPress={onGoBack}>
+                <Text style={styles.backButtonText}>←</Text>
+              </TouchableOpacity>
+              <Text style={styles.title}>Camera</Text>
+              <TouchableOpacity activeOpacity={0.7} style={styles.manualButton} onPress={onGoToManualInput}>
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                   <Path
-                    d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
-                    stroke="white"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                  <Path
-                    d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z"
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
                     fill="white"
-                  />
-                  <Path
-                    d="M21 15L16 10L5 21"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-              </TouchableOpacity>
-              
-              <TouchableOpacity activeOpacity={0.7} style={styles.captureButton} onPress={takePicture}>
-                <View style={styles.captureButtonInner} />
-              </TouchableOpacity>
-              
-              <TouchableOpacity activeOpacity={0.7} style={styles.flipButton} onPress={toggleCameraFacing}>
-                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M17 2L20 5L17 8"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <Path
-                    d="M20 5H9A5 5 0 004 10V14"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <Path
-                    d="M7 22L4 19L7 16"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <Path
-                    d="M4 19H15A5 5 0 0020 14V10"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
                   />
                 </Svg>
               </TouchableOpacity>
             </View>
-          )}
-        </View>
+
+            {!isCapturing && (
+              <View style={styles.bottomBar}>
+                <TouchableOpacity activeOpacity={0.7} style={styles.galleryButton} onPress={pickImageFromGallery}>
+                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
+                      stroke="white"
+                      strokeWidth="2"
+                      fill="none"
+                    />
+                    <Path
+                      d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z"
+                      fill="white"
+                    />
+                    <Path
+                      d="M21 15L16 10L5 21"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                </TouchableOpacity>
+
+                <TouchableOpacity activeOpacity={0.7} style={styles.captureButton} onPress={takePicture}>
+                  <View style={styles.captureButtonInner} />
+                </TouchableOpacity>
+
+                <TouchableOpacity activeOpacity={0.7} style={styles.flipButton} onPress={toggleCameraFacing}>
+                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M17 2L20 5L17 8"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                    <Path
+                      d="M20 5H9A5 5 0 004 10V14"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                    <Path
+                      d="M7 22L4 19L7 16"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                    <Path
+                      d="M4 19H15A5 5 0 0020 14V10"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </Svg>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
       </SafeAreaView>
-      
+
       <NoIngredientsModal
         visible={showNoIngredientsModal}
         onClose={handleCloseNoIngredientsModal}
@@ -782,7 +788,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         onTryGallery={handleSelectFromGallery}
         onManualInput={handleManualInputFromModal}
       />
-      
+
       <NotificationModal
         visible={notification.visible}
         type={notification.type}

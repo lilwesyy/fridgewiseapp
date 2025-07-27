@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { cacheService, ApiCacheService } from './cacheService';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -6,12 +8,85 @@ interface ApiResponse<T = any> {
   error?: string;
 }
 
+interface RequestInterceptor {
+  onRequest?: (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
+  onRequestError?: (error: any) => any;
+}
+
+interface ResponseInterceptor {
+  onResponse?: (response: Response, data: any) => any;
+  onResponseError?: (error: any) => any;
+}
+
+interface RequestConfig {
+  url: string;
+  options: RequestInit;
+}
+
 class ApiService {
   private baseURL: string;
   private onUnauthorized?: () => void;
+  private requestInterceptors: RequestInterceptor[] = [];
+  private responseInterceptors: ResponseInterceptor[] = [];
+  private isOnline: boolean = true;
+  private cacheService: ApiCacheService;
 
   constructor() {
     this.baseURL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+    this.cacheService = new ApiCacheService(this);
+    this.setupNetworkMonitoring();
+    this.setupDefaultInterceptors();
+  }
+
+  private setupNetworkMonitoring() {
+    NetInfo.addEventListener(state => {
+      this.isOnline = state.isConnected ?? false;
+    });
+  }
+
+  private setupDefaultInterceptors() {
+    // Request interceptor for logging
+    this.addRequestInterceptor({
+      onRequest: (config) => {
+        console.log(`🔵 API Request: ${config.options.method || 'GET'} ${config.url}`);
+        return config;
+      },
+      onRequestError: (error) => {
+        console.error('🔴 Request Interceptor Error:', error);
+        throw error;
+      }
+    });
+
+    // Response interceptor for logging
+    this.addResponseInterceptor({
+      onResponse: (response, data) => {
+        console.log(`🟢 API Response: ${response.status} ${response.url}`);
+        return data;
+      },
+      onResponseError: (error) => {
+        console.error('🔴 Response Interceptor Error:', error);
+        throw error;
+      }
+    });
+  }
+
+  // Add request interceptor
+  addRequestInterceptor(interceptor: RequestInterceptor): number {
+    return this.requestInterceptors.push(interceptor) - 1;
+  }
+
+  // Add response interceptor
+  addResponseInterceptor(interceptor: ResponseInterceptor): number {
+    return this.responseInterceptors.push(interceptor) - 1;
+  }
+
+  // Remove interceptor by index
+  removeRequestInterceptor(index: number): void {
+    this.requestInterceptors.splice(index, 1);
+  }
+
+  removeResponseInterceptor(index: number): void {
+    this.responseInterceptors.splice(index, 1);
   }
 
   // Set callback for when user gets unauthorized
@@ -30,7 +105,7 @@ class ApiService {
 
   private async handleUnauthorized() {
     console.log('🚨 Unauthorized access detected - logging out user');
-    
+
     // Clear stored auth data
     try {
       await AsyncStorage.removeItem('auth_token');
@@ -50,12 +125,20 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
+      // Check network connectivity
+      if (!this.isOnline) {
+        return {
+          success: false,
+          error: 'No internet connection. Please check your network and try again.',
+        };
+      }
+
       const token = await this.getAuthToken();
       const url = `${this.baseURL}${endpoint}`;
 
-      const headers: HeadersInit = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers as Record<string, string> || {}),
       };
 
       // Add auth header if token exists
@@ -63,10 +146,29 @@ class ApiService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
+      // Apply request interceptors
+      let requestConfig: RequestConfig = {
+        url,
+        options: {
+          ...options,
+          headers,
+        }
+      };
+
+      for (const interceptor of this.requestInterceptors) {
+        if (interceptor.onRequest) {
+          try {
+            requestConfig = await interceptor.onRequest(requestConfig);
+          } catch (error) {
+            if (interceptor.onRequestError) {
+              interceptor.onRequestError(error);
+            }
+            throw error;
+          }
+        }
+      }
+
+      const response = await fetch(requestConfig.url, requestConfig.options);
 
       // Handle 401 Unauthorized
       if (response.status === 401) {
@@ -79,19 +181,44 @@ class ApiService {
 
       const data = await response.json();
 
+      // Apply response interceptors
+      let processedData = data;
+      for (const interceptor of this.responseInterceptors) {
+        if (interceptor.onResponse) {
+          try {
+            processedData = interceptor.onResponse(response, processedData) || processedData;
+          } catch (error) {
+            if (interceptor.onResponseError) {
+              interceptor.onResponseError(error);
+            }
+            throw error;
+          }
+        }
+      }
+
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || `HTTP ${response.status}: ${response.statusText}`,
+          error: processedData.error || `HTTP ${response.status}: ${response.statusText}`,
         };
       }
 
       return {
         success: true,
-        data: data.data || data,
+        data: processedData.data || processedData,
       };
     } catch (error: any) {
-      // console.error('API request failed:', error);
+      // Apply response error interceptors
+      for (const interceptor of this.responseInterceptors) {
+        if (interceptor.onResponseError) {
+          try {
+            interceptor.onResponseError(error);
+          } catch (interceptorError) {
+            console.error('Response interceptor error:', interceptorError);
+          }
+        }
+      }
+
       return {
         success: false,
         error: error.message || 'Network error occurred',
@@ -131,7 +258,7 @@ class ApiService {
       const token = await this.getAuthToken();
       const url = `${this.baseURL}${endpoint}`;
 
-      const headers: HeadersInit = {};
+      const headers: Record<string, string> = {};
 
       // Add auth header if token exists
       if (token) {
@@ -186,6 +313,70 @@ class ApiService {
 
   async getSecurityHeaders(): Promise<ApiResponse<any>> {
     return this.get('/api/security/headers-test');
+  }
+
+  // Cached API methods for better offline support
+  async getCached<T>(
+    endpoint: string,
+    cacheKey?: string,
+    ttl: number = 5 * 60 * 1000 // 5 minutes default
+  ): Promise<T | null> {
+    const key = cacheKey || `get_${endpoint.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    if (this.isOnline) {
+      return this.cacheService.getNetworkFirst(
+        key,
+        async () => {
+          const response = await this.get<T>(endpoint);
+          if (response.success) {
+            return response.data!;
+          }
+          throw new Error(response.error || 'API call failed');
+        },
+        { ttl }
+      );
+    } else {
+      // Offline - get from cache only
+      return cacheService.getStale<T>(key);
+    }
+  }
+
+  async getCacheFirst<T>(
+    endpoint: string,
+    cacheKey?: string,
+    ttl: number = 5 * 60 * 1000
+  ): Promise<T | null> {
+    const key = cacheKey || `get_${endpoint.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    return this.cacheService.getCacheFirst(
+      key,
+      async () => {
+        const response = await this.get<T>(endpoint);
+        if (response.success) {
+          return response.data!;
+        }
+        throw new Error(response.error || 'API call failed');
+      },
+      { ttl }
+    );
+  }
+
+  // Cache management methods
+  async clearCache(): Promise<void> {
+    await cacheService.clear();
+  }
+
+  async clearExpiredCache(): Promise<void> {
+    await cacheService.clearExpired();
+  }
+
+  async getCacheStats() {
+    return cacheService.getStats();
+  }
+
+  // Check if we're online
+  isConnected(): boolean {
+    return this.isOnline;
   }
 }
 

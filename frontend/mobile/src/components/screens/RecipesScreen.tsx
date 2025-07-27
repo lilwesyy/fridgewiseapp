@@ -184,7 +184,7 @@ interface RecipeItemProps {
 const RecipeItem: React.FC<RecipeItemProps> = (props) => {
   const { colors } = useTheme();
   const cardOpacity = useSharedValue(0);
-  
+
   // Helper function to determine if recipe is public (should show rating)
   const isRecipePublic = () => {
     return props.isPublic || (props.item.isSaved && ((props.item.dishPhotos && props.item.dishPhotos.length > 0) || props.item.cookedAt));
@@ -238,88 +238,88 @@ const RecipeItem: React.FC<RecipeItemProps> = (props) => {
         resetTrigger={props.resetTrigger}
       > */}
       <TouchableOpacity
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 16,
-            shadowColor: colors.shadow || '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
-          }}
-          onPress={props.onPress}
-          activeOpacity={0.7}
-        >
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 16,
+          shadowColor: colors.shadow || '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 2,
+        }}
+        onPress={props.onPress}
+        activeOpacity={0.7}
+      >
 
-          <View style={styles.recipeHeader}>
-            <Text style={[styles.recipeTitle, { color: colors.text }]} numberOfLines={2}>
-              {props.item.title}
-            </Text>
-            <View style={[styles.difficultyBadge, { backgroundColor: props.getDifficultyColor(props.item.difficulty) }]}>
-              <Text style={[styles.difficultyText, { color: colors.buttonText }]}>
-                {props.t(`recipes.difficulty.${props.item.difficulty}`)}
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.recipeDescription, { color: colors.textSecondary }]} numberOfLines={3}>
-            {props.item.description}
+        <View style={styles.recipeHeader}>
+          <Text style={[styles.recipeTitle, { color: colors.text }]} numberOfLines={2}>
+            {props.item.title}
           </Text>
-          <View style={styles.recipeMetadata}>
-            <View style={styles.metadataItem}>
-              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
-                {'⏱️'} {props.item.cookingTime} min
-              </Text>
-            </View>
-            <View style={styles.metadataItem}>
-              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
-                {'👥'} {props.item.servings}
-              </Text>
-            </View>
-            <View style={styles.metadataItem}>
-              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
-                {'🥘'} {props.item.ingredients?.length || 0} {props.t('recipe.ingredients')}
-              </Text>
-            </View>
-            {!!(props.item.completionCount && props.item.completionCount > 0) && (
-              <View style={styles.metadataItem}>
-                <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
-                  {'🍽️'} {props.item.completionCount}x {props.t('recipes.cooked')}
-                </Text>
-              </View>
-            )}
+          <View style={[styles.difficultyBadge, { backgroundColor: props.getDifficultyColor(props.item.difficulty) }]}>
+            <Text style={[styles.difficultyText, { color: colors.buttonText }]}>
+              {props.t(`recipes.difficulty.${props.item.difficulty}`)}
+            </Text>
           </View>
-          {!!(props.item.dietaryTags && props.item.dietaryTags.length > 0) && (
-            <View style={styles.dietaryTags}>
-              {props.item.dietaryTags.slice(0, 3).map((tag) => (
-                <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.badge || colors.card }]}>
-                  <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
-                    {props.t(`recipes.dietary.${tag.replace('-', '')}`)}
-                  </Text>
-                </View>
-              ))}
-              {!!(props.item.dietaryTags && props.item.dietaryTags.length > 3) && (
-                <Text style={[styles.moreTagsText, { color: colors.textSecondary }]}>+{props.item.dietaryTags.length - 3}</Text>
-              )}
+        </View>
+        <Text style={[styles.recipeDescription, { color: colors.textSecondary }]} numberOfLines={3}>
+          {props.item.description}
+        </Text>
+        <View style={styles.recipeMetadata}>
+          <View style={styles.metadataItem}>
+            <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
+              {'⏱️'} {props.item.cookingTime} min
+            </Text>
+          </View>
+          <View style={styles.metadataItem}>
+            <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
+              {'👥'} {props.item.servings}
+            </Text>
+          </View>
+          <View style={styles.metadataItem}>
+            <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
+              {'🥘'} {props.item.ingredients?.length || 0} {props.t('recipe.ingredients')}
+            </Text>
+          </View>
+          {!!(props.item.completionCount && props.item.completionCount > 0) && (
+            <View style={styles.metadataItem}>
+              <Text style={[styles.metadataLabel, { color: colors.textSecondary }]}>
+                {'🍽️'} {props.item.completionCount}x {props.t('recipes.cooked')}
+              </Text>
             </View>
           )}
-          <View style={styles.recipeFooter}>
-            <Text style={[styles.recipeDate, { color: colors.textSecondary }]}>{props.formatDate(props.item.createdAt)}</Text>
-            {isRecipePublic() && (
-              <View style={styles.ratingContainer}>
-                <StarRating 
-                  rating={props.item.averageRating || 0} 
-                  size={16} 
-                  color="#FFD700" 
-                  emptyColor="#E5E5E5" 
-                />
-                <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
-                  ({props.item.totalRatings || 0})
+        </View>
+        {!!(props.item.dietaryTags && props.item.dietaryTags.length > 0) && (
+          <View style={styles.dietaryTags}>
+            {props.item.dietaryTags.slice(0, 3).map((tag) => (
+              <View key={tag} style={[styles.dietaryTag, { backgroundColor: colors.card }]}>
+                <Text style={[styles.dietaryTagText, { color: colors.primary }]}>
+                  {props.t(`recipes.dietary.${tag.replace('-', '')}`)}
                 </Text>
               </View>
+            ))}
+            {!!(props.item.dietaryTags && props.item.dietaryTags.length > 3) && (
+              <Text style={[styles.moreTagsText, { color: colors.textSecondary }]}>+{props.item.dietaryTags.length - 3}</Text>
             )}
           </View>
+        )}
+        <View style={styles.recipeFooter}>
+          <Text style={[styles.recipeDate, { color: colors.textSecondary }]}>{props.formatDate(props.item.createdAt)}</Text>
+          {isRecipePublic() && (
+            <View style={styles.ratingContainer}>
+              <StarRating
+                rating={props.item.averageRating || 0}
+                size={16}
+                color="#FFD700"
+                emptyColor="#E5E5E5"
+              />
+              <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
+                ({props.item.totalRatings || 0})
+              </Text>
+            </View>
+          )}
+        </View>
       </TouchableOpacity>
       {/* </SwipeableRow> */}
     </Animated.View>
@@ -348,7 +348,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>([]);
   const [selectedImageTitle, setSelectedImageTitle] = useState('');
-  
+
   // Public collections state
   const [activeTab, setActiveTab] = useState<'my-recipes' | 'explore'>('my-recipes');
   const [publicRecipes, setPublicRecipes] = useState<any[]>([]);
@@ -357,7 +357,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   const [collectionsSearchQuery, setCollectionsSearchQuery] = useState('');
   const [publicDifficultyFilter, setPublicDifficultyFilter] = useState<string>('');
   const [publicTagFilter, setPublicTagFilter] = useState<string>('');
-  
+
   const dietaryTags = [
     'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'egg-free', 'low-carb', 'keto', 'paleo'
   ];
@@ -540,7 +540,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
       setFilteredPublicRecipes(recipes);
     } catch (error) {
       console.error('Error fetching public recipes:', error);
-      
+
       // Always show empty state for network errors, but log them
       console.log('Network error - showing empty state:', error instanceof Error ? error.message : String(error));
       setPublicRecipes([]);
@@ -708,7 +708,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         onPress={() => {
           onSelectRecipe(item, [item], 0, true); // true = is public
         }}
-        onDelete={() => {}} // No delete action for public recipes
+        onDelete={() => { }} // No delete action for public recipes
         onPhotoPress={handlePhotoPress}
         resetTrigger={resetTrigger}
         t={t}
@@ -724,10 +724,10 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
       <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>{t('recipes.title')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('recipes.subtitle')}</Text>
-        
+
         {/* Tab Selector */}
         <View style={styles.tabContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, activeTab === 'my-recipes' && { backgroundColor: colors.primary }]}
             onPress={() => setActiveTab('my-recipes')}
           >
@@ -735,7 +735,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
               {t('recipes.myRecipes')}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tab, activeTab === 'explore' && { backgroundColor: colors.primary }]}
             onPress={() => setActiveTab('explore')}
           >
@@ -761,102 +761,102 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         {/* Filters for both tabs */}
         <Animated.View style={filtersAnimatedStyle}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersScrollContent}>
-          {/* Difficoltà */}
-          <TouchableOpacity activeOpacity={0.7}
-            style={[styles.filterBadge, { 
-              backgroundColor: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.primary : colors.card, 
-              borderColor: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.primary : 'transparent' 
-            }]}
-            onPress={() => activeTab === 'my-recipes' ? setDifficultyFilter('') : setPublicDifficultyFilter('')}
-          >
-            <Text style={[styles.filterBadgeText, { 
-              color: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.buttonText : colors.text 
-            }]}>{t('common.all')}</Text>
-          </TouchableOpacity>
-          {['easy', 'medium', 'hard'].map(diff => (
+            {/* Difficoltà */}
             <TouchableOpacity activeOpacity={0.7}
-              key={diff}
-              style={[styles.filterBadge, { 
-                backgroundColor: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.primary : colors.card, 
-                borderColor: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.primary : 'transparent' 
+              style={[styles.filterBadge, {
+                backgroundColor: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.primary : colors.card,
+                borderColor: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.primary : 'transparent'
               }]}
-              onPress={() => activeTab === 'my-recipes' ? setDifficultyFilter(diff) : setPublicDifficultyFilter(diff)}
+              onPress={() => activeTab === 'my-recipes' ? setDifficultyFilter('') : setPublicDifficultyFilter('')}
             >
-              <Text style={[styles.filterBadgeText, { 
-                color: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.buttonText : colors.text 
-              }]}>{t(`recipes.difficulty.${diff}`)}</Text>
+              <Text style={[styles.filterBadgeText, {
+                color: !(activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) ? colors.buttonText : colors.text
+              }]}>{t('common.all')}</Text>
             </TouchableOpacity>
-          ))}
-          {/* Tag dietetici */}
-          {dietaryTags.map(tag => (
-            <TouchableOpacity activeOpacity={0.7}
-              key={tag}
-              style={[styles.filterBadge, { 
-                backgroundColor: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.primary : colors.card, 
-                borderColor: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.primary : 'transparent' 
-              }]}
-              onPress={() => activeTab === 'my-recipes' ? setTagFilter(tag) : setPublicTagFilter(tag)}
-            >
-              <Text style={[styles.filterBadgeText, { 
-                color: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.buttonText : colors.text 
-              }]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+            {['easy', 'medium', 'hard'].map(diff => (
+              <TouchableOpacity activeOpacity={0.7}
+                key={diff}
+                style={[styles.filterBadge, {
+                  backgroundColor: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.primary : colors.card,
+                  borderColor: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.primary : 'transparent'
+                }]}
+                onPress={() => activeTab === 'my-recipes' ? setDifficultyFilter(diff) : setPublicDifficultyFilter(diff)}
+              >
+                <Text style={[styles.filterBadgeText, {
+                  color: (activeTab === 'my-recipes' ? difficultyFilter : publicDifficultyFilter) === diff ? colors.buttonText : colors.text
+                }]}>{t(`recipes.difficulty.${diff}`)}</Text>
+              </TouchableOpacity>
+            ))}
+            {/* Tag dietetici */}
+            {dietaryTags.map(tag => (
+              <TouchableOpacity activeOpacity={0.7}
+                key={tag}
+                style={[styles.filterBadge, {
+                  backgroundColor: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.primary : colors.card,
+                  borderColor: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.primary : 'transparent'
+                }]}
+                onPress={() => activeTab === 'my-recipes' ? setTagFilter(tag) : setPublicTagFilter(tag)}
+              >
+                <Text style={[styles.filterBadgeText, {
+                  color: (activeTab === 'my-recipes' ? tagFilter : publicTagFilter) === tag ? colors.buttonText : colors.text
+                }]}>{t(`recipes.dietary.${tag.replace('-', '')}`)}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </Animated.View>
       </Animated.View>
 
       {activeTab === 'my-recipes' ? (
         filteredRecipes.length === 0 ? (
-        <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
-          <View style={{ marginBottom: 16 }}>
-            <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
-              <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card} />
-              <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary} />
-              <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.primary} />
-              <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.primary} />
-              <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.primary} />
-            </Svg>
-          </View>
-          {recipes.length === 0 ? (
-            <>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('recipes.noRecipes')}</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('recipes.startCreating')}</Text>
-              <TouchableOpacity activeOpacity={0.7} style={[styles.scanButton, { backgroundColor: colors.primary }]} onPress={onGoToCamera}>
-                <Text style={[styles.scanButtonText, { color: colors.buttonText }]}>{t('recipes.scanIngredients') || 'Scansiona Ingredienti'}</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {searchQuery ? t('recipes.noResults') : t('recipes.noRecipes')}
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                {searchQuery ? t('recipes.tryDifferentSearch') : t('recipes.startCreating')}
-              </Text>
-            </>
-          )}
-        </Animated.View>
-      ) : (
-        <Animated.View style={[{ flex: 1 }, listAnimatedStyle]}>
-          <FlatList
-            data={filteredRecipes}
-            renderItem={renderRecipe}
-            keyExtractor={(item) => (item as any)._id || item.id}
-            style={styles.recipesList}
-            showsVerticalScrollIndicator={false}
-            refreshing={isLoading}
-            onRefresh={fetchRecipes}
-            refreshControl={
-              <RefreshControl
-                refreshing={isLoading}
-                onRefresh={fetchRecipes}
-                colors={[colors.primary]}
-                tintColor={colors.primary}
-              />
-            }
-          />
-        </Animated.View>
+          <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
+            <View style={{ marginBottom: 16 }}>
+              <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
+                <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card} />
+                <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary} />
+                <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.primary} />
+                <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.primary} />
+                <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.primary} />
+              </Svg>
+            </View>
+            {recipes.length === 0 ? (
+              <>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('recipes.noRecipes')}</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('recipes.startCreating')}</Text>
+                <TouchableOpacity activeOpacity={0.7} style={[styles.scanButton, { backgroundColor: colors.primary }]} onPress={onGoToCamera}>
+                  <Text style={[styles.scanButtonText, { color: colors.buttonText }]}>{t('recipes.scanIngredients') || 'Scansiona Ingredienti'}</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                  {searchQuery ? t('recipes.noResults') : t('recipes.noRecipes')}
+                </Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                  {searchQuery ? t('recipes.tryDifferentSearch') : t('recipes.startCreating')}
+                </Text>
+              </>
+            )}
+          </Animated.View>
+        ) : (
+          <Animated.View style={[{ flex: 1 }, listAnimatedStyle]}>
+            <FlatList
+              data={filteredRecipes}
+              renderItem={renderRecipe}
+              keyExtractor={(item) => (item as any)._id || item.id}
+              style={styles.recipesList}
+              showsVerticalScrollIndicator={false}
+              refreshing={isLoading}
+              onRefresh={fetchRecipes}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isLoading}
+                  onRefresh={fetchRecipes}
+                  colors={[colors.primary]}
+                  tintColor={colors.primary}
+                />
+              }
+            />
+          </Animated.View>
         )
       ) : (
         // Public Collections Tab

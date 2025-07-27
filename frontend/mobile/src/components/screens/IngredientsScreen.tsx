@@ -133,20 +133,20 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
     title: '',
     message: '',
   });
-  
+
   const { canGenerateRecipe, usage, refresh: refreshUsage } = useDailyUsage();
 
   // Animation values
   const headerOpacity = useSharedValue(0);
   const headerScale = useSharedValue(0.8);
   const headerTranslateY = useSharedValue(-30);
-  
+
   const addSectionOpacity = useSharedValue(0);
   const addSectionTranslateY = useSharedValue(30);
-  
+
   const listOpacity = useSharedValue(0);
   const listTranslateY = useSharedValue(40);
-  
+
   const footerOpacity = useSharedValue(0);
   const footerTranslateY = useSharedValue(50);
 
@@ -156,15 +156,15 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
     headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
     headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
     headerTranslateY.value = withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
-    
+
     // Add section animation
     addSectionOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     addSectionTranslateY.value = withDelay(150, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
-    
+
     // List animation
     listOpacity.value = withDelay(300, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     listTranslateY.value = withDelay(300, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
-    
+
     // Footer animation
     footerOpacity.value = withDelay(450, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     footerTranslateY.value = withDelay(450, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
@@ -207,7 +207,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
     try {
       const response = await fetch(`${API_URL}/api/analysis/search-ingredients?query=${encodeURIComponent(query)}&limit=10`);
       const data = await response.json();
-      
+
       if (data.success) {
         setSearchResults(data.data.ingredients);
         setShowSuggestions(data.data.ingredients.length > 0);
@@ -226,17 +226,17 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
   const handleIngredientInputChange = (text: string) => {
     setNewIngredient(text);
-    
+
     // Clear previous timeout
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
-    
+
     // Set new timeout for search
     const timeout = setTimeout(() => {
       searchUSDAIngredients(text);
     }, 300);
-    
+
     setSearchTimeout(timeout);
   };
 
@@ -246,12 +246,12 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       clearTimeout(searchTimeout);
       setSearchTimeout(null);
     }
-    
+
     // Clear search state first
     setShowSuggestions(false);
     setSearchResults([]);
     setNewIngredient('');
-    
+
     const ingredient: Ingredient = {
       name: usdaIngredient.name,
       nameIt: usdaIngredient.nameIt,
@@ -260,7 +260,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       usdaId: usdaIngredient.usdaId,
     };
     setIngredients([...ingredients, ingredient]);
-    
+
     Keyboard.dismiss();
   };
 
@@ -292,7 +292,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
   const generateRecipe = async (preferences: { portions: string; difficulty: string; maxTime: string }) => {
     setShowPreferencesModal(false);
-    
+
     // Check daily limit before attempting generation
     if (!canGenerateRecipe) {
       setNotification({
@@ -308,7 +308,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
     try {
       const ingredientNames = ingredients.map(ing => ing.name);
-      
+
       const response = await fetch(`${API_URL}/api/recipe/generate`, {
         method: 'POST',
         headers: {
@@ -332,19 +332,19 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
       const data = await response.json();
       onGenerateRecipe(data.data);
-      
+
       // Refresh usage data after successful generation
       refreshUsage();
     } catch (error) {
       console.error('Recipe generation error:', error);
-      
+
       const rateLimitNotification = handleRateLimitError(
-        error, 
+        error,
         t('recipe.rateLimitTitle', 'Too Many Recipe Requests'),
-        () => generateRecipe(),
+        () => generateRecipe(preferences),
         t
       );
-      
+
       setNotification(rateLimitNotification);
     } finally {
       setIsGenerating(false);
@@ -353,9 +353,9 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
   const renderIngredient = ({ item, index }: { item: Ingredient; index: number }) => {
     return (
-      <IngredientItem 
-        item={item} 
-        index={index} 
+      <IngredientItem
+        item={item}
+        index={index}
         onRemove={() => removeIngredient(index)}
         language={i18n.language}
       />
@@ -404,17 +404,17 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
             autoComplete="off"
           />
           {isSearching && (
-            <ActivityIndicator 
-              size="small" 
-              color={colors.primary} 
+            <ActivityIndicator
+              size="small"
+              color={colors.primary}
               style={styles.searchIndicator}
             />
           )}
-          <TouchableOpacity activeOpacity={0.7} 
+          <TouchableOpacity activeOpacity={0.7}
             style={[
-              styles.addButton, 
+              styles.addButton,
               searchResults.length === 0 && styles.addButtonDisabled
-            ]} 
+            ]}
             onPress={addIngredient}
             disabled={searchResults.length === 0}
           >
@@ -424,7 +424,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
             ]}>+</Text>
           </TouchableOpacity>
         </View>
-        
+
         {showSuggestions && searchResults.length > 0 && (
           <View style={styles.suggestionsContainer}>
             <FlatList
@@ -493,9 +493,9 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
         onGenerate={generateRecipe}
         isGenerating={isGenerating}
       />
-      
+
       <RecipeGenerationLoader visible={isGenerating} />
-      
+
       <NotificationModal
         visible={notification.visible}
         type={notification.type}

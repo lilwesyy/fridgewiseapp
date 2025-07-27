@@ -20,13 +20,15 @@ import {
   HomeScreen,
   CookingModeScreen,
   OnboardingScreen,
-  MaintenanceScreen
+  MaintenanceScreen,
+  OfflineScreen
 } from './src/components/screens';
 import { BottomNavigation } from './src/components/navigation';
 import type { TabName } from './src/components/navigation';
 import { NotificationModal, NotificationType } from './src/components/modals';
 import { OTPInput, AnimatedContainer } from './src/components/ui';
 import { checkBackendAvailability, BackendHealthMonitor } from './src/utils/healthCheck';
+import { useNetworkStatus } from './src/hooks/useNetworkStatus';
 import Svg, { Path, G, Circle } from 'react-native-svg';
 import './src/i18n';
 
@@ -159,6 +161,7 @@ const AppContent: React.FC = () => {
   const { user, token, isLoading, login, register, logout, forgotPassword, resetPassword, sendEmailVerification, verifyEmail } = useAuth();
   const { isDarkMode, themeMode, colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isOffline, isConnected, refresh: refreshNetworkStatus } = useNetworkStatus();
   
   // Handle splash screen
   useEffect(() => {
@@ -938,6 +941,16 @@ const AppContent: React.FC = () => {
       isPublicRecipe: isPublic || false, // Add flag to track if recipe is public
     });
   };
+
+  // Show offline screen if no internet connection
+  if (isOffline) {
+    return (
+      <OfflineScreen
+        onRetry={refreshNetworkStatus}
+        isRetrying={false}
+      />
+    );
+  }
 
   // Show maintenance screen if backend is down or in maintenance
   if (!backendStatus.isHealthy || backendStatus.isMaintenance) {

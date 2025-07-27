@@ -63,7 +63,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
-  
+
   // Animazioni per il modale di cancellazione dell'account
   const deleteSlideY = useSharedValue(screenHeight);
   const deleteOpacity = useSharedValue(0);
@@ -73,7 +73,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
   useEffect(() => {
     if (showDeleteModal) {
       const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-      
+
       deletePulseScale.value = withRepeat(
         withTiming(1.3, { duration: ANIMATION_DURATIONS.MODAL, easing }),
         -1,
@@ -83,7 +83,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
       deleteSlideY.value = withSpring(0, SPRING_CONFIGS.MODAL);
     } else {
       const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-      
+
       deleteOpacity.value = withTiming(0, { duration: ANIMATION_DURATIONS.QUICK, easing });
       deleteSlideY.value = withTiming(screenHeight, { duration: ANIMATION_DURATIONS.QUICK, easing });
     }
@@ -126,7 +126,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    
+
     saveTimeoutRef.current = setTimeout(async () => {
       setIsUpdating(true);
       try {
@@ -245,8 +245,8 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
   const getMemberSinceDate = () => {
     if (!user?.createdAt) return '';
     const date = new Date(user.createdAt as string);
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
       month: 'long',
       day: 'numeric'
     };
@@ -278,7 +278,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
       });
       return;
     }
-    
+
     setShowDeleteModal(false);
     try {
       await deleteAccount(deletePassword);
@@ -292,10 +292,10 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
       });
     } catch (error: any) {
       setDeletePassword(''); // Clear password on error
-      
+
       // Gestisce errori specifici
       let errorMessage = safeT('profile.deleteAccountError', 'Failed to delete account. Please try again.');
-      
+
       if (error?.message) {
         if (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')) {
           errorMessage = safeT('auth.unauthorized', 'You are not authorized to perform this action. Please log in again.');
@@ -305,7 +305,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
           errorMessage = error.message;
         }
       }
-      
+
       setNotification({
         visible: true,
         type: 'error',
@@ -338,8 +338,8 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
         </View>
 
         <View style={styles.content}>
-          <ScrollView 
-            style={styles.scrollContainer} 
+          <ScrollView
+            style={styles.scrollContainer}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -359,7 +359,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
               <Text style={styles.sectionTitle}>
                 {safeT('profile.accountDetails', 'Account Details')}
               </Text>
-              
+
               {/* Name Field */}
               <View style={styles.fieldContainer}>
                 <Text style={styles.fieldLabel}>
@@ -406,11 +406,11 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                 </Text>
                 <View style={styles.badgeContainer}>
                   <Text style={[
-                    styles.badge, 
+                    styles.badge,
                     user?.role === 'admin' ? styles.adminBadge : styles.userBadge
                   ]}>
-                    {user?.role === 'admin' ? 
-                      safeT('profile.admin', 'Admin') : 
+                    {user?.role === 'admin' ?
+                      safeT('profile.admin', 'Admin') :
                       safeT('profile.user', 'User')
                     }
                   </Text>
@@ -425,96 +425,96 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
               </Text>
 
               <View style={styles.passwordForm}>
-                  <View style={styles.fieldContainer}>
-                    <Text style={styles.fieldLabel}>
-                      {safeT('profile.currentPassword', 'Current Password')}
-                    </Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={passwordForm.currentPassword}
-                      onChangeText={(text) => setPasswordForm({...passwordForm, currentPassword: text})}
-                      placeholder={safeT('profile.enterCurrentPassword', 'Enter current password')}
-                      placeholderTextColor={colors.textSecondary}
-                      secureTextEntry
-                      autoComplete="current-password"
-                      textContentType="password"
-                      autoCorrect={false}
-                    />
-                  </View>
+                <View style={styles.fieldContainer}>
+                  <Text style={styles.fieldLabel}>
+                    {safeT('profile.currentPassword', 'Current Password')}
+                  </Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={passwordForm.currentPassword}
+                    onChangeText={(text) => setPasswordForm({ ...passwordForm, currentPassword: text })}
+                    placeholder={safeT('profile.enterCurrentPassword', 'Enter current password')}
+                    placeholderTextColor={colors.textSecondary}
+                    secureTextEntry
+                    autoComplete="current-password"
+                    textContentType="password"
+                    autoCorrect={false}
+                  />
+                </View>
 
-                  <View style={styles.fieldContainer}>
-                    <Text style={styles.fieldLabel}>
-                      {safeT('profile.newPassword', 'New Password')}
-                    </Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={passwordForm.newPassword}
-                      onChangeText={(text) => setPasswordForm({...passwordForm, newPassword: text})}
-                      placeholder={safeT('profile.enterNewPassword', 'Enter new password')}
-                      placeholderTextColor={colors.textSecondary}
-                      secureTextEntry
-                      autoComplete="new-password"
-                      textContentType="newPassword"
-                      autoCorrect={false}
-                    />
-                    <Text style={styles.passwordRequirements}>
-                      {safeT('profile.passwordRequirements', 'Min 8 chars, uppercase, lowercase, number, special char')}
-                    </Text>
-                  </View>
+                <View style={styles.fieldContainer}>
+                  <Text style={styles.fieldLabel}>
+                    {safeT('profile.newPassword', 'New Password')}
+                  </Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={passwordForm.newPassword}
+                    onChangeText={(text) => setPasswordForm({ ...passwordForm, newPassword: text })}
+                    placeholder={safeT('profile.enterNewPassword', 'Enter new password')}
+                    placeholderTextColor={colors.textSecondary}
+                    secureTextEntry
+                    autoComplete="new-password"
+                    textContentType="newPassword"
+                    autoCorrect={false}
+                  />
+                  <Text style={styles.passwordRequirements}>
+                    {safeT('profile.passwordRequirements', 'Min 8 chars, uppercase, lowercase, number, special char')}
+                  </Text>
+                </View>
 
-                  <View style={styles.fieldContainer}>
-                    <Text style={styles.fieldLabel}>
-                      {safeT('profile.confirmPassword', 'Confirm Password')}
-                    </Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={passwordForm.confirmPassword}
-                      onChangeText={(text) => setPasswordForm({...passwordForm, confirmPassword: text})}
-                      placeholder={safeT('profile.confirmNewPassword', 'Confirm new password')}
-                      placeholderTextColor={colors.textSecondary}
-                      secureTextEntry
-                      autoComplete="new-password"
-                      textContentType="newPassword"
-                      autoCorrect={false}
-                    />
-                  </View>
+                <View style={styles.fieldContainer}>
+                  <Text style={styles.fieldLabel}>
+                    {safeT('profile.confirmPassword', 'Confirm Password')}
+                  </Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={passwordForm.confirmPassword}
+                    onChangeText={(text) => setPasswordForm({ ...passwordForm, confirmPassword: text })}
+                    placeholder={safeT('profile.confirmNewPassword', 'Confirm new password')}
+                    placeholderTextColor={colors.textSecondary}
+                    secureTextEntry
+                    autoComplete="new-password"
+                    textContentType="newPassword"
+                    autoCorrect={false}
+                  />
+                </View>
 
-                  <View style={styles.passwordButtons}>
-                    <TouchableOpacity activeOpacity={0.7} 
-                      style={[styles.button, styles.cancelButton]} 
-                      onPress={() => {
-                        setPasswordForm({
-                          currentPassword: '',
-                          newPassword: '',
-                          confirmPassword: '',
-                        });
-                      }}
-                    >
-                      <Text style={styles.cancelButtonText}>
-                        {safeT('profile.clear', 'Clear')}
+                <View style={styles.passwordButtons}>
+                  <TouchableOpacity activeOpacity={0.7}
+                    style={[styles.button, styles.cancelButton]}
+                    onPress={() => {
+                      setPasswordForm({
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: '',
+                      });
+                    }}
+                  >
+                    <Text style={styles.cancelButtonText}>
+                      {safeT('profile.clear', 'Clear')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity activeOpacity={0.7}
+                    style={[styles.button, styles.saveButton]}
+                    onPress={handlePasswordChange}
+                    disabled={isChangingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+                  >
+                    {isChangingPassword ? (
+                      <ActivityIndicator size="small" color={colors.buttonText} />
+                    ) : (
+                      <Text style={styles.saveButtonText}>
+                        {safeT('common.save', 'Save')}
                       </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity activeOpacity={0.7} 
-                      style={[styles.button, styles.saveButton]} 
-                      onPress={handlePasswordChange}
-                      disabled={isChangingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
-                    >
-                      {isChangingPassword ? (
-                        <ActivityIndicator size="small" color={colors.buttonText} />
-                      ) : (
-                        <Text style={styles.saveButtonText}>
-                          {safeT('common.save', 'Save')}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
             {/* Danger Zone */}
             <View style={[styles.section, styles.dangerSection]}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.dangerButton}
                 onPress={handleDeleteAccount}
                 activeOpacity={0.7}
@@ -523,7 +523,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                   {safeT('profile.deleteAccount', 'Delete Account')}
                 </Text>
               </TouchableOpacity>
-              
+
               <Text style={styles.dangerWarning}>
                 {safeT('profile.deleteAccountWarning', 'This action cannot be undone. All your data will be permanently deleted.')}
               </Text>
@@ -539,7 +539,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
         message={notification.message}
         onClose={() => setNotification({ ...notification, visible: false })}
       />
-      
+
       {/* Delete Account Confirmation Modal */}
       <Modal
         transparent
@@ -555,7 +555,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
           setDeletePassword('');
         }}>
           <Animated.View style={[styles.deleteBackdrop, deleteBackdropStyle]}>
-            <KeyboardAvoidingView 
+            <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               style={styles.keyboardAvoidingView}
             >
@@ -584,7 +584,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                       {safeT('profile.confirmDeleteMessage', 'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.')}
                     </Text>
                   </View>
-                  
+
                   {/* Password Field */}
                   <View style={styles.deletePasswordSection}>
                     <Text style={styles.deletePasswordLabel}>
@@ -604,9 +604,9 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                   </View>
 
                   <View style={styles.deleteActionsRow}>
-                    <TouchableOpacity 
-                      activeOpacity={0.7} 
-                      style={[styles.deleteCancelButton, { marginRight: 6 }]} 
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      style={[styles.deleteCancelButton, { marginRight: 6 }]}
                       onPress={() => {
                         setShowDeleteModal(false);
                         setDeletePassword('');
@@ -616,9 +616,9 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                         {safeT('common.cancel', 'Cancel')}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                      activeOpacity={0.7} 
-                      style={[styles.deleteConfirmButton, { marginLeft: 6 }]} 
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      style={[styles.deleteConfirmButton, { marginLeft: 6 }]}
                       onPress={confirmDeleteAccount}
                     >
                       <Text style={styles.deleteConfirmButtonText}>

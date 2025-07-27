@@ -6,7 +6,7 @@ import { SCALE_VALUES, SPRING_CONFIGS } from '../constants/animations';
  * Custom hook for iOS-style button press animations
  * Provides consistent press feedback across all interactive elements
  */
-export const useButtonAnimation = (scaleValue = SCALE_VALUES.BUTTON_PRESS) => {
+export const useButtonAnimation = (scaleValue: number = SCALE_VALUES.BUTTON_PRESS) => {
   const scale = useSharedValue(1);
 
   const handlePressIn = () => {

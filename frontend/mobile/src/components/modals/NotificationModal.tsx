@@ -33,22 +33,22 @@ interface NotificationModalProps {
 const getIcons = (themeColors: any) => ({
   success: (
     <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke={themeColors.success} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-      <Path d="M9 12L11 14L15 10" stroke={themeColors.success} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+      <Path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke={themeColors.success} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M9 12L11 14L15 10" stroke={themeColors.success} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   ),
   warning: (
     <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 9V13" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-      <Path d="M12 17H12.01" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-      <Path d="M10.29 3.86L1.82 18C1.42 18.66 1.89 19.5 2.65 19.5H21.35C22.11 19.5 22.58 18.66 22.18 18L13.71 3.86C13.33 3.23 12.37 3.23 11.99 3.86Z" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+      <Path d="M12 9V13" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 17H12.01" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M10.29 3.86L1.82 18C1.42 18.66 1.89 19.5 2.65 19.5H21.35C22.11 19.5 22.58 18.66 22.18 18L13.71 3.86C13.33 3.23 12.37 3.23 11.99 3.86Z" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   ),
   error: (
     <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-      <Path d="M15 9L9 15" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-      <Path d="M9 9L15 15" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+      <Path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M15 9L9 15" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M9 9L15 15" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   ),
 });
@@ -103,18 +103,18 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
   }));
-  
+
   // Safety check for props
   const safeTitle = typeof title === 'string' ? title : '';
   const safeMessage = typeof message === 'string' ? message : '';
   const safeType = type || 'success';
-  
+
   useEffect(() => {
     if (visible && autoClose && !buttons) {
       const timer = setTimeout(() => {
         onClose();
       }, autoCloseDelay);
-      
+
       return () => clearTimeout(timer);
     }
   }, [visible, autoClose, autoCloseDelay, onClose, buttons]);
@@ -146,20 +146,20 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         return [styles.buttonText, styles.defaultButtonText];
     }
   };
-  
+
   return (
     <Modal visible={visible} transparent animationType="none">
       <Animated.View style={[styles.overlay, backdropStyle]}>
-        <TouchableOpacity activeOpacity={0.7} 
-          style={styles.overlayTouchable} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.overlayTouchable}
+          activeOpacity={1}
           onPress={handleOverlayPress}
         />
         <Animated.View style={[styles.modalBox, modalStyle]}>
           <View style={styles.icon}>{icons[safeType]}</View>
           <Text style={[styles.title, { color: colors[safeType] }]}>{safeTitle}</Text>
           <Text style={styles.message}>{safeMessage}</Text>
-          
+
           {buttons && buttons.length > 0 && (
             <View style={styles.buttonsContainer}>
               {buttons.map((button, index) => (

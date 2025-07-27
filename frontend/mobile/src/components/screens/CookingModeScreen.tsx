@@ -50,6 +50,10 @@ interface Recipe {
   servings: number;
   difficulty: 'easy' | 'medium' | 'hard';
   dietaryTags: string[];
+  userId?: {
+    _id: string;
+    [key: string]: any;
+  };
   nutrition?: {
     calories: number;
     protein: number;
@@ -64,6 +68,9 @@ interface Recipe {
     tip: string;
     type: 'technique' | 'timing' | 'ingredient' | 'temperature' | 'safety';
   }>;
+  cookedAt?: string; // ISO timestamp when recipe was cooked
+  isSaved?: boolean; // Whether recipe is saved to user's collection
+  dishPhoto?: string; // URL of dish photo
 }
 
 interface CookingModeScreenProps {
@@ -765,7 +772,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         if (remainingSlots <= 2) {
           setNotification({
             visible: true,
-            type: 'info',
+            type: 'success',
             title: safeT('cookingMode.photoSlots.title', 'Spazio foto'),
             message: safeT('cookingMode.photoSlots.message', `Puoi aggiungere ancora {{count}} foto per questa ricetta.`).replace('{{count}}', remainingSlots.toString()),
           });
@@ -1486,7 +1493,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         {currentPhase === 'completed' && (
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={onFinishCooking}
+            onPress={() => onFinishCooking()}
           >
             <Text style={styles.primaryButtonText}>
               {safeT('cookingMode.backToRecipes', 'Back to Recipes')}
@@ -1547,47 +1554,60 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                   <View style={styles.helpContentContainer}>
                     {/* Current Step Tips Only */}
                     <View style={styles.helpTipsContainer}>
-                      {currentStepTips.map((tip: any, tipIndex: number) => (
-                        <View key={tipIndex} style={[
-                          styles.helpTipItem,
-                          styles[`helpTipType${tip.type.charAt(0).toUpperCase() + tip.type.slice(1)}`]
-                        ]}>
-                          <View style={styles.helpTipIconContainer}>
-                            {tip.type === 'technique' && (
-                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke={colors.primary} strokeWidth={2} fill="none" />
-                              </Svg>
-                            )}
-                            {tip.type === 'timing' && (
-                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Circle cx="12" cy="12" r="10" stroke={colors.warning} strokeWidth={2} fill="none" />
-                                <Path d="M12 6V12L16 14" stroke={colors.warning} strokeWidth={2} />
-                              </Svg>
-                            )}
-                            {tip.type === 'temperature' && (
-                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Path d="M14 4V16.5C14 18.4 12.4 20 10.5 20S7 18.4 7 16.5V4C7 2.9 7.9 2 9 2H12C13.1 2 14 2.9 14 4Z" stroke={colors.error} strokeWidth={2} fill="none" />
-                              </Svg>
-                            )}
-                            {tip.type === 'ingredient' && (
-                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L11.84 12.17L17.5 6.5L20.17 9.17L21.5 7.83L21 9ZM1 9L2 8L6 12L2 16L1 15C1 15 5.5 9 5.5 9H1Z" fill={colors.success} />
-                              </Svg>
-                            )}
-                            {tip.type === 'safety' && (
-                              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                <Path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 7C13.1 7 14 7.9 14 9S13.1 11 12 11S10 10.1 10 9S10.9 7 12 7ZM12 17C10.9 17 10 16.1 10 15S10.9 13 12 13S14 13.9 14 15S13.1 17 12 17Z" fill={colors.error} />
-                              </Svg>
-                            )}
+                      {currentStepTips.map((tip: any, tipIndex: number) => {
+                        const tipTypeStyle = (() => {
+                          switch (tip.type) {
+                            case 'technique': return styles.helpTipTypeTechnique;
+                            case 'timing': return styles.helpTipTypeTiming;
+                            case 'ingredient': return styles.helpTipTypeIngredient;
+                            case 'temperature': return styles.helpTipTypeTemperature;
+                            case 'safety': return styles.helpTipTypeSafety;
+                            default: return {};
+                          }
+                        })();
+
+                        return (
+                          <View key={tipIndex} style={[
+                            styles.helpTipItem,
+                            tipTypeStyle
+                          ]}>
+                            <View style={styles.helpTipIconContainer}>
+                              {tip.type === 'technique' && (
+                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke={colors.primary} strokeWidth={2} fill="none" />
+                                </Svg>
+                              )}
+                              {tip.type === 'timing' && (
+                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                  <Circle cx="12" cy="12" r="10" stroke={colors.warning} strokeWidth={2} fill="none" />
+                                  <Path d="M12 6V12L16 14" stroke={colors.warning} strokeWidth={2} />
+                                </Svg>
+                              )}
+                              {tip.type === 'temperature' && (
+                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                  <Path d="M14 4V16.5C14 18.4 12.4 20 10.5 20S7 18.4 7 16.5V4C7 2.9 7.9 2 9 2H12C13.1 2 14 2.9 14 4Z" stroke={colors.error} strokeWidth={2} fill="none" />
+                                </Svg>
+                              )}
+                              {tip.type === 'ingredient' && (
+                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                  <Path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L11.84 12.17L17.5 6.5L20.17 9.17L21.5 7.83L21 9ZM1 9L2 8L6 12L2 16L1 15C1 15 5.5 9 5.5 9H1Z" fill={colors.success} />
+                                </Svg>
+                              )}
+                              {tip.type === 'safety' && (
+                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                                  <Path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 7C13.1 7 14 7.9 14 9S13.1 11 12 11S10 10.1 10 9S10.9 7 12 7ZM12 17C10.9 17 10 16.1 10 15S10.9 13 12 13S14 13.9 14 15S13.1 17 12 17Z" fill={colors.error} />
+                                </Svg>
+                              )}
+                            </View>
+                            <View style={styles.helpTipContent}>
+                              <Text style={styles.helpTipTypeLabel}>
+                                {safeT(`cookingMode.tipTypes.${tip.type}`, tip.type.charAt(0).toUpperCase() + tip.type.slice(1))}
+                              </Text>
+                              <Text style={styles.helpTipText}>{tip.tip}</Text>
+                            </View>
                           </View>
-                          <View style={styles.helpTipContent}>
-                            <Text style={styles.helpTipTypeLabel}>
-                              {safeT(`cookingMode.tipTypes.${tip.type}`, tip.type.charAt(0).toUpperCase() + tip.type.slice(1))}
-                            </Text>
-                            <Text style={styles.helpTipText}>{tip.tip}</Text>
-                          </View>
-                        </View>
-                      ))}
+                        );
+                      })}
                     </View>
                   </View>
                 );
@@ -1691,7 +1711,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                 style={[styles.finishModalButton, styles.finishModalButtonSecondary]}
                 onPress={() => setShowFinishModal(false)}
               >
-                <Text style={[styles.finishModalButtonText, styles.finishModalButtonTextSecondary]}>
+                <Text style={[styles.finishModalButtonText, styles.finishModalButtonTextSecondary]} numberOfLines={1}>
                   {safeT('common.cancel', 'Annulla')}
                 </Text>
               </TouchableOpacity>
@@ -1700,7 +1720,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                 style={[styles.finishModalButton, styles.finishModalButtonPrimary]}
                 onPress={finishCooking}
               >
-                <Text style={[styles.finishModalButtonText, styles.finishModalButtonTextPrimary]}>
+                <Text style={[styles.finishModalButtonText, styles.finishModalButtonTextPrimary]} numberOfLines={1}>
                   {safeT('cookingMode.finishConfirm', 'Salva nei miei piatti')}
                 </Text>
               </TouchableOpacity>
@@ -2381,7 +2401,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    numberOfLines: 1,
   },
   finishModalButtonTextSecondary: {
     color: colors.text,

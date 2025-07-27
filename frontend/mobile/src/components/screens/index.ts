@@ -9,3 +9,4 @@ export { ProfileScreen } from './ProfileScreen';
 export { CookingModeScreen } from './CookingModeScreen';
 export { OnboardingScreen } from './OnboardingScreen';
 export { MaintenanceScreen } from './MaintenanceScreen';
+export { OfflineScreen } from './OfflineScreen';

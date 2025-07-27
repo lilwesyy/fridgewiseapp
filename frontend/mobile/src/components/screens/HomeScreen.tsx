@@ -89,7 +89,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
-  
+
   // Calculate safe area top offset for pull-to-refresh
   const getStatusBarHeight = () => {
     if (Platform.OS === 'ios') {
@@ -116,12 +116,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
 
   useEffect(() => {
     const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-    
+
     // Main content entrance - iOS standard timing
     fadeIn.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
     slideIn.value = withTiming(0, { duration: ANIMATION_DURATIONS.CONTENT, easing });
     scale.value = withSpring(1, SPRING_CONFIGS.GENTLE);
-    
+
     // Logo pulse effect - more subtle, iOS-like
     logoScale.value = withRepeat(
       withSequence(
@@ -131,7 +131,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       -1,
       false
     );
-    
+
     // Stagger card animations - iOS standard timing
     cardScales.forEach((cardScale, index) => {
       cardScale.value = withDelay(
@@ -139,14 +139,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
         withSpring(1, SPRING_CONFIGS.LIST)
       );
     });
-    
+
     cardOpacities.forEach((cardOpacity, index) => {
       cardOpacity.value = withDelay(
         ANIMATION_DELAYS.LIST_BASE + index * ANIMATION_DELAYS.LIST_ITEM,
         withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing })
       );
     });
-    
+
     // Animate tip card - iOS delay pattern
     tipCardScale.value = withDelay(
       ANIMATION_DELAYS.LIST_BASE + ANIMATION_DELAYS.STAGGER_3,
@@ -156,7 +156,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       ANIMATION_DELAYS.LIST_BASE + ANIMATION_DELAYS.STAGGER_3,
       withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing })
     );
-    
+
     // Animate stats section - earlier entry for better UX
     statsScale.value = withDelay(
       ANIMATION_DELAYS.STAGGER_1,
@@ -178,17 +178,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   const getRandomQuote = () => {
     const quoteKeys = [
       'home.quote1',
-      'home.quote2', 
+      'home.quote2',
       'home.quote3',
       'home.quote4',
       'home.quote5'
     ];
-    
+
     // Use date as seed for consistent quote during the same day
     const today = new Date();
     const seed = today.getDate() + today.getMonth() + today.getFullYear();
     const randomIndex = seed % quoteKeys.length;
-    
+
     return t(quoteKeys[randomIndex]);
   };
 
@@ -205,10 +205,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   const bannerStyle = useAnimatedStyle(() => ({
     opacity: withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD })),
     transform: [
-      { translateY: withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(0, { 
-        duration: ANIMATION_DURATIONS.STANDARD, 
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
-      })) },
+      {
+        translateY: withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(0, {
+          duration: ANIMATION_DURATIONS.STANDARD,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+        }))
+      },
     ],
   }));
 
@@ -218,29 +220,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       { scale: withDelay(ANIMATION_DELAYS.STAGGER_2, withSpring(1, SPRING_CONFIGS.GENTLE)) },
     ],
   }));
-  
+
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: buttonScale.value },
     ],
   }));
-  
+
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: logoScale.value },
     ],
   }));
-  
+
   const createCardStyle = (index: number) => useAnimatedStyle(() => ({
     opacity: cardOpacities[index].value,
     transform: [
       { scale: cardScales[index].value },
-      { 
+      {
         translateY: interpolate(
           cardOpacities[index].value,
           [0, 1],
           [30, 0]
-        ) 
+        )
       },
     ],
   }));
@@ -248,41 +250,43 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   const featuresStyle = useAnimatedStyle(() => ({
     opacity: withDelay(ANIMATION_DELAYS.STAGGER_3, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD })),
     transform: [
-      { translateY: withDelay(ANIMATION_DELAYS.STAGGER_3, withTiming(0, { 
-        duration: ANIMATION_DURATIONS.STANDARD, 
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
-      })) },
+      {
+        translateY: withDelay(ANIMATION_DELAYS.STAGGER_3, withTiming(0, {
+          duration: ANIMATION_DURATIONS.STANDARD,
+          easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2)
+        }))
+      },
     ],
   }));
-  
+
   const tipCardAnimatedStyle = useAnimatedStyle(() => ({
     opacity: tipCardOpacity.value,
     transform: [
       { scale: tipCardScale.value },
-      { 
+      {
         translateY: interpolate(
           tipCardOpacity.value,
           [0, 1],
           [20, 0]
-        ) 
+        )
       },
     ],
   }));
-  
+
   const statsAnimatedStyle = useAnimatedStyle(() => ({
     opacity: statsOpacity.value,
     transform: [
       { scale: statsScale.value },
-      { 
+      {
         translateY: interpolate(
           statsOpacity.value,
           [0, 1],
           [15, 0]
-        ) 
+        )
       },
     ],
   }));
-  
+
   const handleCameraPress = () => {
     buttonScale.value = withSequence(
       withSpring(0.95, { damping: 20, stiffness: 300 }),
@@ -290,11 +294,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
     );
     onNavigateToCamera();
   };
-  
+
   const handlePressIn = () => {
     buttonScale.value = withSpring(SCALE_VALUES.BUTTON_PRESS, SPRING_CONFIGS.BUTTON);
   };
-  
+
   const handlePressOut = () => {
     buttonScale.value = withSpring(1, SPRING_CONFIGS.BUTTON);
   };
@@ -317,13 +321,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
         ...recipe,
         id: recipe._id
       };
-      
+
       // Convert all recipes in the array for navigation
       const convertedRecipes = recentRecipes.map(r => ({
         ...r,
         id: r._id
       }));
-      
+
       onSelectRecipe(convertedRecipe, convertedRecipes, index);
     }
   };
@@ -339,8 +343,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   };
 
   return (
-    <Animated.ScrollView 
-      style={[styles.container, animatedStyle]} 
+    <Animated.ScrollView
+      style={[styles.container, animatedStyle]}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -356,9 +360,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       <Animated.View style={[styles.welcomeBanner, bannerStyle]}>
         <View style={styles.bannerContent}>
           <View style={styles.bannerLeft}>
-            <Text style={{...styles.greeting, color: '#fff'}}>{getGreeting()}</Text>
-            <Text style={{...styles.userName, color: '#fff'}}>{userName}!</Text>
-            <Text style={{...styles.bannerQuote, color: '#fff'}}>{getRandomQuote()}</Text>
+            <Text style={{ ...styles.greeting, color: '#fff' }}>{getGreeting()}</Text>
+            <Text style={{ ...styles.userName, color: '#fff' }}>{userName}!</Text>
+            <Text style={{ ...styles.bannerQuote, color: '#fff' }}>{getRandomQuote()}</Text>
           </View>
           <Animated.View style={[styles.bannerRight, logoAnimatedStyle]}>
             <LogoComponent width={80} height={72} color="#fff" />
@@ -394,35 +398,35 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       <Animated.View style={[styles.section, actionStyle]}>
         <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
         <Animated.View style={buttonAnimatedStyle}>
-          <TouchableOpacity activeOpacity={0.7} 
-            style={styles.primaryAction} 
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.primaryAction}
             onPress={handleCameraPress}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
-            activeOpacity={0.8}
           >
-          <View style={styles.actionIcon}>
-            <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <Path
-                d="M16 13C16 15.2091 14.2091 17 12 17C9.79086 17 8 15.2091 8 13C8 10.7909 9.79086 9 12 9C14.2091 9 16 10.7909 16 13Z"
-                stroke="white"
-                strokeWidth="2"
-                fill="none"
-              />
-            </Svg>
-          </View>
-          <View style={styles.actionContent}>
-            <Text style={{...styles.actionTitle, color: 'white'}}>{t('home.scanFridge')}</Text>
-            <Text style={{...styles.actionDescription, color: 'rgba(255,255,255,0.8)'}}>{t('home.scanDescription')}</Text>
-          </View>
-          <Text style={{...styles.actionArrow, color: 'white'}}>→</Text>
+            <View style={styles.actionIcon}>
+              <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <Path
+                  d="M16 13C16 15.2091 14.2091 17 12 17C9.79086 17 8 15.2091 8 13C8 10.7909 9.79086 9 12 9C14.2091 9 16 10.7909 16 13Z"
+                  stroke="white"
+                  strokeWidth="2"
+                  fill="none"
+                />
+              </Svg>
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={{ ...styles.actionTitle, color: 'white' }}>{t('home.scanFridge')}</Text>
+              <Text style={{ ...styles.actionDescription, color: 'rgba(255,255,255,0.8)' }}>{t('home.scanDescription')}</Text>
+            </View>
+            <Text style={{ ...styles.actionArrow, color: 'white' }}>→</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>
@@ -431,9 +435,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       {recentRecipes.length > 0 && (
         <Animated.View style={[styles.section, featuresStyle]}>
           <Text style={styles.sectionTitle}>{t('home.recentRecipes')}</Text>
-          
-          <ScrollView 
-            horizontal 
+
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.recipesScrollContainer}
           >
@@ -453,64 +457,64 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                 } else {
                   console.log(`[HomeScreen] Recipe "${recipe.title}" has no dish photo`);
                 }
-                
+
                 return (
-                <TouchableOpacity activeOpacity={0.7} key={recipe._id} style={styles.recipeCard} onPress={() => handleRecipePress(recipe, index)}>
-                  <View style={styles.recipeImagePlaceholder}>
-                    {firstPhoto?.url ? (
-                      <Image 
-                        source={{ uri: firstPhoto.url }} 
-                        style={styles.recipeImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-                        <Path
-                          d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-                          stroke={colors.success}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                  <TouchableOpacity activeOpacity={0.7} key={recipe._id} style={styles.recipeCard} onPress={() => handleRecipePress(recipe, index)}>
+                    <View style={styles.recipeImagePlaceholder}>
+                      {firstPhoto?.url ? (
+                        <Image
+                          source={{ uri: firstPhoto.url }}
+                          style={styles.recipeImage}
+                          resizeMode="cover"
                         />
-                        <Path
-                          d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-                          stroke={colors.success}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </Svg>
-                    )}
-                  </View>
-                  <View style={styles.recipeInfo}>
-                    <View style={styles.recipeHeader}>
-                      <Text style={styles.recipeTitle} numberOfLines={2}>{recipe.title}</Text>
-                      <TouchableOpacity activeOpacity={0.7} 
-                        style={styles.recipeShareButton}
-                        onPress={(event) => handleShareRecipe(recipe, event)}
-                      >
-                        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                      ) : (
+                        <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
                           <Path
-                            d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
-                            stroke={colors.textSecondary}
-                            strokeWidth={2}
+                            d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
+                            stroke={colors.success}
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <Path
+                            d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
+                            stroke={colors.success}
+                            strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
                         </Svg>
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.recipeDetails}>
-                      {recipe.cookingTime} min • {recipe.servings} {t('recipe.servings')}
-                    </Text>
-                    <View style={styles.recipeTags}>
-                      <Text style={styles.difficultyTag}>{t(`recipe.difficulty.${recipe.difficulty}`)}</Text>
-                      {recipe.dietaryTags.length > 0 && (
-                        <Text style={styles.dietaryTag}>{recipe.dietaryTags[0]}</Text>
                       )}
                     </View>
-                  </View>
-                </TouchableOpacity>
+                    <View style={styles.recipeInfo}>
+                      <View style={styles.recipeHeader}>
+                        <Text style={styles.recipeTitle} numberOfLines={2}>{recipe.title}</Text>
+                        <TouchableOpacity activeOpacity={0.7}
+                          style={styles.recipeShareButton}
+                          onPress={(event) => handleShareRecipe(recipe, event)}
+                        >
+                          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                            <Path
+                              d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
+                              stroke={colors.textSecondary}
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </Svg>
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.recipeDetails}>
+                        {recipe.cookingTime} min • {recipe.servings} {t('recipe.servings')}
+                      </Text>
+                      <View style={styles.recipeTags}>
+                        <Text style={styles.difficultyTag}>{t(`recipe.difficulty.${recipe.difficulty}`)}</Text>
+                        {recipe.dietaryTags.length > 0 && (
+                          <Text style={styles.dietaryTag}>{recipe.dietaryTags[0]}</Text>
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
                 );
               })
             )}
@@ -521,7 +525,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       {/* Features Overview */}
       <Animated.View style={[styles.section, featuresStyle]}>
         <Text style={styles.sectionTitle}>{t('home.featuresTitle')}</Text>
-        
+
         <View style={styles.featuresGrid}>
           <Animated.View style={[styles.featureCard, createCardStyle(0)]}>
             <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
@@ -618,7 +622,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       {/* Tips Section */}
       <Animated.View style={[styles.section, featuresStyle]}>
         <Text style={styles.sectionTitle}>{t('home.tipsTitle')}</Text>
-        
+
         <Animated.View style={[styles.tipCard, tipCardAnimatedStyle]}>
           <View style={styles.tipIcon}>
             <Text style={styles.tipEmoji}>💡</Text>
@@ -629,7 +633,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
           </View>
         </Animated.View>
       </Animated.View>
-      
+
       <ShareModal
         visible={showShareModal}
         recipe={selectedRecipe}
