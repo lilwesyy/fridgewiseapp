@@ -53,11 +53,6 @@ accessibilityRole="button"
 accessible={true}
 ```
 
-**Contrasto dei Colori**
-- Necessario verificare la conformità WCAG 2.1 AA
-- Testare con modalità alto contrasto
-- Assicurare rapporti di contrasto dei colori sufficienti
-
 **Supporto Screen Reader**
 - Manca markup semantico per screen reader
 - Nessuna gerarchia di intestazioni appropriata

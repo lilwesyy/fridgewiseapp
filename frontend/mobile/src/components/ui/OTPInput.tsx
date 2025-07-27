@@ -15,7 +15,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   onChange,
   autoFocus = false
 }) => {
-  const { colors } = useTheme();
+  const { colors, isHighContrast } = useTheme();
   const [focusedIndex, setFocusedIndex] = useState<number | null>(autoFocus ? 0 : null);
   const inputs = useRef<(TextInput | null)[]>([]);
 
@@ -114,8 +114,13 @@ export const OTPInput: React.FC<OTPInputProps> = ({
           style={[
             styles.input,
             focusedIndex === index && styles.inputFocused,
-            digit && styles.inputFilled
+            digit && styles.inputFilled,
+            isHighContrast && styles.inputHighContrast
           ]}
+          accessible={true}
+          accessibilityLabel={`Digit ${index + 1} of ${length}`}
+          accessibilityHint={digit ? `Contains digit ${digit}` : 'Empty field'}
+          accessibilityRole="text"
           value={digit}
           onChangeText={(text) => handleChangeText(text, index)}
           onKeyPress={(e) => handleKeyPress(e, index)}
@@ -173,5 +178,10 @@ const getStyles = (colors: any) => StyleSheet.create({
   inputFilled: {
     borderColor: colors.success || '#10b981',
     backgroundColor: colors.surface || '#FFFFFF',
+  },
+  inputHighContrast: {
+    borderWidth: 3,
+    borderColor: colors.text,
+    backgroundColor: colors.surface,
   },
 });

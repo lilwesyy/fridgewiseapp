@@ -135,8 +135,8 @@ const TabIcon: React.FC<{ name: TabName; isActive: boolean; colors: any }> = ({ 
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onTabPress }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const { colors, isHighContrast } = useTheme();
+  const styles = getStyles(colors, isHighContrast);
 
   const tabs: { key: TabName; label: string }[] = [
     { key: 'home', label: t('navigation.home') },
@@ -154,6 +154,11 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, o
           style={styles.tab}
           onPress={() => onTabPress(tab.key)}
           activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="tab"
+          accessibilityLabel={tab.label}
+          accessibilityState={{ selected: activeTab === tab.key }}
+          accessibilityHint={`Navigate to ${tab.label} screen`}
         >
           <View style={styles.iconContainer}>
             <TabIcon name={tab.key} isActive={activeTab === tab.key} colors={colors} />
@@ -167,12 +172,12 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, o
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, isHighContrast?: boolean) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopWidth: isHighContrast ? 2 : 1,
+    borderTopColor: isHighContrast ? colors.text : colors.border,
     paddingBottom: 20,
     paddingTop: 12,
     shadowColor: colors.shadow || '#000',
