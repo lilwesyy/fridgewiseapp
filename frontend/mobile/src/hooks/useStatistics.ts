@@ -75,7 +75,7 @@ export const useStatistics = () => {
       const data = await response.json();
       setStatistics(data);
     } catch (err) {
-      console.error('Error fetching statistics:', err);
+      // console.error('Error fetching statistics:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch statistics');
     } finally {
       setIsLoading(false);

@@ -40,7 +40,7 @@ interface CameraScreenProps {
 }
 
 export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onGoBack, onGoToManualInput }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
   const [facing, setFacing] = useState<CameraType>('back');
@@ -434,6 +434,9 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         };
         formData.append('image', imageFile);
       }
+
+      // Add current language
+      formData.append('language', i18n.language);
 
       const response = await fetch(`${API_URL}/api/analysis/image`, {
         method: 'POST',

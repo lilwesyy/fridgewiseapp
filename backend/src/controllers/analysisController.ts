@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { AuthRequest } from '../middleware/auth';
 import { Analysis } from '../models/Analysis';
-import { USDARecognizeService } from '../services/usdaRecognizeService';
+import { EnhancedRecognizeService } from '../services/enhancedRecognizeService';
 import { APIResponse } from '@/types';
 
 // Configure multer for memory storage
@@ -32,6 +32,7 @@ export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<a
     console.log('🔍 analyzeImage called');
     console.log('📄 req.file:', req.file);
     console.log('📦 req.body:', req.body);
+    console.log('🌐 language:', req.body.language);
     console.log('📋 req.headers:', req.headers);
     
     if (!req.file) {
@@ -57,12 +58,13 @@ export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<a
     fs.writeFileSync(tempFilePath, req.file.buffer);
     
     // Perform image analysis FIRST
-    console.log('🔍 Starting USDA-enhanced image recognition...');
+    console.log('🔍 Starting Gemini 2.5 Pro image recognition...');
     const startTime = Date.now();
-    const recognizeService = new USDARecognizeService();
+    const recognizeService = new EnhancedRecognizeService();
 
     try {
-      const ingredients = await recognizeService.analyzeImage(tempFilePath);
+      const language = req.body.language || 'en'; // Default to English
+      const ingredients = await recognizeService.analyzeImage(tempFilePath, language);
       
       // Clean up temporary file
       fs.unlinkSync(tempFilePath);

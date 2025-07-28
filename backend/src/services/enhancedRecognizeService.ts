@@ -24,174 +24,12 @@ interface VisionApiResult {
 
 interface ProcessedIngredient {
   name: string;
-  nameIt?: string;
   category: string;
   confidence: number;
   source: 'vision-api' | 'gemini-vision' | 'local-model' | 'fallback';
 }
 
-// Database dinamico degli ingredienti con sinonimi e varianti
-const ENHANCED_FOOD_DATABASE = {
-  // Verdure
-  tomato: {
-    names: ['tomato', 'tomatoes', 'cherry tomato', 'roma tomato', 'beefsteak tomato'],
-    nameIt: 'pomodoro',
-    category: 'vegetables',
-    aliases: ['pomodoro', 'pomodori']
-  },
-  potato: {
-    names: ['potato', 'potatoes', 'russet potato', 'red potato', 'sweet potato'],
-    nameIt: 'patata',
-    category: 'vegetables',
-    aliases: ['patata', 'patate']
-  },
-  onion: {
-    names: ['onion', 'onions', 'red onion', 'white onion', 'yellow onion', 'shallot'],
-    nameIt: 'cipolla',
-    category: 'vegetables',
-    aliases: ['cipolla', 'cipolle']
-  },
-  carrot: {
-    names: ['carrot', 'carrots', 'baby carrot'],
-    nameIt: 'carota',
-    category: 'vegetables',
-    aliases: ['carota', 'carote']
-  },
-  bell_pepper: {
-    names: ['bell pepper', 'pepper', 'red pepper', 'green pepper', 'yellow pepper', 'capsicum'],
-    nameIt: 'peperone',
-    category: 'vegetables',
-    aliases: ['peperone', 'peperoni']
-  },
-  broccoli: {
-    names: ['broccoli', 'broccoli florets'],
-    nameIt: 'broccoli',
-    category: 'vegetables',
-    aliases: ['broccoli']
-  },
-  spinach: {
-    names: ['spinach', 'baby spinach'],
-    nameIt: 'spinaci',
-    category: 'vegetables',
-    aliases: ['spinaci']
-  },
-  zucchini: {
-    names: ['zucchini', 'courgette', 'summer squash'],
-    nameIt: 'zucchina',
-    category: 'vegetables',
-    aliases: ['zucchina', 'zucchine']
-  },
-  eggplant: {
-    names: ['eggplant', 'aubergine'],
-    nameIt: 'melanzana',
-    category: 'vegetables',
-    aliases: ['melanzana', 'melanzane']
-  },
-  mushroom: {
-    names: ['mushroom', 'mushrooms', 'button mushroom', 'portobello', 'shiitake'],
-    nameIt: 'fungo',
-    category: 'vegetables',
-    aliases: ['fungo', 'funghi']
-  },
-  
-  // Frutta
-  apple: {
-    names: ['apple', 'apples', 'red apple', 'green apple', 'granny smith'],
-    nameIt: 'mela',
-    category: 'fruits',
-    aliases: ['mela', 'mele']
-  },
-  banana: {
-    names: ['banana', 'bananas'],
-    nameIt: 'banana',
-    category: 'fruits',
-    aliases: ['banana', 'banane']
-  },
-  orange: {
-    names: ['orange', 'oranges', 'navel orange', 'blood orange'],
-    nameIt: 'arancia',
-    category: 'fruits',
-    aliases: ['arancia', 'arance']
-  },
-  lemon: {
-    names: ['lemon', 'lemons'],
-    nameIt: 'limone',
-    category: 'fruits',
-    aliases: ['limone', 'limoni']
-  },
-  strawberry: {
-    names: ['strawberry', 'strawberries'],
-    nameIt: 'fragola',
-    category: 'fruits',
-    aliases: ['fragola', 'fragole']
-  },
-  
-  // Latticini
-  cheese: {
-    names: ['cheese', 'cheddar', 'mozzarella', 'parmesan', 'gouda', 'swiss cheese'],
-    nameIt: 'formaggio',
-    category: 'dairy',
-    aliases: ['formaggio', 'formaggi']
-  },
-  milk: {
-    names: ['milk', 'whole milk', 'skim milk', '2% milk'],
-    nameIt: 'latte',
-    category: 'dairy',
-    aliases: ['latte']
-  },
-  eggs: {
-    names: ['egg', 'eggs', 'chicken egg'],
-    nameIt: 'uova',
-    category: 'dairy',
-    aliases: ['uovo', 'uova']
-  },
-  butter: {
-    names: ['butter', 'unsalted butter', 'salted butter'],
-    nameIt: 'burro',
-    category: 'dairy',
-    aliases: ['burro']
-  },
-  
-  // Carne
-  chicken: {
-    names: ['chicken', 'chicken breast', 'chicken thigh', 'chicken leg', 'poultry'],
-    nameIt: 'pollo',
-    category: 'meat',
-    aliases: ['pollo']
-  },
-  beef: {
-    names: ['beef', 'steak', 'ground beef', 'beef roast'],
-    nameIt: 'manzo',
-    category: 'meat',
-    aliases: ['manzo', 'bovino']
-  },
-  fish: {
-    names: ['fish', 'salmon', 'tuna', 'cod', 'tilapia', 'seafood'],
-    nameIt: 'pesce',
-    category: 'meat',
-    aliases: ['pesce', 'pesci']
-  },
-  
-  // Cereali
-  rice: {
-    names: ['rice', 'white rice', 'brown rice', 'jasmine rice', 'basmati rice'],
-    nameIt: 'riso',
-    category: 'grains',
-    aliases: ['riso']
-  },
-  pasta: {
-    names: ['pasta', 'spaghetti', 'penne', 'macaroni', 'noodles'],
-    nameIt: 'pasta',
-    category: 'grains',
-    aliases: ['pasta']
-  },
-  bread: {
-    names: ['bread', 'white bread', 'whole wheat bread', 'sourdough'],
-    nameIt: 'pane',
-    category: 'grains',
-    aliases: ['pane']
-  }
-};
+// Rimosso database statico - ora si basa completamente sui risultati dinamici di Gemini
 
 export class EnhancedRecognizeService {
   private geminiApiKey: string;
@@ -202,13 +40,13 @@ export class EnhancedRecognizeService {
     this.visionApiUrl = process.env.RECOGNIZE_API_URL || 'http://localhost:8000';
   }
 
-  async analyzeImage(imagePath: string): Promise<ProcessedIngredient[]> {
-    console.log('🔍 Starting enhanced image analysis for:', imagePath);
+  async analyzeImage(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
+    console.log('🔍 Starting enhanced image analysis for:', imagePath, 'Language:', language);
 
     const results = await Promise.allSettled([
-      this.analyzeWithGeminiVision(imagePath),
-      this.analyzeWithVisionAPI(imagePath),
-      this.analyzeWithLocalModel(imagePath)
+      this.analyzeWithGeminiVision(imagePath, language),
+      this.analyzeWithVisionAPI(imagePath, language),
+      this.analyzeWithLocalModel(imagePath, language)
     ]);
 
     const allIngredients: ProcessedIngredient[] = [];
@@ -227,7 +65,7 @@ export class EnhancedRecognizeService {
 
     if (allIngredients.length === 0) {
       console.log('🔄 All services failed, trying smart fallback');
-      const fallbackResults = await this.getSmartFallback(imagePath);
+      const fallbackResults = await this.getSmartFallback(imagePath, language);
       if (fallbackResults.length === 0) {
         console.log('❌ No ingredients detected in image - will trigger NoIngredientsModal');
         return []; // Return empty array to trigger NoIngredientsModal
@@ -248,7 +86,7 @@ export class EnhancedRecognizeService {
     return finalResults;
   }
 
-  private async analyzeWithGeminiVision(imagePath: string): Promise<ProcessedIngredient[]> {
+  private async analyzeWithGeminiVision(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
     if (!this.geminiApiKey) {
       throw new Error('Gemini API key not available');
     }
@@ -272,7 +110,7 @@ export class EnhancedRecognizeService {
             body: JSON.stringify({              contents: [{
                 parts: [
                   {
-                    text: "You are Gemini 2.5 Pro analyzing a food image. Identify ALL visible food ingredients with maximum precision.\n\nReturn ONLY a valid JSON array:\n[{\"name\": \"ingredient_name\", \"nameIt\": \"nome_italiano\", \"confidence\": 0.95}]\n\nGuidelines:\n1. For 'name': Use specific English names (e.g., 'cherry tomatoes', 'red bell pepper', 'ground beef', 'fresh basil leaves')\n2. For 'nameIt': Provide the Italian translation (e.g., 'pomodorini', 'peperone rosso', 'carne macinata', 'foglie di basilico fresco')\n3. Include ONLY actual food ingredients: vegetables, fruits, meat, fish, dairy, grains, legumes, herbs, spices, nuts, oils\n4. EXCLUDE: utensils, containers, packaging, backgrounds, non-food objects\n5. Confidence: 0.1-1.0 based on visual clarity\n6. Return 1-25 ingredients maximum\n7. Include partial/cut ingredients if clearly identifiable\n8. Be thorough - include spices, herbs, seasonings if visible\n9. Distinguish varieties when possible\n\nExample response:\n[{\"name\": \"cherry tomatoes\", \"nameIt\": \"pomodorini\", \"confidence\": 0.95}, {\"name\": \"fresh basil\", \"nameIt\": \"basilico fresco\", \"confidence\": 0.88}]\n\nFocus on actual food ingredients that could be used in cooking."
+                    text: this.getLanguageSpecificPrompt(language)
                   },
                   {
                     inline_data: {
@@ -300,7 +138,7 @@ export class EnhancedRecognizeService {
             }
 
             const ingredients = JSON.parse(jsonMatch[0]);
-            const processed = this.processGeminiResults(ingredients);
+            const processed = this.processGeminiResults(ingredients, language);
             console.log(`✅ Gemini Vision found ${processed.length} ingredients on attempt ${attempt}`);
             return processed;
           }
@@ -323,7 +161,7 @@ export class EnhancedRecognizeService {
           } else if (response.status === 404) {
             // Gemini 2.5 might not be available, try fallback to 1.5
             console.log('🔄 Gemini 2.5 Pro not available, trying 1.5-flash...');
-            return this.analyzeWithGemini15Fallback(imagePath);
+            return this.analyzeWithGemini15Fallback(imagePath, language);
           } else {
             lastError = new Error(`Gemini 2.5 Pro API error: ${response.status}`);
             break; // Don't retry for other errors
@@ -345,7 +183,51 @@ export class EnhancedRecognizeService {
     }
   }
 
-  private async analyzeWithGemini15Fallback(imagePath: string): Promise<ProcessedIngredient[]> {
+  private getLanguageSpecificPrompt(language: string): string {
+    if (language === 'it') {
+      return `Sei Gemini 2.5 Pro che analizza un'immagine di cibo. Identifica TUTTI gli ingredienti alimentari visibili con massima precisione.
+
+Restituisci SOLO un array JSON valido:
+[{"name": "nome_ingrediente", "confidence": 0.95}]
+
+Linee guida:
+1. Per 'name': Usa nomi specifici italiani (es. 'pomodorini', 'peperone rosso', 'carne macinata', 'foglie di basilico fresco')
+2. Includi SOLO ingredienti alimentari reali: verdure, frutta, carne, pesce, latticini, cereali, legumi, erbe, spezie, noci, oli
+3. ESCLUDI: utensili, contenitori, imballaggi, sfondi, oggetti non alimentari
+4. Confidence: 0.1-1.0 basato sulla chiarezza visiva
+5. Restituisci massimo 1-25 ingredienti
+6. Includi ingredienti parziali/tagliati se chiaramente identificabili
+7. Sii accurato - includi spezie, erbe, condimenti se visibili
+8. Distingui le varietà quando possibile
+
+Esempio risposta:
+[{"name": "pomodorini", "confidence": 0.95}, {"name": "basilico fresco", "confidence": 0.88}]
+
+Concentrati su ingredienti alimentari reali che potrebbero essere usati in cucina.`;
+    } else {
+      return `You are Gemini 2.5 Pro analyzing a food image. Identify ALL visible food ingredients with maximum precision.
+
+Return ONLY a valid JSON array:
+[{"name": "ingredient_name", "confidence": 0.95}]
+
+Guidelines:
+1. For 'name': Use specific English names (e.g., 'cherry tomatoes', 'red bell pepper', 'ground beef', 'fresh basil leaves')
+2. Include ONLY actual food ingredients: vegetables, fruits, meat, fish, dairy, grains, legumes, herbs, spices, nuts, oils
+3. EXCLUDE: utensils, containers, packaging, backgrounds, non-food objects
+4. Confidence: 0.1-1.0 based on visual clarity
+5. Return 1-25 ingredients maximum
+6. Include partial/cut ingredients if clearly identifiable
+7. Be thorough - include spices, herbs, seasonings if visible
+8. Distinguish varieties when possible
+
+Example response:
+[{"name": "cherry tomatoes", "confidence": 0.95}, {"name": "fresh basil", "confidence": 0.88}]
+
+Focus on actual food ingredients that could be used in cooking.`;
+    }
+  }
+
+  private async analyzeWithGemini15Fallback(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
     try {
       const imageBuffer = fs.readFileSync(imagePath);
       const imageBase64 = imageBuffer.toString('base64');
@@ -362,7 +244,7 @@ export class EnhancedRecognizeService {
           contents: [{
             parts: [
               {
-                text: "Analyze this food image and identify visible ingredients. Return ONLY a JSON array: [{\"name\": \"ingredient_name\", \"nameIt\": \"nome_italiano\", \"confidence\": 0.95}]. Use specific English names for 'name' and Italian translations for 'nameIt'. Include only food items, confidence 0.1-1.0."
+                text: this.getLanguageSpecificPrompt(language)
               },
               {
                 inline_data: {
@@ -392,7 +274,7 @@ export class EnhancedRecognizeService {
       }
 
       const ingredients = JSON.parse(jsonMatch[0]);
-      const processed = this.processGeminiResults(ingredients);
+      const processed = this.processGeminiResults(ingredients, language);
       console.log(`✅ Gemini 1.5 fallback found ${processed.length} ingredients`);
       return processed;
 
@@ -402,7 +284,7 @@ export class EnhancedRecognizeService {
     }
   }
 
-  private async analyzeWithVisionAPI(imagePath: string): Promise<ProcessedIngredient[]> {
+  private async analyzeWithVisionAPI(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
     try {
       const formData = new FormData();
       formData.append('file', fs.createReadStream(imagePath));
@@ -419,7 +301,7 @@ export class EnhancedRecognizeService {
       }
 
       const result = await response.json() as RecognitionResult;
-      return this.processVisionAPIResults(result);
+      return this.processVisionAPIResults(result, language);
 
     } catch (error) {
       console.error('❌ Vision API error:', error);
@@ -427,47 +309,29 @@ export class EnhancedRecognizeService {
     }
   }
 
-  private async analyzeWithLocalModel(imagePath: string): Promise<ProcessedIngredient[]> {
+  private async analyzeWithLocalModel(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
     // Placeholder per un modello locale futuro (TensorFlow.js, ONNX, etc.)
     // Per ora ritorna array vuoto
     return [];
   }
 
-  private processGeminiResults(ingredients: any[]): ProcessedIngredient[] {
+  private processGeminiResults(ingredients: any[], language: string = 'en'): ProcessedIngredient[] {
     const processed: ProcessedIngredient[] = [];
 
     ingredients.forEach(item => {
       if (item.name && typeof item.confidence === 'number') {
-        // Prima verifica se l'ingrediente sembra essere cibo
+        // Verifica se l'ingrediente sembra essere cibo
         if (this.looksLikeFood(item.name)) {
-          // Cerca nel nostro database per traduzioni e categorie
-          const foodInfo = this.findFoodInDatabase(item.name);
+          const category = this.guessCategory(item.name);
           
-          if (foodInfo) {
-            // Se trovato nel database, usa le nostre informazioni
-            processed.push({
-              name: foodInfo.key,
-              nameIt: foodInfo.data.nameIt,
-              category: foodInfo.data.category,
-              confidence: Math.min(item.confidence, 1),
-              source: 'gemini-vision'
-            });
-          } else {
-            // Se non trovato nel database, usa la traduzione di Gemini se disponibile
-            const category = this.guessCategory(item.name);
-            const nameIt = item.nameIt || this.guessItalianTranslation(item.name); // Use Gemini's translation first
-            
-            processed.push({
-              name: item.name.toLowerCase().trim(),
-              nameIt,
-              category,
-              confidence: Math.min(item.confidence * 0.95, 1), // Slightly lower confidence for unknown items
-              source: 'gemini-vision'
-            });
-            
-            const translationSource = item.nameIt ? 'Gemini' : 'fallback';
-            console.log(`🆕 New ingredient discovered: ${item.name} → ${nameIt} (${category}) [translation: ${translationSource}]`);
-          }
+          processed.push({
+            name: item.name.toLowerCase().trim(),
+            category,
+            confidence: Math.min(item.confidence, 1),
+            source: 'gemini-vision'
+          });
+          
+          console.log(`✅ Gemini found ingredient: ${item.name} (${category})`);
         } else {
           console.log(`🚫 Gemini found non-food item: ${item.name}`);
         }
@@ -477,40 +341,24 @@ export class EnhancedRecognizeService {
     return processed;
   }
 
-  private processVisionAPIResults(result: RecognitionResult): ProcessedIngredient[] {
+  private processVisionAPIResults(result: RecognitionResult, language: string = 'en'): ProcessedIngredient[] {
     const tags = result.tags || result.english || [];
     const processed: ProcessedIngredient[] = [];
 
     tags.forEach((tag, index) => {
       // Filtra solo termini che sembrano essere ingredienti alimentari
       if (this.looksLikeFood(tag)) {
-        const foodInfo = this.findFoodInDatabase(tag);
         const confidence = Math.max(0.5, 1 - (index * 0.1)) * 0.8; // Reduce confidence for legacy API
+        const category = this.guessCategory(tag);
         
-        if (foodInfo) {
-          // Se trovato nel database
-          processed.push({
-            name: foodInfo.key,
-            nameIt: foodInfo.data.nameIt,
-            category: foodInfo.data.category,
-            confidence,
-            source: 'vision-api'
-          });
-        } else {
-          // Se non trovato, accetta comunque se sembra cibo
-          const category = this.guessCategory(tag);
-          const nameIt = this.guessItalianTranslation(tag);
-          
-          processed.push({
-            name: tag.toLowerCase().trim(),
-            nameIt,
-            category,
-            confidence: confidence * 0.9, // Lower confidence for unknown items from legacy API
-            source: 'vision-api'
-          });
-          
-          console.log(`🆕 Legacy API found new ingredient: ${tag} → ${nameIt} (${category})`);
-        }
+        processed.push({
+          name: tag.toLowerCase().trim(),
+          category,
+          confidence: confidence * 0.9, // Lower confidence for legacy API
+          source: 'vision-api'
+        });
+        
+        console.log(`🆕 Legacy API found ingredient: ${tag} (${category})`);
       } else {
         console.log(`🚫 Filtered non-food term: ${tag}`);
       }
@@ -519,66 +367,7 @@ export class EnhancedRecognizeService {
     return processed;
   }
 
-  private findFoodInDatabase(query: string): { key: string; data: any } | null {
-    const normalizedQuery = query.toLowerCase().trim();
-
-    // Cerca match esatto per chiave
-    for (const [key, data] of Object.entries(ENHANCED_FOOD_DATABASE)) {
-      // Match sui nomi principali
-      if (data.names.some(name => name.toLowerCase() === normalizedQuery)) {
-        return { key, data };
-      }
-      
-      // Match sugli alias (traduzioni italiane)
-      if (data.aliases.some(alias => alias.toLowerCase() === normalizedQuery)) {
-        return { key, data };
-      }
-    }
-
-    // Fuzzy matching per varianti
-    for (const [key, data] of Object.entries(ENHANCED_FOOD_DATABASE)) {
-      for (const name of data.names) {
-        if (this.fuzzyMatch(normalizedQuery, name.toLowerCase())) {
-          return { key, data };
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private fuzzyMatch(query: string, target: string): boolean {
-    // Match se query è contenuta in target o viceversa
-    if (query.length >= 4 && target.includes(query)) return true;
-    if (target.length >= 4 && query.includes(target)) return true;
-    
-    // Levenshtein distance per match simili
-    const distance = this.levenshteinDistance(query, target);
-    const maxLength = Math.max(query.length, target.length);
-    const similarity = 1 - (distance / maxLength);
-    
-    return similarity >= 0.8 && Math.min(query.length, target.length) >= 3;
-  }
-
-  private levenshteinDistance(str1: string, str2: string): number {
-    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
-
-    for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
-    for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
-
-    for (let j = 1; j <= str2.length; j++) {
-      for (let i = 1; i <= str1.length; i++) {
-        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-        matrix[j][i] = Math.min(
-          matrix[j][i - 1] + 1, // deletion
-          matrix[j - 1][i] + 1, // insertion
-          matrix[j - 1][i - 1] + indicator // substitution
-        );
-      }
-    }
-
-    return matrix[str2.length][str1.length];
-  }
+  // Rimosso database statico e funzioni correlate
 
   private combineAndRankResults(ingredients: ProcessedIngredient[]): ProcessedIngredient[] {
     const ingredientMap = new Map<string, ProcessedIngredient>();
@@ -636,35 +425,12 @@ export class EnhancedRecognizeService {
     return finalResults;
   }
 
-  private async getSmartFallback(imagePath: string): Promise<ProcessedIngredient[]> {
+  private async getSmartFallback(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
     console.log('🧠 Using smart fallback analysis...');
     
-    // Analisi del nome file per indizi
-    const filename = path.basename(imagePath).toLowerCase();
-    const possibleIngredients: ProcessedIngredient[] = [];
-
-    // Cerca indizi nel nome del file
-    for (const [key, data] of Object.entries(ENHANCED_FOOD_DATABASE)) {
-      for (const name of data.names) {
-        if (filename.includes(name.toLowerCase().replace(/\s+/g, ''))) {
-          possibleIngredients.push({
-            name: key,
-            nameIt: data.nameIt,
-            category: data.category,
-            confidence: 0.7,
-            source: 'fallback'
-          });
-        }
-      }
-    }
-
-    if (possibleIngredients.length > 0) {
-      console.log(`📁 Found ${possibleIngredients.length} ingredients from filename analysis`);
-      return possibleIngredients.slice(0, 3);
-    }
-
-    // Non restituire ingredienti di fallback se non ne abbiamo trovati
-    console.log('🚫 No ingredients detected and no filename hints - returning empty result');
+    // Senza database statico, il fallback è limitato
+    // In futuro si potrebbe implementare analisi del nome file o altri metodi
+    console.log('🚫 No fallback ingredients available - returning empty result');
     return [];
   }
 
@@ -920,97 +686,5 @@ export class EnhancedRecognizeService {
     return 'other';
   }
 
-  private guessItalianTranslation(ingredient: string): string {
-    const normalizedIngredient = ingredient.toLowerCase().trim();
-    
-    // Traduzioni comuni che non sono nel database
-    const commonTranslations: { [key: string]: string } = {
-      // Verdure aggiuntive
-      'artichoke': 'carciofo',
-      'asparagus': 'asparago',
-      'avocado': 'avocado',
-      'beetroot': 'barbabietola',
-      'beet': 'barbabietola',
-      'cabbage': 'cavolo',
-      'cauliflower': 'cavolfiore',
-      'corn': 'mais',
-      'fennel': 'finocchio',
-      'kale': 'cavolo riccio',
-      'leek': 'porro',
-      'okra': 'okra',
-      'radish': 'ravanello',
-      'turnip': 'rapa',
-      
-      // Frutta aggiuntiva
-      'apricot': 'albicocca',
-      'blueberry': 'mirtillo',
-      'cantaloupe': 'melone',
-      'cherry': 'ciliegia',
-      'coconut': 'cocco',
-      'cranberry': 'mirtillo rosso',
-      'date': 'dattero',
-      'fig': 'fico',
-      'grape': 'uva',
-      'grapefruit': 'pompelmo',
-      'kiwi': 'kiwi',
-      'lime': 'lime',
-      'mango': 'mango',
-      'papaya': 'papaya',
-      'peach': 'pesca',
-      'pear': 'pera',
-      'pineapple': 'ananas',
-      'plum': 'prugna',
-      'raspberry': 'lampone',
-      'watermelon': 'anguria',
-      
-      // Carne aggiuntiva
-      'duck': 'anatra',
-      'lamb': 'agnello',
-      'pork': 'maiale',
-      'salmon': 'salmone',
-      'shrimp': 'gamberetto',
-      'tuna': 'tonno',
-      'turkey': 'tacchino',
-      'veal': 'vitello',
-      
-      // Cereali e legumi
-      'barley': 'orzo',
-      'chickpeas': 'ceci',
-      'lentils': 'lenticchie',
-      'oats': 'avena',
-      'quinoa': 'quinoa',
-      'soybeans': 'soia',
-      
-      // Erbe e spezie
-      'cilantro': 'coriandolo',
-      'cinnamon': 'cannella',
-      'cloves': 'chiodi di garofano',
-      'cumin': 'cumino',
-      'dill': 'aneto',
-      'ginger': 'zenzero',
-      'mint': 'menta',
-      'nutmeg': 'noce moscata',
-      'paprika': 'paprika',
-      'rosemary': 'rosmarino',
-      'sage': 'salvia',
-      'thyme': 'timo',
-      'turmeric': 'curcuma',
-      'vanilla': 'vaniglia'
-    };
-    
-    // Cerca traduzione diretta
-    if (commonTranslations[normalizedIngredient]) {
-      return commonTranslations[normalizedIngredient];
-    }
-    
-    // Cerca match parziale
-    for (const [english, italian] of Object.entries(commonTranslations)) {
-      if (normalizedIngredient.includes(english) || english.includes(normalizedIngredient)) {
-        return italian;
-      }
-    }
-    
-    // Se non trovata, restituisci il nome originale
-    return ingredient;
-  }
+  // Rimossa funzione di traduzione - ora Gemini gestisce direttamente la lingua
 }
