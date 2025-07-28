@@ -10,6 +10,7 @@ import {
   StatusBar,
   Platform,
   Image,
+  SafeAreaView,
 } from 'react-native';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
@@ -343,7 +344,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   };
 
   return (
-    <Animated.ScrollView
+    <SafeAreaView style={styles.safeArea}>
+      <Animated.ScrollView
       style={[styles.container, animatedStyle]}
       showsVerticalScrollIndicator={false}
       refreshControl={
@@ -642,11 +644,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
           setSelectedRecipe(null);
         }}
       />
-    </Animated.ScrollView>
+      </Animated.ScrollView>
+    </SafeAreaView>
   );
 };
 
 const getStyles = (colors: any) => StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -654,7 +661,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   welcomeBanner: {
     backgroundColor: colors.primary,
     marginHorizontal: 20,
-    marginTop: 60,
+    marginTop: 20,
     borderRadius: 16,
     overflow: 'hidden',
   },
