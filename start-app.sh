@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script per avviare FridgeWise AI
+# Script per avviare FridgeWiseAI
 # Colori per output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -8,7 +8,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 FridgeWise AI Startup Script${NC}"
+echo -e "${BLUE}🚀 FridgeWiseAI Startup Script${NC}"
 echo "=================================="
 
 # Funzione per controllare se un processo è in esecuzione
@@ -145,7 +145,7 @@ case "$1" in
         start_backend
         start_frontend
         show_status
-        echo -e "${GREEN}🎉 FridgeWise AI started successfully!${NC}"
+        echo -e "${GREEN}🎉 FridgeWiseAI started successfully!${NC}"
         echo -e "${BLUE}💡 Use './start-app.sh expo' to open Expo Go${NC}"
         ;;
     "stop")
@@ -167,7 +167,7 @@ case "$1" in
         $0 start
         ;;
     *)
-        echo -e "${BLUE}🚀 FridgeWise AI Management Script${NC}"
+        echo -e "${BLUE}🚀 FridgeWiseAI Management Script${NC}"
         echo "Usage: $0 {start|stop|status|expo|logs|restart}"
         echo ""
         echo "Commands:"

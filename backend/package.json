@@ -1,7 +1,7 @@
 {
-  "name": "fridgewise-backend",
+  "name": "fridgewiseai-backend",
   "version": "1.0.0",
-  "description": "Backend for FridgeWise AI app",
+  "description": "Backend for FridgeWiseAI app",
   "main": "src/index.ts",
   "scripts": {
     "start": "node src/index.js",

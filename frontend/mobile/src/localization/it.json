@@ -139,7 +139,7 @@
     "aiDisclaimerText": "Il riconoscimento ingredienti basato su IA potrebbe non essere accurato al 100%. Verifica sempre i risultati e controlla gli allergeni."
   },
   "home": {
-    "welcome": "Benvenuto in FridgeWise",
+    "welcome": "Benvenuto in FridgeWiseAI",
     "subtitle": "Analizza il contenuto del tuo frigorifero e ricevi suggerimenti per ricette",
     "goodMorning": "Buongiorno",
     "goodAfternoon": "Buon pomeriggio",
@@ -735,7 +735,7 @@
     "lastUpdated": "Ultimo aggiornamento",
     "dataCollection": {
       "title": "Raccolta Dati",
-      "content": "FridgeWise raccoglie informazioni necessarie per fornire raccomandazioni di ricette personalizzate e migliorare i nostri servizi di riconoscimento ingredienti basati su IA. Questo include:",
+      "content": "FridgeWiseAI raccoglie informazioni necessarie per fornire raccomandazioni di ricette personalizzate e migliorare i nostri servizi di riconoscimento ingredienti basati su IA. Questo include:",
       "account": "Informazioni account: indirizzo email, nome visualizzato, preferenze dietetiche e livello di competenza culinaria",
       "ingredients": "Foto degli ingredienti (elaborate localmente, solo dati anonimizzati inviati ai server), risultati di riconoscimento e feedback di validazione",
       "recipes": "Preferenze ricette, ricette salvate, cronologia di cottura, valutazioni e modifiche alle ricette",
@@ -757,7 +757,7 @@
     },
     "dataSharing": {
       "title": "Condivisione Dati con Terze Parti",
-      "content": "FridgeWise mantiene politiche rigorose di condivisione dati. Potremmo condividere dati limitati e anonimizzati con:",
+      "content": "FridgeWiseAI mantiene politiche rigorose di condivisione dati. Potremmo condividere dati limitati e anonimizzati con:",
       "ai": "Fornitori di servizi IA (OpenAI, Google Vision API) per riconoscimento ingredienti - solo immagini elaborate, nessun identificatore personale",
       "usda": "API USDA FoodData Central per validazione informazioni nutrizionali - nessun dato personale condiviso",
       "analytics": "Fornitori di analisi (Firebase Analytics) per metriche delle prestazioni dell'app - solo dati di utilizzo anonimizzati",
@@ -768,7 +768,7 @@
     },
     "dataSecurity": {
       "title": "Sicurezza e Protezione dei Dati",
-      "content": "FridgeWise implementa misure di sicurezza complete per proteggere le tue informazioni personali:",
+      "content": "FridgeWiseAI implementa misure di sicurezza complete per proteggere le tue informazioni personali:",
       "encryption": "Crittografia end-to-end per la trasmissione dati e crittografia AES-256 per i dati a riposo",
       "access": "Controlli di accesso rigorosi con permessi basati su ruoli e autenticazione multi-fattore per il nostro team",
       "infrastructure": "Infrastruttura cloud sicura con audit di sicurezza regolari e valutazioni delle vulnerabilità",
@@ -791,7 +791,7 @@
     },
     "cookies": {
       "title": "Cookie e Tecnologie di Tracciamento",
-      "content": "FridgeWise utilizza tecnologie di tracciamento limitate per migliorare la tua esperienza:",
+      "content": "FridgeWiseAI utilizza tecnologie di tracciamento limitate per migliorare la tua esperienza:",
       "essential": "Cookie essenziali per la funzionalità dell'app, autenticazione utente e sicurezza",
       "analytics": "Cookie analitici per comprendere i pattern di utilizzo dell'app e migliorare le prestazioni (opt-out disponibile)",
       "preferences": "Cookie di preferenze per ricordare le tue impostazioni e restrizioni dietetiche",
@@ -801,7 +801,7 @@
     },
     "dataRetention": {
       "title": "Politica di Conservazione Dati",
-      "content": "FridgeWise conserva i tuoi dati personali solo per il tempo necessario:",
+      "content": "FridgeWiseAI conserva i tuoi dati personali solo per il tempo necessario:",
       "account": "Dati account: conservati finché il tuo account è attivo, eliminati entro 30 giorni dalla cancellazione dell'account",
       "recipes": "Cronologia ricette e preferenze: conservate per 3 anni dopo l'ultimo accesso per migliorare le raccomandazioni",
       "analytics": "Dati analitici anonimizzati: conservati fino a 2 anni per il miglioramento del servizio",
@@ -822,7 +822,7 @@
     },
     "childrens": {
       "title": "Privacy dei Minori (Conformità COPPA)",
-      "content": "FridgeWise si impegna a proteggere la privacy dei minori:",
+      "content": "FridgeWiseAI si impegna a proteggere la privacy dei minori:",
       "age": "Il nostro servizio non è destinato a bambini sotto i 13 anni",
       "collection": "Non raccogliamo consapevolmente informazioni personali da bambini sotto i 13 anni",
       "discovery": "Se scopriamo di aver raccolto dati da un bambino sotto i 13 anni, li elimineremo immediatamente",

@@ -10,7 +10,7 @@ export const createSecureFormData = (options?: any) => {
   
   // Generate a cryptographically secure boundary
   const randomBytes = crypto.randomBytes(16);
-  const secureBoundary = `----formdata-fridgewise-${randomBytes.toString('hex')}`.substring(0, 70);
+  const secureBoundary = `----formdata-fridgewiseai-${randomBytes.toString('hex')}`.substring(0, 70);
   
   // Override the internal boundary with our secure one
   (formData as any)._boundary = secureBoundary;
@@ -34,7 +34,7 @@ export const SecureFormData = function(this: any, options?: any) {
  */
 export const generateSecureBoundary = (): string => {
   const randomBytes = crypto.randomBytes(16);
-  return `----formdata-fridgewise-${randomBytes.toString('hex')}`.substring(0, 70);
+  return `----formdata-fridgewiseai-${randomBytes.toString('hex')}`.substring(0, 70);
 };
 
 /**

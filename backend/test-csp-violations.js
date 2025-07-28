@@ -12,56 +12,56 @@ const API_URL = process.env.API_URL || 'http://localhost:3000';
 // Simula violazioni CSP di esempio
 const sampleViolations = [
   {
-    'document-uri': 'https://fridgewise.app/dashboard',
+    'document-uri': 'https://fridgewiseai.app/dashboard',
     'violated-directive': 'script-src',
     'blocked-uri': 'https://malicious-site.com/script.js',
     'effective-directive': 'script-src',
     'original-policy': "default-src 'self'; script-src 'self' 'nonce-abc123'",
-    'source-file': 'https://fridgewise.app/dashboard',
+    'source-file': 'https://fridgewiseai.app/dashboard',
     'line-number': 42,
     'column-number': 15,
     'status-code': 200
   },
   {
-    'document-uri': 'https://fridgewise.app/recipes',
+    'document-uri': 'https://fridgewiseai.app/recipes',
     'violated-directive': 'img-src',
     'blocked-uri': 'http://unsecure-images.com/recipe.jpg',
     'effective-directive': 'img-src',
     'original-policy': "default-src 'self'; img-src 'self' https: data:",
-    'source-file': 'https://fridgewise.app/recipes',
+    'source-file': 'https://fridgewiseai.app/recipes',
     'line-number': 128,
     'column-number': 8,
     'status-code': 200
   },
   {
-    'document-uri': 'https://fridgewise.app/profile',
+    'document-uri': 'https://fridgewiseai.app/profile',
     'violated-directive': 'style-src',
     'blocked-uri': 'inline',
     'effective-directive': 'style-src',
     'original-policy': "default-src 'self'; style-src 'self' 'unsafe-inline'",
-    'source-file': 'https://fridgewise.app/profile',
+    'source-file': 'https://fridgewiseai.app/profile',
     'line-number': 67,
     'column-number': 22,
     'status-code': 200
   },
   {
-    'document-uri': 'https://fridgewise.app/camera',
+    'document-uri': 'https://fridgewiseai.app/camera',
     'violated-directive': 'connect-src',
     'blocked-uri': 'https://suspicious-api.com/upload',
     'effective-directive': 'connect-src',
     'original-policy': "default-src 'self'; connect-src 'self' https://api.openai.com",
-    'source-file': 'https://fridgewise.app/camera',
+    'source-file': 'https://fridgewiseai.app/camera',
     'line-number': 95,
     'column-number': 12,
     'status-code': 200
   },
   {
-    'document-uri': 'https://fridgewise.app/dashboard',
+    'document-uri': 'https://fridgewiseai.app/dashboard',
     'violated-directive': 'script-src',
     'blocked-uri': 'eval',
     'effective-directive': 'script-src',
     'original-policy': "default-src 'self'; script-src 'self' 'nonce-abc123'",
-    'source-file': 'https://fridgewise.app/dashboard',
+    'source-file': 'https://fridgewiseai.app/dashboard',
     'line-number': 156,
     'column-number': 5,
     'status-code': 200

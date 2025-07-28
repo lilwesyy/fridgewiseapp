@@ -23,7 +23,7 @@ export function generatePasswordResetEmail(
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #16a34a; margin-bottom: 10px;">FridgeWise</h1>
+          <h1 style="color: #16a34a; margin-bottom: 10px;">FridgeWiseAI</h1>
           <h2 style="color: #333; margin-bottom: 20px;">${t.passwordReset.title}</h2>
         </div>
         
@@ -70,7 +70,7 @@ export function generateEmailVerificationEmail(
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #16a34a; margin-bottom: 10px;">🍽️ FridgeWise</h1>
+          <h1 style="color: #16a34a; margin-bottom: 10px;">🍽️ FridgeWiseAI</h1>
           <h2 style="color: #333; margin-top: 0;">${t.emailVerification.title}</h2>
         </div>
         

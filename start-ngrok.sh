@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Avvio FridgeWise con ngrok per accesso remoto..."
+echo "🚀 Avvio FridgeWiseAI con ngrok per accesso remoto..."
 
 # Colori per i messaggi
 RED='\033[0;31m'

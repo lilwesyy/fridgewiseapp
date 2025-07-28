@@ -137,7 +137,7 @@
     "aiDisclaimerText": "AI-powered ingredient detection may not be 100% accurate. Always verify results and check for allergens."
   },
   "home": {
-    "welcome": "Welcome to FridgeWise",
+    "welcome": "Welcome to FridgeWiseAI",
     "subtitle": "Analyze your fridge contents and get recipe suggestions",
     "goodMorning": "Good morning",
     "goodAfternoon": "Good afternoon",
@@ -712,7 +712,7 @@
     "lastUpdated": "Last updated",
     "dataCollection": {
       "title": "Data Collection",
-      "content": "FridgeWise collects information necessary to provide personalized recipe recommendations and improve our AI-powered ingredient recognition services. This includes:",
+      "content": "FridgeWiseAI collects information necessary to provide personalized recipe recommendations and improve our AI-powered ingredient recognition services. This includes:",
       "account": "Account information: email address, display name, dietary preferences, and cooking skill level",
       "ingredients": "Ingredient photos (processed locally, only anonymized data sent to servers), recognition results, and validation feedback",
       "recipes": "Recipe preferences, saved recipes, cooking history, ratings, and recipe modifications",
@@ -734,7 +734,7 @@
     },
     "dataSharing": {
       "title": "Third-Party Data Sharing",
-      "content": "FridgeWise maintains strict data sharing policies. We may share limited, anonymized data with:",
+      "content": "FridgeWiseAI maintains strict data sharing policies. We may share limited, anonymized data with:",
       "ai": "AI service providers (OpenAI, Google Vision API) for ingredient recognition - only processed images, no personal identifiers",
       "usda": "USDA FoodData Central API for nutritional information validation - no personal data shared",
       "analytics": "Analytics providers (Firebase Analytics) for app performance metrics - anonymized usage data only",
@@ -745,7 +745,7 @@
     },
     "dataSecurity": {
       "title": "Data Security & Protection",
-      "content": "FridgeWise implements comprehensive security measures to protect your personal information:",
+      "content": "FridgeWiseAI implements comprehensive security measures to protect your personal information:",
       "encryption": "End-to-end encryption for data transmission and AES-256 encryption for data at rest",
       "access": "Strict access controls with role-based permissions and multi-factor authentication for our team",
       "infrastructure": "Secure cloud infrastructure with regular security audits and vulnerability assessments",
@@ -768,7 +768,7 @@
     },
     "cookies": {
       "title": "Cookies and Tracking Technologies",
-      "content": "FridgeWise uses limited tracking technologies to enhance your experience:",
+      "content": "FridgeWiseAI uses limited tracking technologies to enhance your experience:",
       "essential": "Essential cookies for app functionality, user authentication, and security",
       "analytics": "Analytics cookies to understand app usage patterns and improve performance (opt-out available)",
       "preferences": "Preference cookies to remember your settings and dietary restrictions",
@@ -778,7 +778,7 @@
     },
     "dataRetention": {
       "title": "Data Retention Policy",
-      "content": "FridgeWise retains your personal data only as long as necessary:",
+      "content": "FridgeWiseAI retains your personal data only as long as necessary:",
       "account": "Account data: Retained while your account is active, deleted within 30 days of account deletion",
       "recipes": "Recipe history and preferences: Retained for 3 years after last login to improve recommendations",
       "analytics": "Anonymized analytics data: Retained for up to 2 years for service improvement",
@@ -799,7 +799,7 @@
     },
     "childrens": {
       "title": "Children's Privacy (COPPA Compliance)",
-      "content": "FridgeWise is committed to protecting children's privacy:",
+      "content": "FridgeWiseAI is committed to protecting children's privacy:",
       "age": "Our service is not intended for children under 13 years of age",
       "collection": "We do not knowingly collect personal information from children under 13",
       "discovery": "If we discover we have collected data from a child under 13, we will delete it immediately",
@@ -828,16 +828,16 @@
       "email": "Email: privacy@fridgewiseai.com",
       "response": "We respond to all privacy inquiries within 48 hours",
       "dpo": "Data Protection Officer: dpo@fridgewiseai.com",
-      "address": "Mailing Address: FridgeWise Privacy Team, [Your Business Address]"
+      "address": "Mailing Address: FridgeWiseAI Privacy Team, [Your Business Address]"
     },
     "disclaimer": {
       "title": "Important Disclaimers",
       "content": "Please read these important notices regarding our service:",
       "accuracy": "Recipe suggestions are based on AI ingredient recognition, which may not be 100% accurate",
       "safety": "Always verify ingredient safety, expiration dates, and check for allergens before cooking",
-      "medical": "FridgeWise is not a medical service and should not be used for dietary medical advice",
+      "medical": "FridgeWiseAI is not a medical service and should not be used for dietary medical advice",
       "allergies": "Users with food allergies should exercise extreme caution and consult healthcare providers",
-      "liability": "FridgeWise is not liable for adverse reactions or health issues resulting from recipe suggestions",
+      "liability": "FridgeWiseAI is not liable for adverse reactions or health issues resulting from recipe suggestions",
       "professional": "For specific dietary needs or medical conditions, consult qualified nutrition professionals"
     },
     "effective": {
@@ -850,11 +850,11 @@
     "lastUpdated": "Last updated",
     "acceptance": {
       "title": "Acceptance of Terms",
-      "content": "By using FridgeWise AI, you agree to these Terms of Service. If you disagree with any part, please do not use our app."
+      "content": "By using FridgeWiseAI, you agree to these Terms of Service. If you disagree with any part, please do not use our app."
     },
     "description": {
       "title": "Service Description",
-      "content": "FridgeWise AI is a mobile application that provides:",
+      "content": "FridgeWiseAI is a mobile application that provides:",
       "feature1": "AI-powered ingredient recognition from photos",
       "feature2": "Personalized recipe recommendations",
       "feature3": "Dietary restriction management",
@@ -877,11 +877,11 @@
     },
     "content": {
       "title": "Content and Intellectual Property",
-      "content": "All app content, including recipes, interface design, and AI technology, is owned by FridgeWise AI and protected by intellectual property laws."
+      "content": "All app content, including recipes, interface design, and AI technology, is owned by FridgeWiseAI and protected by intellectual property laws."
     },
     "liability": {
       "title": "Limitation of Liability",
-      "content": "FridgeWise AI is provided 'as is'. We are not liable for any damages arising from app use. Users are responsible for verifying recipe safety and ingredient compatibility."
+      "content": "FridgeWiseAI is provided 'as is'. We are not liable for any damages arising from app use. Users are responsible for verifying recipe safety and ingredient compatibility."
     },
     "termination": {
       "title": "Termination",
@@ -1034,7 +1034,7 @@
     "welcome": {
       "title": "Never waste food again",
       "subtitle": "Turn what you have into what you love",
-      "description": "FridgeWise helps you cook delicious meals with ingredients you already have at home."
+      "description": "FridgeWiseAI helps you cook delicious meals with ingredients you already have at home."
     },
     "scan": {
       "title": "Snap a photo, get recipes",

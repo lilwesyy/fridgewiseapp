@@ -12,7 +12,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Basic test route
 app.get('/', (req, res) => {
-  res.json({ message: 'FridgeWise API is running!' });
+  res.json({ message: 'FridgeWiseAI API is running!' });
 });
 
 app.get('/health', (req, res) => {

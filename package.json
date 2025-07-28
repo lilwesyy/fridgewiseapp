@@ -1,7 +1,7 @@
 {
-  "name": "fridgewiseapp",
+  "name": "fridgewiseaiapp",
   "version": "1.0.0",
-  "description": "FridgeWise AI App - Smart recipe suggestions from fridge contents",
+  "description": "FridgeWiseAI App - Smart recipe suggestions from fridge contents",
   "scripts": {
     "start:backend": "cd backend && npm run dev",
     "start:mobile": "cd frontend/mobile && npm start",
@@ -13,7 +13,7 @@
     "dev:tunnel": "npm run start:tunnel"
   },
   "keywords": ["react-native", "ai", "food", "recipes", "fridge"],
-  "author": "FridgeWise Team",
+  "author": "FridgeWiseAI Team",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^7.6.0"

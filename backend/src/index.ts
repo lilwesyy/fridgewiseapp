@@ -123,7 +123,7 @@ app.get('/health', (req: express.Request, res: express.Response) => {
     status: 'healthy', 
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '1.0.0',
-    message: 'FridgeWise API is running',
+    message: 'FridgeWiseAI API is running',
     environment: {
       nodeEnv: process.env.NODE_ENV,
       port: process.env.PORT

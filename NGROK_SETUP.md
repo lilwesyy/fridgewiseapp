@@ -1,4 +1,4 @@
-# 🌐 Setup ngrok per FridgeWise
+# 🌐 Setup ngrok per FridgeWiseAI
 
 Questa guida ti aiuta a configurare ngrok per esporre il backend e usare l'app mobile da qualsiasi dispositivo connesso a internet.
 

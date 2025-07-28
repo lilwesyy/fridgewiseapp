@@ -10,7 +10,7 @@ import { Switch } from 'react-native';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
-import { 
+import {
   CameraScreen,
   IngredientsScreen,
   RecipeScreen,
@@ -162,7 +162,7 @@ const AppContent: React.FC = () => {
   const { isDarkMode, themeMode, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { isOffline, isConnected, refresh: refreshNetworkStatus } = useNetworkStatus();
-  
+
   // Handle splash screen
   useEffect(() => {
     const hideSplash = async () => {
@@ -170,19 +170,19 @@ const AppContent: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       await SplashScreen.hideAsync();
     };
-    
+
     if (!isLoading) {
       hideSplash();
     }
   }, [isLoading, isDarkMode]);
-  
+
   // Force StatusBar update when theme changes
   useEffect(() => {
     // Force native StatusBar update
     const barStyle = isDarkMode ? 'light-content' : 'dark-content';
     RNStatusBar.setBarStyle(barStyle, true);
   }, [isDarkMode, themeMode]);
-  
+
   // Safety wrapper for translations
   const safeT = (key: string, fallback?: string) => {
     try {
@@ -225,11 +225,11 @@ const AppContent: React.FC = () => {
     email: '',
     token: ''
   });
-  
+
   const [forgotPasswordForm, setForgotPasswordForm] = useState({
     email: '',
   });
-  
+
   const [verifyCodeForm, setVerifyCodeForm] = useState({
     email: '',
     code: '',
@@ -334,7 +334,7 @@ const AppContent: React.FC = () => {
 
   const handleRetryConnection = async () => {
     setBackendStatus(prev => ({ ...prev, isCheckingHealth: true }));
-    
+
     try {
       const result = await checkBackendAvailability(API_URL, 3, 2000);
       setBackendStatus({
@@ -356,13 +356,13 @@ const AppContent: React.FC = () => {
     try {
       // Save onboarding completion status
       await AsyncStorage.setItem('onboarding_completed', 'true');
-      
+
       // Save user preferences for when they register/login
       await AsyncStorage.setItem('user_preferences', JSON.stringify(preferences));
-      
+
       // Update language immediately
       i18nInstance.changeLanguage(preferences.preferredLanguage);
-      
+
       // Hide onboarding and show register screen
       setShowOnboarding(false);
       setOnboardingCompleted(true);
@@ -380,7 +380,7 @@ const AppContent: React.FC = () => {
     try {
       // Save onboarding completion status (skipped)
       await AsyncStorage.setItem('onboarding_completed', 'true');
-      
+
       // Hide onboarding and show welcome screen
       setShowOnboarding(false);
       setOnboardingCompleted(true);
@@ -398,7 +398,7 @@ const AppContent: React.FC = () => {
     // Validate login form
     const emailValidation = validateLoginEmail(loginForm.email);
     const passwordValidation = validateLoginPassword(loginForm.password);
-    
+
     setLoginValidation({
       email: emailValidation,
       password: passwordValidation,
@@ -471,17 +471,17 @@ const AppContent: React.FC = () => {
     if (password.length < 8) {
       return { isValid: false, message: safeT('validation.passwordTooShort'), strength: 1 };
     }
-    
+
     let strength = 0;
     if (password.length >= 8) strength++;
     if (/[a-z]/.test(password)) strength++;
     if (/[A-Z]/.test(password)) strength++;
     if (/[0-9]/.test(password)) strength++;
     if (/[^A-Za-z0-9]/.test(password)) strength++;
-    
+
     const isValid = strength >= 3;
     const message = isValid ? '' : safeT('validation.passwordWeak');
-    
+
     return { isValid, message, strength };
   };
 
@@ -517,7 +517,7 @@ const AppContent: React.FC = () => {
   const handleLoginFormChange = (field: string, value: string) => {
     const newForm = { ...loginForm, [field]: value };
     setLoginForm(newForm);
-    
+
     // Clear validation errors when user starts typing
     if (field === 'email') {
       setLoginValidation(prev => ({ ...prev, email: { isValid: true, message: '' } }));
@@ -529,7 +529,7 @@ const AppContent: React.FC = () => {
   const handleRegisterFormChange = (field: string, value: string | boolean) => {
     const newForm = { ...registerForm, [field]: value };
     setRegisterForm(newForm);
-    
+
     // Real-time validation
     if (field === 'name') {
       setValidation(prev => ({ ...prev, name: validateName(value as string) }));
@@ -538,14 +538,14 @@ const AppContent: React.FC = () => {
     } else if (field === 'password') {
       const passwordValidation = validatePassword(value as string);
       const confirmPasswordValidation = validateConfirmPassword(value as string, newForm.confirmPassword);
-      setValidation(prev => ({ 
-        ...prev, 
+      setValidation(prev => ({
+        ...prev,
         password: passwordValidation,
         confirmPassword: confirmPasswordValidation
       }));
     } else if (field === 'confirmPassword') {
-      setValidation(prev => ({ 
-        ...prev, 
+      setValidation(prev => ({
+        ...prev,
         confirmPassword: validateConfirmPassword(newForm.password, value as string)
       }));
     }
@@ -557,14 +557,14 @@ const AppContent: React.FC = () => {
     const emailValidation = validateEmail(registerForm.email);
     const passwordValidation = validatePassword(registerForm.password);
     const confirmPasswordValidation = validateConfirmPassword(registerForm.password, registerForm.confirmPassword);
-    
+
     setValidation({
       name: nameValidation,
       email: emailValidation,
       password: passwordValidation,
       confirmPassword: confirmPasswordValidation,
     });
-    
+
     if (!nameValidation.isValid || !emailValidation.isValid || !passwordValidation.isValid || !confirmPasswordValidation.isValid) {
       setNotification({
         visible: true,
@@ -574,7 +574,7 @@ const AppContent: React.FC = () => {
       });
       return;
     }
-    
+
     if (!registerForm.acceptTerms) {
       setNotification({
         visible: true,
@@ -584,12 +584,12 @@ const AppContent: React.FC = () => {
       });
       return;
     }
-    
+
     try {
       // Use preferences from onboarding if available, otherwise use current system language
       let preferredLanguage: 'en' | 'it' = 'en';
       let dietaryRestrictions: string[] = [];
-      
+
       try {
         const savedPreferences = await AsyncStorage.getItem('user_preferences');
         if (savedPreferences) {
@@ -603,14 +603,14 @@ const AppContent: React.FC = () => {
         // If we can't read preferences, use current language
         preferredLanguage = (i18nInstance?.language as 'en' | 'it') || 'en';
       }
-      
+
       await register(registerForm.email, registerForm.password, registerForm.name, preferredLanguage, dietaryRestrictions);
-      
+
       // After successful registration, send verification email and go to verification screen
       setEmailVerificationForm({ email: registerForm.email, token: '' });
       await sendEmailVerification(registerForm.email);
       setAuthMode('verify-email');
-      
+
     } catch (error: any) {
       setNotification({
         visible: true,
@@ -623,7 +623,7 @@ const AppContent: React.FC = () => {
 
   const handleForgotPassword = async () => {
     const emailValidation = validateEmail(forgotPasswordForm.email);
-    
+
     if (!emailValidation.isValid) {
       setNotification({
         visible: true,
@@ -638,17 +638,17 @@ const AppContent: React.FC = () => {
       console.log('Sending forgot password request for:', forgotPasswordForm.email);
       const response = await forgotPassword(forgotPasswordForm.email);
       console.log('Forgot password response:', response);
-      
+
       // Salva l'email per la schermata successiva
       setVerifyCodeForm({ ...verifyCodeForm, email: forgotPasswordForm.email });
-      
+
       setNotification({
         visible: true,
         type: 'success',
         title: safeT('common.success'),
         message: safeT('auth.resetPasswordSuccess'),
       });
-      
+
       // Vai alla schermata di verifica codice
       setAuthMode('verify-code');
     } catch (error: any) {
@@ -680,7 +680,7 @@ const AppContent: React.FC = () => {
   const handleResetPassword = async () => {
     const passwordValidation = validatePassword(resetPasswordForm.newPassword);
     const confirmPasswordValidation = validateConfirmPassword(resetPasswordForm.newPassword, resetPasswordForm.confirmNewPassword);
-    
+
     if (!passwordValidation.isValid || !confirmPasswordValidation.isValid) {
       setNotification({
         visible: true,
@@ -772,7 +772,7 @@ const AppContent: React.FC = () => {
 
   const handleConfirmExitCooking = () => {
     setShowCookingExitModal(false);
-    
+
     if (pendingTab) {
       if (pendingTab === 'camera') {
         setAppState({
@@ -809,8 +809,10 @@ const AppContent: React.FC = () => {
         isRecipeJustGenerated: false,
         allRecipes: [],
         currentRecipeIndex: 0,
+        isCookingModeActive: false,
+        isPublicRecipe: false,
       });
-      
+
       // Reset to welcome screen (don't show onboarding again after logout)
       setAuthMode('welcome');
     } catch (error) {
@@ -833,14 +835,14 @@ const AppContent: React.FC = () => {
   const handleEmailVerification = async () => {
     try {
       await verifyEmail(emailVerificationForm.email, emailVerificationForm.token);
-      
+
       setNotification({
         visible: true,
         type: 'success',
         title: safeT('auth.verificationSuccess', 'Email Verified'),
         message: safeT('auth.verificationSuccessMessage', 'Your email has been verified successfully! Welcome to FridgeWise.'),
       });
-      
+
       // Clear forms - user will be automatically logged in
       setEmailVerificationForm({ email: '', token: '' });
       setRegisterForm({
@@ -850,7 +852,7 @@ const AppContent: React.FC = () => {
         confirmPassword: '',
         acceptTerms: false,
       });
-      
+
     } catch (error: any) {
       setNotification({
         visible: true,
@@ -911,7 +913,7 @@ const AppContent: React.FC = () => {
 
   const handleStartCooking = (recipe: any) => {
     // handleStartCooking called with recipe
-    
+
     setAppState({
       ...appState,
       currentScreen: 'cooking',
@@ -1007,550 +1009,550 @@ const AppContent: React.FC = () => {
         <>
           <SafeAreaView style={styles.welcomeContainer}>
             <AnimatedContainer animationType="staggered">
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.welcomeHeader}>
-              <View style={styles.logoSection}>
-                <LogoComponent width={120} height={108} />
-                <Text style={styles.welcomeTitle}>FridgeWise</Text>
-                <Text style={styles.welcomeTagline}>Smart. Simple. Delicious.</Text>
-              </View>
-              <Text style={styles.welcomeSubtitle}>
-                {safeT('home.subtitle')}
-              </Text>
-            </View>
-            
-            <View style={styles.illustrationContainer}>
-              <View style={styles.phoneFrame}>
-                <View style={styles.phoneContent}>
-                  <View style={styles.ingredientsColumn}>
-                    <View style={styles.ingredientItem}>
-                      <View style={styles.ingredientIcon}>
-                        <Text style={styles.emoji}>🍅</Text>
-                      </View>
-                      <Text style={styles.ingredientText}>Tomatoes</Text>
-                    </View>
-                    <View style={styles.ingredientItem}>
-                      <View style={styles.ingredientIcon}>
-                        <Text style={styles.emoji}>🧀</Text>
-                      </View>
-                      <Text style={styles.ingredientText}>Cheese</Text>
-                    </View>
-                    <View style={styles.ingredientItem}>
-                      <View style={styles.ingredientIcon}>
-                        <Text style={styles.emoji}>🌿</Text>
-                      </View>
-                      <Text style={styles.ingredientText}>Basil</Text>
-                    </View>
+              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.welcomeHeader}>
+                  <View style={styles.logoSection}>
+                    <LogoComponent width={120} height={108} />
+                    <Text style={styles.welcomeTitle}>FridgeWise</Text>
+                    <Text style={styles.welcomeTagline}>Smart. Simple. Delicious.</Text>
                   </View>
-                  
-                  <View style={styles.aiMagicColumn}>
-                    <View style={styles.aiIcon}>
-                      <Text style={styles.lightningEmoji}>⚡</Text>
-                    </View>
-                    <Text style={styles.aiText}>AI Magic</Text>
-                  </View>
+                  <Text style={styles.welcomeSubtitle}>
+                    {safeT('home.subtitle')}
+                  </Text>
                 </View>
-                
-                <View style={styles.recipeResult}>
-                  <Text style={styles.resultLabel}>Suggested Recipe</Text>
-                  <Text style={styles.resultTitle}>Pizza Margherita</Text>
-                </View>
-              </View>
-            </View>
 
-          </ScrollView>
-          <StatusBar style={isDarkMode ? "light" : "dark"} />
-          </AnimatedContainer>
+                <View style={styles.illustrationContainer}>
+                  <View style={styles.phoneFrame}>
+                    <View style={styles.phoneContent}>
+                      <View style={styles.ingredientsColumn}>
+                        <View style={styles.ingredientItem}>
+                          <View style={styles.ingredientIcon}>
+                            <Text style={styles.emoji}>🍅</Text>
+                          </View>
+                          <Text style={styles.ingredientText}>Tomatoes</Text>
+                        </View>
+                        <View style={styles.ingredientItem}>
+                          <View style={styles.ingredientIcon}>
+                            <Text style={styles.emoji}>🧀</Text>
+                          </View>
+                          <Text style={styles.ingredientText}>Cheese</Text>
+                        </View>
+                        <View style={styles.ingredientItem}>
+                          <View style={styles.ingredientIcon}>
+                            <Text style={styles.emoji}>🌿</Text>
+                          </View>
+                          <Text style={styles.ingredientText}>Basil</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.aiMagicColumn}>
+                        <View style={styles.aiIcon}>
+                          <Text style={styles.lightningEmoji}>⚡</Text>
+                        </View>
+                        <Text style={styles.aiText}>AI Magic</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.recipeResult}>
+                      <Text style={styles.resultLabel}>Suggested Recipe</Text>
+                      <Text style={styles.resultTitle}>Pizza Margherita</Text>
+                    </View>
+                  </View>
+                </View>
+
+              </ScrollView>
+              <StatusBar style={isDarkMode ? "light" : "dark"} />
+            </AnimatedContainer>
           </SafeAreaView>
-          
+
           <AnimatedContainer animationType="slideUp" delay={150}>
-          <View style={[styles.fixedBottomButtons, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-            <TouchableOpacity 
-              style={styles.primaryButton} 
-              onPress={() => setAuthMode('register')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.primaryButtonText}>{safeT('auth.register')}</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.secondaryButton} 
-              onPress={() => setAuthMode('login')}
-            >
-              <Text style={styles.secondaryButtonText}>{safeT('auth.login')}</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={[styles.fixedBottomButtons, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => setAuthMode('register')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.primaryButtonText}>{safeT('auth.register')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => setAuthMode('login')}
+              >
+                <Text style={styles.secondaryButtonText}>{safeT('auth.login')}</Text>
+              </TouchableOpacity>
+            </View>
           </AnimatedContainer>
-          
+
           {renderNotificationModal()}
         </>
       );
     }
-    
+
     if (authMode === 'login') {
       return (
         <>
           <SafeAreaView style={styles.authContainer}>
             <AnimatedContainer animationType="slideLeft">
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.authHeader}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={() => setAuthMode('welcome')}
-              >
-                <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
-              </TouchableOpacity>
-              <Text style={styles.authTitle}>{safeT('auth.signIn')}</Text>
-            </View>
-            
-            <View style={styles.authForm}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.email')}</Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      !loginValidation.email.isValid ? styles.inputError : null
-                    ]}
-                    value={loginForm.email}
-                    onChangeText={(text) => handleLoginFormChange('email', text)}
-                    placeholder={safeT('auth.email')}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="emailAddress"
-                    autoComplete="email"
-                    placeholderTextColor={colors.textSecondary}
-                  />
+              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.authHeader}>
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => setAuthMode('welcome')}
+                  >
+                    <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.authTitle}>{safeT('auth.signIn')}</Text>
                 </View>
-                {!loginValidation.email.isValid && (
-                  <Text style={styles.errorText}>{loginValidation.email.message}</Text>
-                )}
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.password')}</Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      !loginValidation.password.isValid ? styles.inputError : null
-                    ]}
-                    value={loginForm.password}
-                    onChangeText={(text) => handleLoginFormChange('password', text)}
-                    placeholder={safeT('auth.password')}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="password"
-                    autoComplete="current-password"
-                    placeholderTextColor={colors.textSecondary}
-                    onSubmitEditing={handleLogin}
-                    returnKeyType="go"
-                  />
+
+                <View style={styles.authForm}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.email')}</Text>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          !loginValidation.email.isValid ? styles.inputError : null
+                        ]}
+                        value={loginForm.email}
+                        onChangeText={(text) => handleLoginFormChange('email', text)}
+                        placeholder={safeT('auth.email')}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        textContentType="emailAddress"
+                        autoComplete="email"
+                        placeholderTextColor={colors.textSecondary}
+                      />
+                    </View>
+                    {!loginValidation.email.isValid && (
+                      <Text style={styles.errorText}>{loginValidation.email.message}</Text>
+                    )}
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.password')}</Text>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          !loginValidation.password.isValid ? styles.inputError : null
+                        ]}
+                        value={loginForm.password}
+                        onChangeText={(text) => handleLoginFormChange('password', text)}
+                        placeholder={safeT('auth.password')}
+                        secureTextEntry
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        textContentType="password"
+                        autoComplete="current-password"
+                        placeholderTextColor={colors.textSecondary}
+                        onSubmitEditing={handleLogin}
+                        returnKeyType="go"
+                      />
+                    </View>
+                    {!loginValidation.password.isValid && (
+                      <Text style={styles.errorText}>{loginValidation.password.message}</Text>
+                    )}
+                  </View>
+
+                  <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
+                    <Text style={styles.primaryButtonText}>{safeT('auth.signIn')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={() => setAuthMode('forgot-password')}
+                  >
+                    <Text style={styles.linkButtonText}>
+                      {safeT('auth.forgotPassword')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={() => setAuthMode('register')}
+                  >
+                    <Text style={styles.linkButtonText}>
+                      {safeT('auth.dontHaveAccount')} {safeT('auth.register')}
+                    </Text>
+                  </TouchableOpacity>
+
                 </View>
-                {!loginValidation.password.isValid && (
-                  <Text style={styles.errorText}>{loginValidation.password.message}</Text>
-                )}
-              </View>
-              
-              <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                <Text style={styles.primaryButtonText}>{safeT('auth.signIn')}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.linkButton} 
-                onPress={() => setAuthMode('forgot-password')}
-              >
-                <Text style={styles.linkButtonText}>
-                  {safeT('auth.forgotPassword')}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.linkButton} 
-                onPress={() => setAuthMode('register')}
-              >
-                <Text style={styles.linkButtonText}>
-                  {safeT('auth.dontHaveAccount')} {safeT('auth.register')}
-                </Text>
-              </TouchableOpacity>
-              
-            </View>
-          </ScrollView>
-          <StatusBar style={isDarkMode ? "light" : "dark"} />
-          </AnimatedContainer>
+              </ScrollView>
+              <StatusBar style={isDarkMode ? "light" : "dark"} />
+            </AnimatedContainer>
           </SafeAreaView>
           {renderNotificationModal()}
         </>
       );
     }
-    
+
     if (authMode === 'register') {
       return (
         <>
           <SafeAreaView style={styles.authContainer}>
             <AnimatedContainer animationType="slideRight">
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.authHeader}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={() => setAuthMode('welcome')}
-              >
-                <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
-              </TouchableOpacity>
-              <Text style={styles.authTitle}>{safeT('auth.register')}</Text>
-            </View>
-            
-            <View style={styles.authForm}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.name')}</Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
+              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.authHeader}>
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => setAuthMode('welcome')}
+                  >
+                    <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.authTitle}>{safeT('auth.register')}</Text>
+                </View>
+
+                <View style={styles.authForm}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.name')}</Text>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          validation.name.message ? styles.inputError : null,
+                          validation.name.isValid ? styles.inputValid : null
+                        ]}
+                        value={registerForm.name}
+                        onChangeText={(text) => handleRegisterFormChange('name', text)}
+                        placeholder={safeT('auth.name')}
+                        autoCapitalize="words"
+                        autoCorrect={false}
+                        textContentType="name"
+                        autoComplete="name"
+                        placeholderTextColor={colors.textSecondary}
+                      />
+                      {registerForm.name.length > 0 && (
+                        <ValidationIcon isValid={validation.name.isValid} colors={colors} />
+                      )}
+                    </View>
+                    {validation.name.message ? (
+                      <Text style={styles.errorText}>{validation.name.message}</Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.email')}</Text>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          validation.email.message ? styles.inputError : null,
+                          validation.email.isValid ? styles.inputValid : null
+                        ]}
+                        value={registerForm.email}
+                        onChangeText={(text) => handleRegisterFormChange('email', text)}
+                        placeholder={safeT('auth.email')}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        textContentType="emailAddress"
+                        autoComplete="email"
+                        placeholderTextColor={colors.textSecondary}
+                      />
+                      {registerForm.email.length > 0 && (
+                        <ValidationIcon isValid={validation.email.isValid} colors={colors} />
+                      )}
+                    </View>
+                    {validation.email.message ? (
+                      <Text style={styles.errorText}>{validation.email.message}</Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.password')}</Text>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          validation.password.message ? styles.inputError : null,
+                          validation.password.isValid ? styles.inputValid : null
+                        ]}
+                        value={registerForm.password}
+                        onChangeText={(text) => handleRegisterFormChange('password', text)}
+                        placeholder={safeT('auth.password')}
+                        secureTextEntry
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        textContentType="newPassword"
+                        autoComplete="new-password"
+                        placeholderTextColor={colors.textSecondary}
+                      />
+                      {registerForm.password.length > 0 && (
+                        <ValidationIcon isValid={validation.password.isValid} colors={colors} />
+                      )}
+                    </View>
+                    {validation.password.message ? (
+                      <Text style={styles.errorText}>{validation.password.message}</Text>
+                    ) : null}
+                    {registerForm.password.length > 0 && (
+                      <PasswordStrengthIndicator strength={validation.password.strength} colors={colors} t={safeT} />
+                    )}
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.confirmPassword')}</Text>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          validation.confirmPassword.message ? styles.inputError : null,
+                          validation.confirmPassword.isValid ? styles.inputValid : null
+                        ]}
+                        value={registerForm.confirmPassword}
+                        onChangeText={(text) => handleRegisterFormChange('confirmPassword', text)}
+                        placeholder={safeT('auth.confirmPassword')}
+                        secureTextEntry
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        textContentType="newPassword"
+                        autoComplete="new-password"
+                        placeholderTextColor={colors.textSecondary}
+                      />
+                      {registerForm.confirmPassword.length > 0 && (
+                        <ValidationIcon isValid={validation.confirmPassword.isValid} colors={colors} />
+                      )}
+                    </View>
+                    {validation.confirmPassword.message ? (
+                      <Text style={styles.errorText}>{validation.confirmPassword.message}</Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.termsContainer}>
+                    <Switch
+                      value={registerForm.acceptTerms}
+                      onValueChange={(value) => handleRegisterFormChange('acceptTerms', value)}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={registerForm.acceptTerms ? colors.buttonText : colors.textSecondary}
+                    />
+                    <View style={styles.termsTextContainer}>
+                      <Text style={styles.termsText}>
+                        {safeT('auth.acceptTerms')}{' '}
+                        <Text style={styles.termsLink}>{safeT('auth.termsOfService')}</Text>
+                        {' '}{safeT('auth.and')}{' '}
+                        <Text style={styles.termsLink}>{safeT('auth.privacyPolicy')}</Text>
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
                     style={[
-                      styles.input,
-                      validation.name.message ? styles.inputError : null,
-                      validation.name.isValid ? styles.inputValid : null
+                      styles.primaryButton,
+                      (!validation.name.isValid || !validation.email.isValid || !validation.password.isValid || !validation.confirmPassword.isValid || !registerForm.acceptTerms) && styles.primaryButtonDisabled
                     ]}
-                    value={registerForm.name}
-                    onChangeText={(text) => handleRegisterFormChange('name', text)}
-                    placeholder={safeT('auth.name')}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                    textContentType="name"
-                    autoComplete="name"
-                    placeholderTextColor={colors.textSecondary}
-                  />
-                  {registerForm.name.length > 0 && (
-                    <ValidationIcon isValid={validation.name.isValid} colors={colors} />
-                  )}
+                    onPress={handleRegister}
+                    disabled={!validation.name.isValid || !validation.email.isValid || !validation.password.isValid || !validation.confirmPassword.isValid || !registerForm.acceptTerms}
+                  >
+                    <Text style={styles.primaryButtonText}>{safeT('auth.register')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={() => setAuthMode('login')}
+                  >
+                    <Text style={styles.linkButtonText}>
+                      {safeT('auth.alreadyHaveAccount')} {safeT('auth.login')}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                {validation.name.message ? (
-                  <Text style={styles.errorText}>{validation.name.message}</Text>
-                ) : null}
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.email')}</Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      validation.email.message ? styles.inputError : null,
-                      validation.email.isValid ? styles.inputValid : null
-                    ]}
-                    value={registerForm.email}
-                    onChangeText={(text) => handleRegisterFormChange('email', text)}
-                    placeholder={safeT('auth.email')}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="emailAddress"
-                    autoComplete="email"
-                    placeholderTextColor={colors.textSecondary}
-                  />
-                  {registerForm.email.length > 0 && (
-                    <ValidationIcon isValid={validation.email.isValid} colors={colors} />
-                  )}
-                </View>
-                {validation.email.message ? (
-                  <Text style={styles.errorText}>{validation.email.message}</Text>
-                ) : null}
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.password')}</Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      validation.password.message ? styles.inputError : null,
-                      validation.password.isValid ? styles.inputValid : null
-                    ]}
-                    value={registerForm.password}
-                    onChangeText={(text) => handleRegisterFormChange('password', text)}
-                    placeholder={safeT('auth.password')}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="newPassword"
-                    autoComplete="new-password"
-                    placeholderTextColor={colors.textSecondary}
-                  />
-                  {registerForm.password.length > 0 && (
-                    <ValidationIcon isValid={validation.password.isValid} colors={colors} />
-                  )}
-                </View>
-                {validation.password.message ? (
-                  <Text style={styles.errorText}>{validation.password.message}</Text>
-                ) : null}
-                {registerForm.password.length > 0 && (
-                  <PasswordStrengthIndicator strength={validation.password.strength} colors={colors} t={safeT} />
-                )}
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.confirmPassword')}</Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      validation.confirmPassword.message ? styles.inputError : null,
-                      validation.confirmPassword.isValid ? styles.inputValid : null
-                    ]}
-                    value={registerForm.confirmPassword}
-                    onChangeText={(text) => handleRegisterFormChange('confirmPassword', text)}
-                    placeholder={safeT('auth.confirmPassword')}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="newPassword"
-                    autoComplete="new-password"
-                    placeholderTextColor={colors.textSecondary}
-                  />
-                  {registerForm.confirmPassword.length > 0 && (
-                    <ValidationIcon isValid={validation.confirmPassword.isValid} colors={colors} />
-                  )}
-                </View>
-                {validation.confirmPassword.message ? (
-                  <Text style={styles.errorText}>{validation.confirmPassword.message}</Text>
-                ) : null}
-              </View>
-              
-              <View style={styles.termsContainer}>
-                <Switch
-                  value={registerForm.acceptTerms}
-                  onValueChange={(value) => handleRegisterFormChange('acceptTerms', value)}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={registerForm.acceptTerms ? colors.buttonText : colors.textSecondary}
-                />
-                <View style={styles.termsTextContainer}>
-                  <Text style={styles.termsText}>
-                    {safeT('auth.acceptTerms')}{' '}
-                    <Text style={styles.termsLink}>{safeT('auth.termsOfService')}</Text>
-                    {' '}{safeT('auth.and')}{' '}
-                    <Text style={styles.termsLink}>{safeT('auth.privacyPolicy')}</Text>
-                  </Text>
-                </View>
-              </View>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.primaryButton,
-                  (!validation.name.isValid || !validation.email.isValid || !validation.password.isValid || !validation.confirmPassword.isValid || !registerForm.acceptTerms) && styles.primaryButtonDisabled
-                ]} 
-                onPress={handleRegister}
-                disabled={!validation.name.isValid || !validation.email.isValid || !validation.password.isValid || !validation.confirmPassword.isValid || !registerForm.acceptTerms}
-              >
-                <Text style={styles.primaryButtonText}>{safeT('auth.register')}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.linkButton} 
-                onPress={() => setAuthMode('login')}
-              >
-                <Text style={styles.linkButtonText}>
-                  {safeT('auth.alreadyHaveAccount')} {safeT('auth.login')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-          <StatusBar style={isDarkMode ? "light" : "dark"} />
-          </AnimatedContainer>
+              </ScrollView>
+              <StatusBar style={isDarkMode ? "light" : "dark"} />
+            </AnimatedContainer>
           </SafeAreaView>
           {renderNotificationModal()}
         </>
       );
     }
-    
+
     if (authMode === 'forgot-password') {
       return (
         <>
           <SafeAreaView style={styles.authContainer}>
             <AnimatedContainer animationType="slideUp">
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.authHeader}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={() => setAuthMode('login')}
-              >
-                <Text style={styles.backButtonText}>{String(`← ${safeT('auth.backToLogin')}`)}</Text>
-              </TouchableOpacity>
-              <Text style={styles.authTitle}>{safeT('auth.resetPassword')}</Text>
-            </View>
-            
-            <View style={styles.authForm}>
-              <Text style={styles.instructionText}>
-                {safeT('auth.resetPasswordInstructions')}
-              </Text>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.email')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={forgotPasswordForm.email}
-                  onChangeText={(text) => setForgotPasswordForm({ ...forgotPasswordForm, email: text })}
-                  placeholder={safeT('auth.email')}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="emailAddress"
-                  autoComplete="email"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-              
-              <TouchableOpacity style={styles.primaryButton} onPress={handleForgotPassword}>
-                <Text style={styles.primaryButtonText}>{safeT('auth.sendResetEmail')}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.linkButton} 
-                onPress={() => setAuthMode('login')}
-              >
-                <Text style={styles.linkButtonText}>
-                  {safeT('auth.backToLogin')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-          <StatusBar style={isDarkMode ? "light" : "dark"} />
-          </AnimatedContainer>
+              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.authHeader}>
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => setAuthMode('login')}
+                  >
+                    <Text style={styles.backButtonText}>{String(`← ${safeT('auth.backToLogin')}`)}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.authTitle}>{safeT('auth.resetPassword')}</Text>
+                </View>
+
+                <View style={styles.authForm}>
+                  <Text style={styles.instructionText}>
+                    {safeT('auth.resetPasswordInstructions')}
+                  </Text>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.email')}</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={forgotPasswordForm.email}
+                      onChangeText={(text) => setForgotPasswordForm({ ...forgotPasswordForm, email: text })}
+                      placeholder={safeT('auth.email')}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      textContentType="emailAddress"
+                      autoComplete="email"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                  </View>
+
+                  <TouchableOpacity style={styles.primaryButton} onPress={handleForgotPassword}>
+                    <Text style={styles.primaryButtonText}>{safeT('auth.sendResetEmail')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={() => setAuthMode('login')}
+                  >
+                    <Text style={styles.linkButtonText}>
+                      {safeT('auth.backToLogin')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+              <StatusBar style={isDarkMode ? "light" : "dark"} />
+            </AnimatedContainer>
           </SafeAreaView>
           {renderNotificationModal()}
         </>
       );
     }
-    
+
     if (authMode === 'verify-code') {
       return (
         <>
           <SafeAreaView style={styles.authContainer}>
             <AnimatedContainer animationType="scale">
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.authHeader}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={() => setAuthMode('forgot-password')}
-              >
-                <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
-              </TouchableOpacity>
-              <Text style={styles.authTitle}>{safeT('auth.verifyCode')}</Text>
-            </View>
-            
-            <View style={styles.authForm}>
-              <Text style={styles.instructionText}>
-                {safeT('auth.verifyCodeInstructions')}
-              </Text>
-              
-              <View style={styles.otpContainer}>
-                <Text style={[styles.label, { textAlign: 'center' }]}>{safeT('auth.resetCode')}</Text>
-                <OTPInput
-                  length={6}
-                  value={verifyCodeForm.code}
-                  onChange={(code) => setVerifyCodeForm({ ...verifyCodeForm, code })}
-                  autoFocus={true}
-                />
-              </View>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.primaryButton,
-                  verifyCodeForm.code.length !== 6 && styles.primaryButtonDisabled
-                ]} 
-                onPress={handleVerifyCode}
-                disabled={verifyCodeForm.code.length !== 6}
-              >
-                <Text style={styles.primaryButtonText}>{safeT('auth.verifyCode')}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.linkButton} 
-                onPress={() => setAuthMode('forgot-password')}
-              >
-                <Text style={styles.linkButtonText}>
-                  {safeT('auth.resendCode')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-          <StatusBar style={isDarkMode ? "light" : "dark"} />
-          </AnimatedContainer>
+              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.authHeader}>
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => setAuthMode('forgot-password')}
+                  >
+                    <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.authTitle}>{safeT('auth.verifyCode')}</Text>
+                </View>
+
+                <View style={styles.authForm}>
+                  <Text style={styles.instructionText}>
+                    {safeT('auth.verifyCodeInstructions')}
+                  </Text>
+
+                  <View style={styles.otpContainer}>
+                    <Text style={[styles.label, { textAlign: 'center' }]}>{safeT('auth.resetCode')}</Text>
+                    <OTPInput
+                      length={6}
+                      value={verifyCodeForm.code}
+                      onChange={(code) => setVerifyCodeForm({ ...verifyCodeForm, code })}
+                      autoFocus={true}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryButton,
+                      verifyCodeForm.code.length !== 6 && styles.primaryButtonDisabled
+                    ]}
+                    onPress={handleVerifyCode}
+                    disabled={verifyCodeForm.code.length !== 6}
+                  >
+                    <Text style={styles.primaryButtonText}>{safeT('auth.verifyCode')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={() => setAuthMode('forgot-password')}
+                  >
+                    <Text style={styles.linkButtonText}>
+                      {safeT('auth.resendCode')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+              <StatusBar style={isDarkMode ? "light" : "dark"} />
+            </AnimatedContainer>
           </SafeAreaView>
           {renderNotificationModal()}
         </>
       );
     }
-    
+
     if (authMode === 'reset-password') {
       return (
         <>
           <SafeAreaView style={styles.authContainer}>
             <AnimatedContainer animationType="slideDown">
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.authHeader}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={() => setAuthMode('login')}
-              >
-                <Text style={styles.backButtonText}>{String(`← ${safeT('auth.backToLogin')}`)}</Text>
-              </TouchableOpacity>
-              <Text style={styles.authTitle}>{safeT('auth.enterNewPassword')}</Text>
-            </View>
-            
-            <View style={styles.authForm}>
-              <Text style={styles.instructionText}>
-                {safeT('auth.enterNewPasswordInstructions')}
-              </Text>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.newPassword')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={resetPasswordForm.newPassword}
-                  onChangeText={(text) => setResetPasswordForm({ ...resetPasswordForm, newPassword: text })}
-                  placeholder={safeT('auth.newPassword')}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="newPassword"
-                  autoComplete="new-password"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{safeT('auth.confirmNewPassword')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={resetPasswordForm.confirmNewPassword}
-                  onChangeText={(text) => setResetPasswordForm({ ...resetPasswordForm, confirmNewPassword: text })}
-                  placeholder={safeT('auth.confirmNewPassword')}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="newPassword"
-                  autoComplete="new-password"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-              
-              <TouchableOpacity style={styles.primaryButton} onPress={handleResetPassword}>
-                <Text style={styles.primaryButtonText}>{safeT('auth.resetPassword')}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.linkButton} 
-                onPress={() => setAuthMode('login')}
-              >
-                <Text style={styles.linkButtonText}>
-                  {safeT('auth.backToLogin')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-          <StatusBar style={isDarkMode ? "light" : "dark"} />
-          </AnimatedContainer>
+              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.authHeader}>
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => setAuthMode('login')}
+                  >
+                    <Text style={styles.backButtonText}>{String(`← ${safeT('auth.backToLogin')}`)}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.authTitle}>{safeT('auth.enterNewPassword')}</Text>
+                </View>
+
+                <View style={styles.authForm}>
+                  <Text style={styles.instructionText}>
+                    {safeT('auth.enterNewPasswordInstructions')}
+                  </Text>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.newPassword')}</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={resetPasswordForm.newPassword}
+                      onChangeText={(text) => setResetPasswordForm({ ...resetPasswordForm, newPassword: text })}
+                      placeholder={safeT('auth.newPassword')}
+                      secureTextEntry
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      textContentType="newPassword"
+                      autoComplete="new-password"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>{safeT('auth.confirmNewPassword')}</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={resetPasswordForm.confirmNewPassword}
+                      onChangeText={(text) => setResetPasswordForm({ ...resetPasswordForm, confirmNewPassword: text })}
+                      placeholder={safeT('auth.confirmNewPassword')}
+                      secureTextEntry
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      textContentType="newPassword"
+                      autoComplete="new-password"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                  </View>
+
+                  <TouchableOpacity style={styles.primaryButton} onPress={handleResetPassword}>
+                    <Text style={styles.primaryButtonText}>{safeT('auth.resetPassword')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={() => setAuthMode('login')}
+                  >
+                    <Text style={styles.linkButtonText}>
+                      {safeT('auth.backToLogin')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+              <StatusBar style={isDarkMode ? "light" : "dark"} />
+            </AnimatedContainer>
           </SafeAreaView>
           {renderNotificationModal()}
         </>
@@ -1562,51 +1564,51 @@ const AppContent: React.FC = () => {
         <>
           <SafeAreaView style={styles.authContainer}>
             <AnimatedContainer animationType="scale">
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.authHeader}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={() => setAuthMode('register')}
-              >
-                <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
-              </TouchableOpacity>
-              <Text style={styles.authTitle}>{safeT('auth.verifyEmail', 'Verify Email')}</Text>
-            </View>
-            
-            <View style={styles.authForm}>
-              <Text style={styles.instructionText}>
-                {safeT('auth.verifyEmailInstructions', 'Enter the 6-digit code sent to your email address to verify your account.')}
-              </Text>
-              
-              <Text style={styles.emailDisplayText}>
-                {emailVerificationForm.email}
-              </Text>
-              
-              <View style={styles.inputGroup}>
-                <OTPInput
-                  length={6}
-                  value={emailVerificationForm.token}
-                  onChange={(code) => setEmailVerificationForm({...emailVerificationForm, token: code})}
-                  autoFocus={true}
-                />
-              </View>
-              
-              <TouchableOpacity style={styles.primaryButton} onPress={handleEmailVerification}>
-                <Text style={styles.primaryButtonText}>{safeT('auth.verifyEmail', 'Verify Email')}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.linkButton} 
-                onPress={handleResendVerificationCode}
-              >
-                <Text style={styles.linkButtonText}>
-                  {safeT('auth.resendCode')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-          <StatusBar style={isDarkMode ? "light" : "dark"} />
-          </AnimatedContainer>
+              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.authHeader}>
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => setAuthMode('register')}
+                  >
+                    <Text style={styles.backButtonText}>{String(`← ${safeT('common.back')}`)}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.authTitle}>{safeT('auth.verifyEmail', 'Verify Email')}</Text>
+                </View>
+
+                <View style={styles.authForm}>
+                  <Text style={styles.instructionText}>
+                    {safeT('auth.verifyEmailInstructions', 'Enter the 6-digit code sent to your email address to verify your account.')}
+                  </Text>
+
+                  <Text style={styles.emailDisplayText}>
+                    {emailVerificationForm.email}
+                  </Text>
+
+                  <View style={styles.inputGroup}>
+                    <OTPInput
+                      length={6}
+                      value={emailVerificationForm.token}
+                      onChange={(code) => setEmailVerificationForm({ ...emailVerificationForm, token: code })}
+                      autoFocus={true}
+                    />
+                  </View>
+
+                  <TouchableOpacity style={styles.primaryButton} onPress={handleEmailVerification}>
+                    <Text style={styles.primaryButtonText}>{safeT('auth.verifyEmail', 'Verify Email')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={handleResendVerificationCode}
+                  >
+                    <Text style={styles.linkButtonText}>
+                      {safeT('auth.resendCode')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+              <StatusBar style={isDarkMode ? "light" : "dark"} />
+            </AnimatedContainer>
           </SafeAreaView>
           {renderNotificationModal()}
         </>
@@ -1625,7 +1627,7 @@ const AppContent: React.FC = () => {
       />
     );
   }
-  
+
   if (appState.currentScreen === 'recipe') {
     return (
       <RecipeScreen
@@ -1641,38 +1643,38 @@ const AppContent: React.FC = () => {
         onNavigateToRecipe={handleNavigateToRecipe}
         onRecipeUpdate={async (updatedRecipe) => {
           // Updating recipe
-          
+
           // Check if this is a transition from temporary to saved recipe
           const wasTempRecipe = appState.isRecipeJustGenerated && !appState.recipe?.id && !appState.recipe?._id;
           const isNowSaved = updatedRecipe.id || updatedRecipe._id;
-          
+
           // Recipe state transition
-          
+
           if (wasTempRecipe && isNowSaved) {
             // Transitioning from temporary to saved recipe
             // Transition from temporary to saved recipe - update state to show normal recipe view
-            setAppState({ 
-              ...appState, 
+            setAppState({
+              ...appState,
               recipe: updatedRecipe,
               isRecipeJustGenerated: false // No longer just generated
             });
             return;
           }
-          
+
           // Update state immediately for UI responsiveness
           setAppState({ ...appState, recipe: updatedRecipe });
-          
+
           // Save to database if recipe has ID (for AI chat modifications)
           if (updatedRecipe._id) {
             try {
               // Saving recipe to database
-              
+
               // Fix ingredients with empty units (database requires non-empty unit field)
               const fixedIngredients = updatedRecipe.ingredients.map((ing: any) => ({
                 ...ing,
                 unit: ing.unit || 'q.b.' // Use 'q.b.' if unit is empty
               }));
-              
+
               const requestBody = {
                 title: updatedRecipe.title,
                 description: updatedRecipe.description,
@@ -1684,9 +1686,9 @@ const AppContent: React.FC = () => {
                 difficulty: updatedRecipe.difficulty,
                 dietaryTags: updatedRecipe.dietaryTags
               };
-              
+
               // Request body prepared
-              
+
               const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/recipe/${updatedRecipe._id}`, {
                 method: 'PUT',
                 headers: {
@@ -1695,7 +1697,7 @@ const AppContent: React.FC = () => {
                 },
                 body: JSON.stringify(requestBody),
               });
-              
+
               if (response.ok) {
                 // Recipe saved successfully to database
               } else {
@@ -1713,8 +1715,8 @@ const AppContent: React.FC = () => {
       />
     );
   }
-  
-  
+
+
 
   // Main app screens with bottom navigation
   const renderMainContent = () => {
@@ -1727,7 +1729,7 @@ const AppContent: React.FC = () => {
             onGoToManualInput={() => setAppState({ ...appState, currentScreen: 'ingredients', ingredients: [] })}
           />
         );
-      
+
       case 'recipes':
         return (
           <RecipesScreen
@@ -1735,21 +1737,21 @@ const AppContent: React.FC = () => {
             onGoToCamera={() => setAppState({ ...appState, currentScreen: 'camera', activeTab: 'camera' })}
           />
         );
-      
+
       case 'saved':
         return (
           <SavedScreen
             onSelectRecipe={(recipe, allRecipes, index) => handleSelectRecipeFromList(recipe, allRecipes, index, 'saved')}
           />
         );
-      
+
       case 'profile':
         return (
           <ProfileScreen
             onLogout={handleLogout}
           />
         );
-      
+
       case 'cooking':
         return appState.recipe ? (
           <CookingModeScreen
@@ -1762,7 +1764,7 @@ const AppContent: React.FC = () => {
             isPublicRecipe={appState.isPublicRecipe}
           />
         ) : null;
-      
+
       default: // 'home'
         return (
           <HomeScreen
@@ -1809,7 +1811,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.background,
     paddingTop: Platform.OS === 'ios' ? 0 : 0, // SafeAreaView handles iOS automatically
   },
-  
+
   // Loading Screen
   loadingContainer: {
     flex: 1,

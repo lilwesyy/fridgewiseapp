@@ -1,14 +1,14 @@
 // MongoDB initialization script
-db = db.getSiblingDB('fridgewise');
+db = db.getSiblingDB('fridgewiseai');
 
 // Create a user for the application
 db.createUser({
-  user: 'fridgewise_user',
-  pwd: 'fridgewise_password',
+  user: 'fridgewiseai_user',
+  pwd: 'fridgewiseai_password',
   roles: [
     {
       role: 'readWrite',
-      db: 'fridgewise'
+      db: 'fridgewiseai'
     }
   ]
 });

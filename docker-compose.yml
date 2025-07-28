@@ -1,12 +1,12 @@
 services:
   mongodb:
     image: mongo:7.0
-    container_name: fridgewise-mongodb
+    container_name: fridgewiseai-mongodb
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: fridgewise
+      MONGO_INITDB_DATABASE: fridgewiseai
     ports:
       - "27017:27017"
     volumes:
@@ -17,7 +17,7 @@ services:
 
   redis:
     image: redis:7.2-alpine
-    container_name: fridgewise-redis
+    container_name: fridgewiseai-redis
     restart: unless-stopped
     ports:
       - "6379:6379"

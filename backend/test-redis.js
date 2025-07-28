@@ -19,7 +19,7 @@ async function testRedis() {
     console.log('✅ Set/Get test:', value);
 
     // Test JSON operations
-    const testData = { message: 'Hello from FridgeWise!', timestamp: new Date().toISOString() };
+    const testData = { message: 'Hello from FridgeWiseAI!', timestamp: new Date().toISOString() };
     await client.set('test:json', JSON.stringify(testData));
     const jsonValue = await client.get('test:json');
     console.log('✅ JSON test:', JSON.parse(jsonValue));

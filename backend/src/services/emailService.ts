@@ -40,7 +40,7 @@ class EmailService {
   }
 
   async sendPasswordResetCode(email: string, resetCode: string, locale: SupportedLocale = 'en'): Promise<void> {
-    const fromName = process.env.EMAIL_FROM_NAME || 'FridgeWise';
+    const fromName = process.env.EMAIL_FROM_NAME || 'FridgeWiseAI';
     const fromAddress = process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER;
     
     const emailContent = generatePasswordResetEmail(resetCode, locale);
@@ -56,7 +56,7 @@ class EmailService {
   }
 
   async sendEmailVerificationCode(email: string, verificationCode: string, locale: SupportedLocale = 'en'): Promise<void> {
-    const fromName = process.env.EMAIL_FROM_NAME || 'FridgeWise';
+    const fromName = process.env.EMAIL_FROM_NAME || 'FridgeWiseAI';
     const fromAddress = process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER;
     
     const emailContent = generateEmailVerificationEmail(verificationCode, locale);

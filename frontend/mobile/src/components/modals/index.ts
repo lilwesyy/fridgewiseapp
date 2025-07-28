@@ -1,5 +1,5 @@
 // Modal Components
-export { NotificationModal } from './NotificationModal';
+export { NotificationModal, type NotificationType } from './NotificationModal';
 export { RatingModal } from './RatingModal';
 export { RecipePreferencesModal } from './RecipePreferencesModal';
 export { PhotoUploadModal } from './PhotoUploadModal';

@@ -17,7 +17,7 @@ const User = mongoose.model('User', userSchema);
 const makeAdmin = async () => {
   try {
     // Connetti al database
-    const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fridgewise';
+    const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fridgewiseai';
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB');
 

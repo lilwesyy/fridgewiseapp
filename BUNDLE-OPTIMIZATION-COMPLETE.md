@@ -1,8 +1,8 @@
-# 📦 Bundle Size Optimization - FridgeWise App
+# 📦 Bundle Size Optimization - FridgeWiseAI App
 
 ## 🎯 Optimization Summary
 
-La dimensione del bundle dell'app FridgeWise è stata analizzata e ottimizzata attraverso diverse strategie per migliorare le performance e ridurre i tempi di caricamento.
+La dimensione del bundle dell'app FridgeWiseAI è stata analizzata e ottimizzata attraverso diverse strategie per migliorare le performance e ridurre i tempi di caricamento.
 
 ## 📊 Analysis Results
 

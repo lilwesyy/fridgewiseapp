@@ -1,19 +1,19 @@
 {
   "passwordReset": {
-    "subject": "FridgeWise - Codice di Reset Password",
+    "subject": "FridgeWiseAI - Codice di Reset Password",
     "title": "Richiesta Reset Password",
     "message": "Hai richiesto di reimpostare la tua password. Utilizza il seguente codice per reimpostare la password:",
     "expiry": "Questo codice scadrà tra <strong>10 minuti</strong> per motivi di sicurezza.",
     "securityNotice": "<strong>Avviso di Sicurezza:</strong> Se non hai richiesto questo reset password, ignora questa email. Il tuo account rimane sicuro.",
-    "footer": "Questa è un'email automatica di FridgeWise. Non rispondere a questa email."
+    "footer": "Questa è un'email automatica di FridgeWiseAI. Non rispondere a questa email."
   },
   "emailVerification": {
-    "subject": "FridgeWise - Codice di Verifica Email",
+    "subject": "FridgeWiseAI - Codice di Verifica Email",
     "title": "Verifica il Tuo Indirizzo Email",
-    "welcome": "Benvenuto in FridgeWise! Per completare la registrazione, verifica il tuo indirizzo email utilizzando il codice qui sotto:",
+    "welcome": "Benvenuto in FridgeWiseAI! Per completare la registrazione, verifica il tuo indirizzo email utilizzando il codice qui sotto:",
     "codeTitle": "Il Tuo Codice di Verifica",
     "expiry": "Questo codice scadrà tra <strong>10 minuti</strong>. Inseriscilo nell'app per verificare il tuo indirizzo email.",
-    "securityNotice": "<strong>Avviso di Sicurezza:</strong> Se non hai creato un account con FridgeWise, ignora questa email.",
-    "footer": "Questa è un'email automatica di FridgeWise. Non rispondere a questa email."
+    "securityNotice": "<strong>Avviso di Sicurezza:</strong> Se non hai creato un account con FridgeWiseAI, ignora questa email.",
+    "footer": "Questa è un'email automatica di FridgeWiseAI. Non rispondere a questa email."
   }
 }
