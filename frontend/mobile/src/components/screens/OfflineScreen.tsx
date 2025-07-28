@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
-import Svg, { Path, Circle, G } from 'react-native-svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
@@ -52,49 +51,7 @@ const OfflineIcon = ({ colors }: { colors: any }) => {
 
   return (
     <Animated.View style={animatedStyle}>
-      <Svg width={120} height={120} viewBox="0 0 120 120" fill="none">
-        {/* WiFi Icon with X */}
-        <G transform="translate(30, 40)">
-          {/* WiFi curves */}
-          <Path
-            d="M30 20C20 20 12 25 12 30"
-            stroke={colors.textSecondary}
-            strokeWidth={3}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <Path
-            d="M30 20C40 20 48 25 48 30"
-            stroke={colors.textSecondary}
-            strokeWidth={3}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <Path
-            d="M30 15C17 15 6 22 6 30"
-            stroke={colors.textSecondary}
-            strokeWidth={3}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <Path
-            d="M30 15C43 15 54 22 54 30"
-            stroke={colors.textSecondary}
-            strokeWidth={3}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <Circle cx={30} cy={35} r={3} fill={colors.textSecondary} />
-          
-          {/* X overlay */}
-          <Path
-            d="M15 10L45 40M45 10L15 40"
-            stroke={colors.error || '#FF6B6B'}
-            strokeWidth={4}
-            strokeLinecap="round"
-          />
-        </G>
-      </Svg>
+      <Ionicons name="wifi-outline" size={120} color={colors.textSecondary} />
     </Animated.View>
   );
 };

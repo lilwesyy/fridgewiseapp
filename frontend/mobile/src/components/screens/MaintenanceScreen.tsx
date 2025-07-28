@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
-import Svg, { Path, Circle, G } from 'react-native-svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
@@ -47,15 +46,7 @@ const MaintenanceIcon = ({ colors }: { colors: any }) => {
 
   return (
     <Animated.View style={animatedStyle}>
-      <Svg width={120} height={120} viewBox="0 0 120 120" fill="none">
-        <Circle cx={60} cy={60} r={50} stroke={colors.primary} strokeWidth={3} strokeDasharray="8 4" />
-        <G transform="translate(60, 60)">
-          <Path
-            d="M-15 -20 L15 -20 L15 -10 L25 -10 L0 15 L-25 -10 L-15 -10 Z"
-            fill={colors.primary}
-          />
-        </G>
-      </Svg>
+      <Ionicons name="construct" size={120} color={colors.primary} />
     </Animated.View>
   );
 };

@@ -1405,15 +1405,11 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
               onPress={prevStep}
               disabled={currentStep === 0}
             >
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M19 12H5M12 19L5 12L12 5"
-                  stroke={currentStep === 0 ? colors.border : colors.text}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
+              <Ionicons 
+                name="arrow-back-outline" 
+                size={20} 
+                color={currentStep === 0 ? colors.border : colors.text} 
+              />
               <Text style={[
                 styles.navButtonText,
                 currentStep === 0 && styles.navButtonTextDisabled
@@ -1432,15 +1428,11 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                   : safeT('cookingMode.next', 'Next')
                 )}
               </Text>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M5 12H19M12 5L19 12L12 19"
-                  stroke={colors.text}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
+              <Ionicons 
+                name="arrow-forward-outline" 
+                size={20} 
+                color={colors.text} 
+              />
             </TouchableOpacity>
           </View>
         )}
@@ -1489,15 +1481,12 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                 if (currentStepTips.length === 0) {
                   return (
                     <View style={styles.helpEmptyState}>
-                      <Svg width={48} height={48} viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16 }}>
-                        <Circle cx="12" cy="12" r="10" stroke={colors.border} strokeWidth={2} />
-                        <Path
-                          d="M8 12H16M12 8V16"
-                          stroke={colors.border}
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                        />
-                      </Svg>
+                      <Ionicons 
+                        name="help-circle-outline" 
+                        size={48} 
+                        color={colors.border} 
+                        style={{ marginBottom: 16 }}
+                      />
                       <Text style={styles.helpEmptyStateText}>
                         {safeT('cookingMode.noTips', 'Nessun consiglio disponibile per questo passaggio.')}
                       </Text>
@@ -1528,30 +1517,19 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                           ]}>
                             <View style={styles.helpTipIconContainer}>
                               {tip.type === 'technique' && (
-                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke={colors.primary} strokeWidth={2} fill="none" />
-                                </Svg>
+                                <Ionicons name="construct-outline" size={20} color={colors.primary} />
                               )}
                               {tip.type === 'timing' && (
-                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                  <Circle cx="12" cy="12" r="10" stroke={colors.warning} strokeWidth={2} fill="none" />
-                                  <Path d="M12 6V12L16 14" stroke={colors.warning} strokeWidth={2} />
-                                </Svg>
+                                <Ionicons name="time-outline" size={20} color={colors.warning} />
                               )}
                               {tip.type === 'temperature' && (
-                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                  <Path d="M14 4V16.5C14 18.4 12.4 20 10.5 20S7 18.4 7 16.5V4C7 2.9 7.9 2 9 2H12C13.1 2 14 2.9 14 4Z" stroke={colors.error} strokeWidth={2} fill="none" />
-                                </Svg>
+                                <Ionicons name="thermometer-outline" size={20} color={colors.error} />
                               )}
                               {tip.type === 'ingredient' && (
-                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                  <Path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L11.84 12.17L17.5 6.5L20.17 9.17L21.5 7.83L21 9ZM1 9L2 8L6 12L2 16L1 15C1 15 5.5 9 5.5 9H1Z" fill={colors.success} />
-                                </Svg>
+                                <Ionicons name="leaf-outline" size={20} color={colors.success} />
                               )}
                               {tip.type === 'safety' && (
-                                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                                  <Path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 7C13.1 7 14 7.9 14 9S13.1 11 12 11S10 10.1 10 9S10.9 7 12 7ZM12 17C10.9 17 10 16.1 10 15S10.9 13 12 13S14 13.9 14 15S13.1 17 12 17Z" fill={colors.error} />
-                                </Svg>
+                                <Ionicons name="shield-outline" size={20} color={colors.error} />
                               )}
                             </View>
                             <View style={styles.helpTipContent}>

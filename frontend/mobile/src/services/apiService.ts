@@ -1,6 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { cacheService, ApiCacheService } from './cacheService';
+import { secureStorage } from './secureStorage';
+import { expoSecurityService } from './certificatePinning';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -96,7 +97,7 @@ class ApiService {
 
   private async getAuthToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem('auth_token');
+      return await secureStorage.getToken();
     } catch (error) {
       console.error('Error getting auth token:', error);
       return null;
@@ -108,8 +109,8 @@ class ApiService {
 
     // Clear stored auth data
     try {
-      await AsyncStorage.removeItem('auth_token');
-      await AsyncStorage.removeItem('auth_user');
+      await secureStorage.removeToken();
+      await secureStorage.removeUser();
     } catch (error) {
       console.error('Error clearing auth data:', error);
     }
@@ -168,7 +169,7 @@ class ApiService {
         }
       }
 
-      const response = await fetch(requestConfig.url, requestConfig.options);
+      const response = await expoSecurityService.secureFetch(requestConfig.url, requestConfig.options);
 
       // Handle 401 Unauthorized
       if (response.status === 401) {
@@ -265,7 +266,7 @@ class ApiService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(url, {
+      const response = await expoSecurityService.secureFetch(url, {
         method: 'POST',
         headers,
         body: formData,

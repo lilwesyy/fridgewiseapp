@@ -18,7 +18,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStatistics } from '../../hooks/useStatistics';
 import { ShareModal } from '../modals/ShareModal';
-import Svg, { Path, G } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { LogoComponent } from '../ui/LogoComponent';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -39,47 +40,6 @@ interface HomeScreenProps {
   onSelectRecipe?: (recipe: any, allRecipes: any[], index: number) => void;
 }
 
-const LogoComponent: React.FC<{ width?: number; height?: number; color?: string }> = ({ width = 60, height = 54, color = "#fff" }) => (
-  <Svg width={width} height={height} viewBox="0 0 267 241">
-    <G>
-      <G>
-        <Path
-          opacity="0.973"
-          d="m206.03101,0c3.374,0.174 6.707,0.674 10,1.5c10.926,4.018 16.26,11.852 16,23.5c-0.794,11.216 -4.294,21.549 -10.5,31c-16.359,23.467 -35.193,44.967 -56.5,64.5c-42.519,37.697 -87.186,72.531 -134,104.5c-0.333,-0.5 -0.667,-1 -1,-1.5c33.982,-64.834 73.816,-125.668 119.5,-182.5c11.309,-12.65 23.809,-23.817 37.5,-33.5c6.009,-3.684 12.342,-6.184 19,-7.5z"
-          fill={color}
-        />
-      </G>
-      <G>
-        <Path
-          opacity="0.94"
-          d="m68.03101,26c6.552,-0.474 10.385,2.526 11.5,9c0.748,8.853 -0.252,17.519 -3,26c-10.067,28.465 -23.067,55.465 -39,81c0.267,-28.554 3.933,-56.888 11,-85c2.516,-10.198 7.016,-19.364 13.5,-27.5c1.932,-1.459 3.932,-2.625 6,-3.5z"
-          fill={color}
-        />
-      </G>
-      <G>
-        <Path
-          opacity="0.906"
-          d="m5.03101,102c3.472,-0.537 6.305,0.463 8.5,3c1.985,6.323 3.151,12.823 3.5,19.5c-1.074,16.687 -3.408,33.187 -7,49.5c-5.431,-18.081 -8.764,-36.581 -10,-55.5c-0.284,-6.217 1.382,-11.717 5,-16.5z"
-          fill={color}
-        />
-      </G>
-      <G>
-        <Path
-          opacity="0.956"
-          d="m241.03101,143c6.891,-0.599 13.558,0.235 20,2.5c8.351,8.935 7.684,17.268 -2,25c-12.697,8.125 -26.364,14.125 -41,18c-34.818,9.247 -70.151,15.247 -106,18c32.85,-21.763 67.516,-40.429 104,-56c8.319,-2.99 16.652,-5.49 25,-7.5z"
-          fill={color}
-        />
-      </G>
-      <G>
-        <Path
-          opacity="0.911"
-          d="m186.03101,225c6.009,-0.166 12.009,0.001 18,0.5c6.464,0.38 10.131,3.713 11,10c-1.409,2.879 -3.743,4.545 -7,5c-22.268,1.801 -44.268,-0.032 -66,-5.5c14.501,-4.628 29.168,-7.961 44,-10z"
-          fill={color}
-        />
-      </G>
-    </G>
-  </Svg>
-);
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSelectRecipe }) => {
   const { t } = useTranslation();
@@ -408,21 +368,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
             onPressOut={handlePressOut}
           >
             <View style={styles.actionIcon}>
-              <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Path
-                  d="M16 13C16 15.2091 14.2091 17 12 17C9.79086 17 8 15.2091 8 13C8 10.7909 9.79086 9 12 9C14.2091 9 16 10.7909 16 13Z"
-                  stroke="white"
-                  strokeWidth="2"
-                  fill="none"
-                />
-              </Svg>
+              <Ionicons name="camera" size={32} color="white" />
             </View>
             <View style={styles.actionContent}>
               <Text style={{ ...styles.actionTitle, color: 'white' }}>{t('home.scanFridge')}</Text>
@@ -470,22 +416,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                           resizeMode="cover"
                         />
                       ) : (
-                        <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-                          <Path
-                            d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-                            stroke={colors.success}
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <Path
-                            d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-                            stroke={colors.success}
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </Svg>
+                        <Ionicons name="book" size={32} color={colors.success} />
                       )}
                     </View>
                     <View style={styles.recipeInfo}>
@@ -495,15 +426,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                           style={styles.recipeShareButton}
                           onPress={(event) => handleShareRecipe(recipe, event)}
                         >
-                          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                            <Path
-                              d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
-                              stroke={colors.textSecondary}
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </Svg>
+                          <Ionicons name="share-outline" size={16} color={colors.textSecondary} />
                         </TouchableOpacity>
                       </View>
                       <Text style={styles.recipeDetails}>
@@ -531,29 +454,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
         <View style={styles.featuresGrid}>
           <Animated.View style={[styles.featureCard, createCardStyle(0)]}>
             <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M12 2L2 7L12 12L22 7L12 2Z"
-                  stroke={colors.primary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Path
-                  d="M2 17L12 22L22 17"
-                  stroke={colors.primary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Path
-                  d="M2 12L12 17L22 12"
-                  stroke={colors.primary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
+              <Ionicons name="scan-outline" size={24} color={colors.primary} />
             </View>
             <Text style={styles.featureTitle}>{t('home.aiRecognition')}</Text>
             <Text style={styles.featureDescription}>{t('home.aiDescription')}</Text>
@@ -561,22 +462,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
 
           <Animated.View style={[styles.featureCard, createCardStyle(1)]}>
             <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-                  stroke={colors.success}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Path
-                  d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-                  stroke={colors.success}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
+              <Ionicons name="book-outline" size={24} color={colors.success} />
             </View>
             <Text style={styles.featureTitle}>{t('home.smartRecipes')}</Text>
             <Text style={styles.featureDescription}>{t('home.recipesDescription')}</Text>
@@ -584,15 +470,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
 
           <Animated.View style={[styles.featureCard, createCardStyle(2)]}>
             <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M19 21L12 16L5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21Z"
-                  stroke={colors.warning}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
+              <Ionicons name="bookmark-outline" size={24} color={colors.warning} />
             </View>
             <Text style={styles.featureTitle}>{t('home.saveRecipes')}</Text>
             <Text style={styles.featureDescription}>{t('home.saveDescription')}</Text>
@@ -600,20 +478,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
 
           <Animated.View style={[styles.featureCard, createCardStyle(3)]}>
             <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M17 8C17 10.7614 14.7614 13 12 13C9.23858 13 7 10.7614 7 8C7 5.23858 9.23858 3 12 3C14.7614 3 17 5.23858 17 8Z"
-                  stroke={colors.primary}
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <Path
-                  d="M20 21C20 16.0294 16.4183 12 12 12C7.58172 12 4 16.0294 4 21"
-                  stroke={colors.primary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </Svg>
+              <Ionicons name="person-outline" size={24} color={colors.primary} />
             </View>
             <Text style={styles.featureTitle}>{t('home.personalizedExperience')}</Text>
             <Text style={styles.featureDescription}>{t('home.personalizedDescription')}</Text>

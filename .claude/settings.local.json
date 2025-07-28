@@ -35,7 +35,9 @@
       "Bash(mv:*)",
       "Bash(true)",
       "Bash(ls:*)",
-      "mcp__serena__replace_symbol_body"
+      "mcp__serena__replace_symbol_body",
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

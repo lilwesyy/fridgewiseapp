@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from '../services/apiService';
+import { secureStorage } from '../services/secureStorage';
+import { expoSecurityService } from '../services/certificatePinning';
 
 interface User {
   id: string;
@@ -65,7 +66,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(null);
       setUser(null);
     });
+
+    // Set up token refresh check every 5 minutes
+    const tokenRefreshInterval = setInterval(async () => {
+      await checkTokenExpiration();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => {
+      clearInterval(tokenRefreshInterval);
+    };
   }, []);
+
+  // Check if token is near expiry and handle accordingly
+  const checkTokenExpiration = async () => {
+    try {
+      const isNearExpiry = await secureStorage.isTokenNearExpiry();
+      const currentToken = await secureStorage.getToken();
+      
+      if (currentToken && isNearExpiry) {
+        console.log('⚠️ Token is near expiry, logging out user');
+        await logout();
+      }
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
+    }
+  };
 
   // Refresh user profile from server (for cross-device sync)
   const refreshProfile = async (currentToken?: string) => {
@@ -78,7 +103,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const refreshedUser = addCacheBustingToAvatar(result.data);
         
         // Update both state and storage
-        await AsyncStorage.setItem('auth_user', JSON.stringify(refreshedUser));
+        await secureStorage.setUser(refreshedUser);
         setUser(refreshedUser);
       }
     } catch (error) {
@@ -89,12 +114,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loadStoredAuth = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem('auth_token');
-      const storedUser = await AsyncStorage.getItem('auth_user');
+      const storedToken = await secureStorage.getToken();
+      const storedUser = await secureStorage.getUser();
 
       if (storedToken && storedUser) {
         setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        setUser(storedUser);
         
         // Refresh profile in background to sync latest changes
         refreshProfile(storedToken);
@@ -108,7 +133,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,16 +156,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { user, token } = data.data;
       const userWithCacheBusting = addCacheBustingToAvatar(user, true); // Force refresh on login/register
       
-      // Store in AsyncStorage
+      // Store in secure storage with 24-hour expiration
       if (token) {
-        await AsyncStorage.setItem('auth_token', token);
+        await secureStorage.setToken(token, 24 * 60 * 60 * 1000); // 24 hours
       } else {
-        await AsyncStorage.removeItem('auth_token');
+        await secureStorage.removeToken();
       }
       if (userWithCacheBusting) {
-        await AsyncStorage.setItem('auth_user', JSON.stringify(userWithCacheBusting));
+        await secureStorage.setUser(userWithCacheBusting);
       } else {
-        await AsyncStorage.removeItem('auth_user');
+        await secureStorage.removeUser();
       }
 
       setToken(token);
@@ -155,7 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('🚀 Registration attempt:', { API_URL, email });
       console.log('📍 Full URL:', `${API_URL}/api/auth/register`);
       
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,16 +199,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { user, token } = data.data;
       const userWithCacheBusting = addCacheBustingToAvatar(user, true); // Force refresh on login/register
       
-      // Store in AsyncStorage
+      // Store in secure storage with 24-hour expiration
       if (token) {
-        await AsyncStorage.setItem('auth_token', token);
+        await secureStorage.setToken(token, 24 * 60 * 60 * 1000); // 24 hours
       } else {
-        await AsyncStorage.removeItem('auth_token');
+        await secureStorage.removeToken();
       }
       if (userWithCacheBusting) {
-        await AsyncStorage.setItem('auth_user', JSON.stringify(userWithCacheBusting));
+        await secureStorage.setUser(userWithCacheBusting);
       } else {
-        await AsyncStorage.removeItem('auth_user');
+        await secureStorage.removeUser();
       }
 
       setToken(token);
@@ -195,8 +220,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('auth_token');
-      await AsyncStorage.removeItem('auth_user');
+      await secureStorage.removeToken();
+      await secureStorage.removeUser();
       setToken(null);
       setUser(null);
     } catch (error) {
@@ -215,7 +240,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const updatedUser = result.data;
       
       // Update stored user
-      await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
+      await secureStorage.setUser(updatedUser);
       setUser(updatedUser);
     } catch (error: any) {
       console.error('Profile update error:', error);
@@ -273,7 +298,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const updatedUser = addCacheBustingToAvatar(result.data, true); // Force refresh on avatar upload/delete
       
       // Update stored user
-      await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
+      await secureStorage.setUser(updatedUser);
       setUser(updatedUser);
       
       return updatedUser;
@@ -294,7 +319,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const updatedUser = addCacheBustingToAvatar(result.data, true); // Force refresh on avatar upload/delete
       
       // Update stored user
-      await AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
+      await secureStorage.setUser(updatedUser);
       setUser(updatedUser);
       
       return updatedUser;
@@ -307,7 +332,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const forgotPassword = async (email: string) => {
     try {
       console.log('🔄 Sending forgot password request to:', `${API_URL}/api/auth/forgot-password`);
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -332,7 +357,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const resetPassword = async (token: string, newPassword: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+      const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -353,7 +378,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const deleteAccount = async (password: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/delete-account`, {
+      const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/delete-account`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -369,10 +394,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // Clear local storage after successful deletion
-      await AsyncStorage.removeItem('auth_token');
-      await AsyncStorage.removeItem('auth_user');
-      await AsyncStorage.removeItem('onboarding_completed');
-      await AsyncStorage.removeItem('user_preferences');
+      await secureStorage.clearAll();
       
       setToken(null);
       setUser(null);
@@ -383,7 +405,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const sendEmailVerification = async (email: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/send-email-verification`, {
+      const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/send-email-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -403,7 +425,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const verifyEmail = async (email: string, token: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify-email`, {
+      const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/verify-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -422,8 +444,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const authToken = data.data.token;
         const userData = addCacheBustingToAvatar(data.data.user);
         
-        await AsyncStorage.setItem('auth_token', authToken);
-        await AsyncStorage.setItem('auth_user', JSON.stringify(userData));
+        await secureStorage.setToken(authToken, 24 * 60 * 60 * 1000); // 24 hours
+        await secureStorage.setUser(userData);
         
         setToken(authToken);
         setUser(userData);

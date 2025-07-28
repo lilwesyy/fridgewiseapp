@@ -418,27 +418,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
     return (
       <View style={styles.progressContainer}>
         <Animated.View style={[styles.progressCircle, progressStyle]}>
-          <Svg width={40} height={40} viewBox="0 0 40 40">
-            <Circle
-              cx={20}
-              cy={20}
-              r={18}
-              stroke={colors.border}
-              strokeWidth={2}
-              fill="none"
-            />
-            <Circle
-              cx={20}
-              cy={20}
-              r={18}
-              stroke={colors.primary}
-              strokeWidth={2}
-              fill="none"
-              strokeDasharray={`${(uploadProgress.percentage / 100) * 113} 113`}
-              strokeLinecap="round"
-              transform="rotate(-90 20 20)"
-            />
-          </Svg>
+          <Ionicons name="sync-outline" size={40} color={colors.primary} />
         </Animated.View>
         <Text style={styles.progressText}>
           {uploadState === 'compressing' 
@@ -498,19 +478,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
                   {/* Success indicator */}
                   {uploadState === 'success' && (
                     <View style={styles.successOverlay}>
-                      <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                        <Path 
-                          d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" 
-                          fill={colors.success} 
-                        />
-                        <Path 
-                          d="M9 12L11 14L15 10" 
-                          stroke="white" 
-                          strokeWidth={2} 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round"
-                        />
-                      </Svg>
+                      <Ionicons name="checkmark-circle" size={48} color={colors.success} />
                       <Text style={styles.successText}>{t('cookingMode.photoUpload.success.message')}</Text>
                     </View>
                   )}

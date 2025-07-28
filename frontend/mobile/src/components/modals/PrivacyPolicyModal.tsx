@@ -18,7 +18,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, EASING_CURVES } from '../../constants/animations';
-import Svg, { Path } from 'react-native-svg';
 
 interface PrivacyPolicyModalProps {
   visible: boolean;

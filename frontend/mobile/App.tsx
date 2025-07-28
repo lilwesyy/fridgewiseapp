@@ -29,7 +29,9 @@ import { NotificationModal, NotificationType } from './src/components/modals';
 import { OTPInput, AnimatedContainer } from './src/components/ui';
 import { checkBackendAvailability, BackendHealthMonitor } from './src/utils/healthCheck';
 import { useNetworkStatus } from './src/hooks/useNetworkStatus';
-import Svg, { Path, G, Circle } from 'react-native-svg';
+import Svg, { Path, G } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { LogoComponent } from './src/components/ui/LogoComponent';
 import './src/i18n';
 
 type Screen = 'home' | 'camera' | 'ingredients' | 'recipe' | 'recipes' | 'saved' | 'profile' | 'cooking';
@@ -46,72 +48,13 @@ interface AppState {
   isPublicRecipe: boolean; // Flag to track if recipe is from public collection
 }
 
-const LogoComponent: React.FC<{ width?: number; height?: number }> = ({ width = 60, height = 54 }) => (
-  <Svg width={width} height={height} viewBox="0 0 267 241">
-    <G>
-      <G>
-        <Path
-          opacity="0.973"
-          d="m206.03101,0c3.374,0.174 6.707,0.674 10,1.5c10.926,4.018 16.26,11.852 16,23.5c-0.794,11.216 -4.294,21.549 -10.5,31c-16.359,23.467 -35.193,44.967 -56.5,64.5c-42.519,37.697 -87.186,72.531 -134,104.5c-0.333,-0.5 -0.667,-1 -1,-1.5c33.982,-64.834 73.816,-125.668 119.5,-182.5c11.309,-12.65 23.809,-23.817 37.5,-33.5c6.009,-3.684 12.342,-6.184 19,-7.5z"
-          fill="rgb(22, 163, 74)"
-        />
-      </G>
-      <G>
-        <Path
-          opacity="0.94"
-          d="m68.03101,26c6.552,-0.474 10.385,2.526 11.5,9c0.748,8.853 -0.252,17.519 -3,26c-10.067,28.465 -23.067,55.465 -39,81c0.267,-28.554 3.933,-56.888 11,-85c2.516,-10.198 7.016,-19.364 13.5,-27.5c1.932,-1.459 3.932,-2.625 6,-3.5z"
-          fill="rgb(20, 150, 68)"
-        />
-      </G>
-      <G>
-        <Path
-          opacity="0.906"
-          d="m5.03101,102c3.472,-0.537 6.305,0.463 8.5,3c1.985,6.323 3.151,12.823 3.5,19.5c-1.074,16.687 -3.408,33.187 -7,49.5c-5.431,-18.081 -8.764,-36.581 -10,-55.5c-0.284,-6.217 1.382,-11.717 5,-16.5z"
-          fill="rgb(18, 135, 62)"
-        />
-      </G>
-      <G>
-        <Path
-          opacity="0.956"
-          d="m241.03101,143c6.891,-0.599 13.558,0.235 20,2.5c8.351,8.935 7.684,17.268 -2,25c-12.697,8.125 -26.364,14.125 -41,18c-34.818,9.247 -70.151,15.247 -106,18c32.85,-21.763 67.516,-40.429 104,-56c8.319,-2.99 16.652,-5.49 25,-7.5z"
-          fill="rgb(16, 120, 56)"
-        />
-      </G>
-      <G>
-        <Path
-          opacity="0.911"
-          d="m186.03101,225c6.009,-0.166 12.009,0.001 18,0.5c6.464,0.38 10.131,3.713 11,10c-1.409,2.879 -3.743,4.545 -7,5c-22.268,1.801 -44.268,-0.032 -66,-5.5c14.501,-4.628 29.168,-7.961 44,-10z"
-          fill="rgb(14, 105, 50)"
-        />
-      </G>
-    </G>
-  </Svg>
-);
 
 const ValidationIcon: React.FC<{ isValid: boolean; colors: any }> = ({ isValid, colors }) => (
   <View style={{ marginLeft: 8 }}>
     {isValid ? (
-      <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
-        <Circle cx="10" cy="10" r="10" fill={colors.success} />
-        <Path
-          d="M6 10L8.5 12.5L14 7"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
+      <Ionicons name="checkmark-circle" size={20} color={colors.success} />
     ) : (
-      <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
-        <Circle cx="10" cy="10" r="10" fill={colors.error} />
-        <Path
-          d="M7 7L13 13M7 13L13 7"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
+      <Ionicons name="close-circle" size={20} color={colors.error} />
     )}
   </View>
 );
