@@ -78,12 +78,6 @@ accessible={true}
 
 ### ⚠️ Lacune di Conformità
 
-**Contenuto Privacy Policy**
-- Necessario aggiungere contenuto effettivo della privacy policy (attualmente solo struttura placeholder)
-- Mancano politiche di conservazione dei dati
-- Necessario specificare pratiche di condivisione dati con terze parti
-- Mancano procedure di eliminazione dei dati utente
-
 **Linee Guida App Store**
 - Necessari video di anteprima dell'app
 - Manca configurazione rating per età

@@ -9,6 +9,10 @@
     "category": "Food & Drink",
     "keywords": ["food", "recipes", "cooking", "AI", "ingredients", "fridge", "meal planning", "food recognition"],
     "orientation": "portrait",
+    "contentRating": {
+      "rating": "13+",
+      "advisory": []
+    },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -27,15 +31,21 @@
       "bundleIdentifier": "com.fridgewise.app",
       "buildNumber": "1",
       "userInterfaceStyle": "automatic",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "FridgeWise needs camera access to scan and identify ingredients from your fridge for recipe suggestions",
         "NSPhotoLibraryUsageDescription": "FridgeWise needs photo library access to select ingredient images for analysis and recipe generation",
-        "NSPhotoLibraryAddUsageDescription": "FridgeWise may save generated recipes and ingredient photos to your photo library"
-      }
+        "NSPhotoLibraryAddUsageDescription": "FridgeWise may save generated recipes and ingredient photos to your photo library",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "appStoreUrl": "https://apps.apple.com/app/fridgewise/idXXXXXXXXXX"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#16A34A"
       },
       "package": "com.fridgewise.app",
       "versionCode": 1,
@@ -44,11 +54,49 @@
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.fridgewise.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "https",
+            "host": "fridgewiseai.com"
+          },
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "FridgeWise - AI Recipe Generator",
+      "shortName": "FridgeWise",
+      "lang": "en",
+      "scope": "/",
+      "themeColor": "#16A34A",
+      "backgroundColor": "#ffffff",
+      "startUrl": "/",
+      "display": "standalone",
+      "orientation": "portrait"
+    },
+    "hooks": {
+      "postPublish": [
+        {
+          "file": "sentry-expo/upload-sourcemaps",
+          "config": {
+            "organization": "fridgewise",
+            "project": "fridgewise-app"
+          }
+        }
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
     }
   }
 }
