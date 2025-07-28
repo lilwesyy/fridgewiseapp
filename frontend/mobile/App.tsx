@@ -21,7 +21,8 @@ import {
   CookingModeScreen,
   OnboardingScreen,
   MaintenanceScreen,
-  OfflineScreen
+  OfflineScreen,
+  LazyScreenErrorBoundary
 } from './src/components/screens';
 import { BottomNavigation } from './src/components/navigation';
 import type { TabName } from './src/components/navigation';
@@ -32,6 +33,8 @@ import { useNetworkStatus } from './src/hooks/useNetworkStatus';
 import Svg, { Path, G } from 'react-native-svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { LogoComponent } from './src/components/ui/LogoComponent';
+import { useComponentPreloader } from './src/utils/preloader';
+import { PerformanceDebugger } from './src/components/ui/PerformanceDebugger';
 import './src/i18n';
 
 type Screen = 'home' | 'camera' | 'ingredients' | 'recipe' | 'recipes' | 'saved' | 'profile' | 'cooking';
@@ -105,6 +108,7 @@ const AppContent: React.FC = () => {
   const { isDarkMode, themeMode, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { isOffline, isConnected, refresh: refreshNetworkStatus } = useNetworkStatus();
+  const { preloadBasedOnUserFlow, schedulePreload } = useComponentPreloader();
 
   // Handle splash screen
   useEffect(() => {
@@ -112,12 +116,18 @@ const AppContent: React.FC = () => {
       // Wait for the theme to be loaded
       await new Promise(resolve => setTimeout(resolve, 100));
       await SplashScreen.hideAsync();
+      
+      // Start preloading after splash screen is hidden
+      if (user) {
+        // User is logged in, preload likely next screens
+        schedulePreload('camera', 3000); // Preload camera after 3s
+      }
     };
 
     if (!isLoading) {
       hideSplash();
     }
-  }, [isLoading, isDarkMode]);
+  }, [isLoading, isDarkMode, user, schedulePreload]);
 
   // Force StatusBar update when theme changes
   useEffect(() => {
@@ -663,6 +673,8 @@ const AppContent: React.FC = () => {
         currentScreen: 'ingredients',
         ingredients: [...appState.ingredients, ...ingredients],
       });
+      // Preload recipe screen per il prossimo step
+      schedulePreload('recipe', 1000);
     }
     // If no ingredients, stay on camera screen and let CameraScreen handle the modal
   };
@@ -674,6 +686,8 @@ const AppContent: React.FC = () => {
       recipe,
       isRecipeJustGenerated: true,
     });
+    // Preload cooking mode per possibile utilizzo
+    schedulePreload('cooking', 2000);
   };
 
   const handleStartOver = () => {
@@ -711,6 +725,9 @@ const AppContent: React.FC = () => {
         activeTab: tab,
       });
     }
+
+    // Preload components basato sul nuovo screen
+    preloadBasedOnUserFlow(tab);
   };
 
   const handleConfirmExitCooking = () => {
@@ -1562,18 +1579,21 @@ const AppContent: React.FC = () => {
   // Special screens without bottom navigation (only ingredients and recipe flow)
   if (appState.currentScreen === 'ingredients') {
     return (
-      <IngredientsScreen
-        ingredients={appState.ingredients}
-        onGenerateRecipe={handleRecipeGenerated}
-        onGoBack={handleGoBack}
-        onGoToCamera={(currentIngredients) => setAppState({ ...appState, currentScreen: 'camera', ingredients: currentIngredients })}
-      />
+      <LazyScreenErrorBoundary>
+        <IngredientsScreen
+          ingredients={appState.ingredients}
+          onGenerateRecipe={handleRecipeGenerated}
+          onGoBack={handleGoBack}
+          onGoToCamera={(currentIngredients) => setAppState({ ...appState, currentScreen: 'camera', ingredients: currentIngredients })}
+        />
+      </LazyScreenErrorBoundary>
     );
   }
 
   if (appState.currentScreen === 'recipe') {
     return (
-      <RecipeScreen
+      <LazyScreenErrorBoundary>
+        <RecipeScreen
         recipe={appState.recipe}
         onGoBack={handleGoBack}
         onStartOver={handleStartOver}
@@ -1656,6 +1676,7 @@ const AppContent: React.FC = () => {
         }}
         isPublic={appState.isPublicRecipe}
       />
+      </LazyScreenErrorBoundary>
     );
   }
 
@@ -1666,11 +1687,13 @@ const AppContent: React.FC = () => {
     switch (appState.currentScreen) {
       case 'camera':
         return (
-          <CameraScreen
-            onImageAnalyzed={handleImageAnalyzed}
-            onGoBack={() => setAppState({ ...appState, currentScreen: 'home', activeTab: 'home' })}
-            onGoToManualInput={() => setAppState({ ...appState, currentScreen: 'ingredients', ingredients: [] })}
-          />
+          <LazyScreenErrorBoundary>
+            <CameraScreen
+              onImageAnalyzed={handleImageAnalyzed}
+              onGoBack={() => setAppState({ ...appState, currentScreen: 'home', activeTab: 'home' })}
+              onGoToManualInput={() => setAppState({ ...appState, currentScreen: 'ingredients', ingredients: [] })}
+            />
+          </LazyScreenErrorBoundary>
         );
 
       case 'recipes':
@@ -1697,15 +1720,17 @@ const AppContent: React.FC = () => {
 
       case 'cooking':
         return appState.recipe ? (
-          <CookingModeScreen
-            recipe={appState.recipe}
-            onGoBack={handleGoBack}
-            onFinishCooking={handleFinishCooking}
-            showForceExitModal={showCookingExitModal}
-            onForceExitConfirm={handleConfirmExitCooking}
-            onForceExitCancel={handleCancelExitCooking}
-            isPublicRecipe={appState.isPublicRecipe}
-          />
+          <LazyScreenErrorBoundary>
+            <CookingModeScreen
+              recipe={appState.recipe}
+              onGoBack={handleGoBack}
+              onFinishCooking={handleFinishCooking}
+              showForceExitModal={showCookingExitModal}
+              onForceExitConfirm={handleConfirmExitCooking}
+              onForceExitCancel={handleCancelExitCooking}
+              isPublicRecipe={appState.isPublicRecipe}
+            />
+          </LazyScreenErrorBoundary>
         ) : null;
 
       default: // 'home'
@@ -1726,6 +1751,7 @@ const AppContent: React.FC = () => {
           activeTab={appState.activeTab}
           onTabPress={handleTabPress}
         />
+        <PerformanceDebugger enabled={__DEV__} />
       </View>
       {renderNotificationModal()}
     </>
