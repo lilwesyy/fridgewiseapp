@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../contexts/ThemeContext';
 import Animated, {
   useSharedValue,
@@ -32,24 +32,13 @@ interface NotificationModalProps {
 
 const getIcons = (themeColors: any) => ({
   success: (
-    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke={themeColors.success} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M9 12L11 14L15 10" stroke={themeColors.success} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
+    <Ionicons name="checkmark-circle-outline" size={32} color={themeColors.success} />
   ),
   warning: (
-    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 9V13" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M12 17H12.01" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M10.29 3.86L1.82 18C1.42 18.66 1.89 19.5 2.65 19.5H21.35C22.11 19.5 22.58 18.66 22.18 18L13.71 3.86C13.33 3.23 12.37 3.23 11.99 3.86Z" stroke={themeColors.warning} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
+    <Ionicons name="warning-outline" size={32} color={themeColors.warning} />
   ),
   error: (
-    <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M15 9L9 15" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M9 9L15 15" stroke={themeColors.error} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
+    <Ionicons name="alert-circle-outline" size={32} color={themeColors.error} />
   ),
 });
 

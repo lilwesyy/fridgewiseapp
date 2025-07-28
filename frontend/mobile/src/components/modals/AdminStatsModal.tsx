@@ -22,83 +22,42 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, EASING_CURVES, ANIMATION_DELAYS } from '../../constants/animations';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Stats Icons
 const UsersIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 24,
   color
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
-      fill={color}
-    />
-    <Path
-      d="M12 14C7.03125 14 3 18.0312 3 23H21C21 18.0312 16.9688 14 12 14Z"
-      fill={color}
-    />
-  </Svg>
+  <Ionicons name="people" size={size} color={color} />
 );
 
 const RecipeIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 24,
   color
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M8.1 13.34L10.83 10.61C11.22 10.22 11.22 9.59 10.83 9.2C10.44 8.81 9.81 8.81 9.42 9.2L6.69 11.93C6.31 12.31 6.31 12.92 6.69 13.31L9.42 16.04C9.61 16.23 9.86 16.32 10.11 16.32C10.36 16.32 10.61 16.23 10.8 16.04C11.19 15.65 11.19 15.02 10.8 14.63L8.1 13.34Z"
-      fill={color}
-    />
-    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none" />
-  </Svg>
+  <Ionicons name="restaurant" size={size} color={color} />
 );
 
 const AnalysisIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 24,
   color
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M3 3V21H21"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M9 9L12 6L16 10L20 6"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
+  <Ionicons name="analytics" size={size} color={color} />
 );
 
 const CameraIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 24,
   color
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M9 2L7.17 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4H16.83L15 2H9Z"
-      fill={color}
-    />
-    <Circle cx="12" cy="12" r="4" fill="white" />
-  </Svg>
+  <Ionicons name="camera" size={size} color={color} />
 );
 
 const SecurityIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 24,
   color
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z"
-      fill={color}
-    />
-  </Svg>
+  <Ionicons name="shield-checkmark" size={size} color={color} />
 );
 
 interface AdminStatsModalProps {

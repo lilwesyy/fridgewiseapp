@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { NotificationModal } from '../modals/NotificationModal';
@@ -219,15 +219,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
               <View style={styles.headerContent}>
                 <View style={styles.headerLeft}>
                   <View style={styles.iconContainer}>
-                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z"
-                        stroke="#007AFF"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    <Ionicons name="chatbubble-ellipses" size={24} color="#007AFF" />
                   </View>
                   <View>
                     <Text style={styles.title}>FridgeWise AI</Text>
@@ -235,15 +227,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                   </View>
                 </View>
                 <TouchableOpacity activeOpacity={0.7} onPress={handleClose} style={styles.closeButton}>
-                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M18 6L6 18M6 6L18 18"
-                      stroke="#6c757d"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
+                  <Ionicons name="close" size={24} color="#6c757d" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -251,11 +235,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
             {/* AI Disclaimer */}
             <View style={styles.aiDisclaimer}>
               <View style={styles.aiDisclaimerHeader}>
-                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
-                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M12 8V16" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M8 12H16" stroke="#007AFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
+                <Ionicons name="bulb" size={14} color="#007AFF" style={styles.aiIcon} />
                 <Text style={styles.aiDisclaimerTitle}>AI-Generated Content</Text>
               </View>
               <Text style={styles.aiDisclaimerText}>Responses are AI-generated and may not always be accurate. Always verify cooking instructions and ingredient safety.</Text>
@@ -290,15 +270,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                         style={styles.modificationButton}
                         onPress={() => handleApplyModifications(msg.updatedRecipe)}
                       >
-                        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={styles.modificationIcon}>
-                          <Path
-                            d="M20 6L9 17L4 12"
-                            stroke="#28a745"
-                            strokeWidth={2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </Svg>
+                        <Ionicons name="checkmark" size={16} color="#28a745" style={styles.modificationIcon} />
                         <Text style={styles.modificationButtonText}>Applica Modifiche</Text>
                       </TouchableOpacity>
                     )}
@@ -334,15 +306,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                   onPress={handleSend}
                   disabled={isSending || !input.trim()}
                 >
-                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"
-                      stroke="#fff"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
+                  <Ionicons name="send" size={20} color="#fff" />
                 </TouchableOpacity>
               </View>
             </View>

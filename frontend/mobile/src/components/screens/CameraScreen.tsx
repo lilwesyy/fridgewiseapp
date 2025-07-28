@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { NoIngredientsModal } from '../modals/NoIngredientsModal';
 import { NotificationModal, NotificationType } from '../modals/NotificationModal';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -179,12 +179,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
         <Animated.View style={[styles.permissionContent, permissionContainerStyle]}>
           <Animated.View style={[{ marginBottom: 24 }, iconAnimatedStyle]}>
-            <Svg width={80} height={80} viewBox="0 0 48 48" fill="none">
-              <Rect x={8} y={12} width={32} height={24} rx={4} stroke={colors.error} strokeWidth={2.5} fill={colors.card} />
-              <Rect x={22} y={18} width={4} height={8} rx={2} fill={colors.error} />
-              <Rect x={22} y={28} width={4} height={4} rx={2} fill={colors.error} />
-              <Path d="M16 12V8a8 8 0 0116 0v4" stroke={colors.error} strokeWidth={2.5} strokeLinecap="round" />
-            </Svg>
+            <Ionicons name="lock-closed" size={80} color={colors.error} />
           </Animated.View>
           <Text style={[styles.permissionTitle, { color: colors.text }]}>{t('camera.error')}</Text>
           <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>{cameraError}</Text>
@@ -230,21 +225,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
         <Animated.View style={[styles.permissionContent, permissionContainerStyle]}>
           <Animated.View style={[{ marginBottom: 24 }, iconAnimatedStyle]}>
-            <Svg width={80} height={80} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
-                stroke={colors.primary}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <Path
-                d="M16 13C16 15.2091 14.2091 17 12 17C9.79086 17 8 15.2091 8 13C8 10.7909 9.79086 9 12 9C14.2091 9 16 10.7909 16 13Z"
-                stroke={colors.primary}
-                strokeWidth="2"
-                fill="none"
-              />
-            </Svg>
+            <Ionicons name="camera" size={80} color={colors.primary} />
           </Animated.View>
           <Text style={[styles.permissionTitle, { color: colors.text }]}>{t('camera.permissionTitle')}</Text>
           <Text style={[styles.permissionMessage, { color: colors.textSecondary }]}>{t('camera.permissionMessage')}</Text>
@@ -652,11 +633,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
           {isAnalyzing && (
             <View style={styles.aiDisclaimerBottom}>
               <View style={styles.aiDisclaimerHeader}>
-                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
-                  <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M12 8V16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M8 12H16" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
+                <Ionicons name="bulb" size={14} color="white" style={styles.aiIcon} />
                 <Text style={styles.aiDisclaimerTitle}>{t('camera.aiRecognition')}</Text>
               </View>
               <Text style={styles.aiDisclaimerText}>{t('camera.aiDisclaimerText')}</Text>
@@ -701,37 +678,14 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
               </TouchableOpacity>
               <Text style={styles.title}>Camera</Text>
               <TouchableOpacity activeOpacity={0.7} style={styles.manualButton} onPress={onGoToManualInput}>
-                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
-                    fill="white"
-                  />
-                </Svg>
+                <Ionicons name="add-circle" size={24} color="white" />
               </TouchableOpacity>
             </View>
 
             {!isCapturing && (
               <View style={styles.bottomBar}>
                 <TouchableOpacity activeOpacity={0.7} style={styles.galleryButton} onPress={pickImageFromGallery}>
-                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
-                      stroke="white"
-                      strokeWidth="2"
-                      fill="none"
-                    />
-                    <Path
-                      d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z"
-                      fill="white"
-                    />
-                    <Path
-                      d="M21 15L16 10L5 21"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
+                  <Ionicons name="images" size={24} color="white" />
                 </TouchableOpacity>
 
                 <TouchableOpacity activeOpacity={0.7} style={styles.captureButton} onPress={takePicture}>
@@ -739,40 +693,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
                 </TouchableOpacity>
 
                 <TouchableOpacity activeOpacity={0.7} style={styles.flipButton} onPress={toggleCameraFacing}>
-                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M17 2L20 5L17 8"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                    <Path
-                      d="M20 5H9A5 5 0 004 10V14"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                    <Path
-                      d="M7 22L4 19L7 16"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                    <Path
-                      d="M4 19H15A5 5 0 0020 14V10"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                  </Svg>
+                  <Ionicons name="camera-reverse" size={24} color="white" />
                 </TouchableOpacity>
               </View>
             )}

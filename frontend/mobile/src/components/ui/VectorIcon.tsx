@@ -1,88 +1,105 @@
 import React from 'react';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../contexts/ThemeContext';
-
-type IconLibrary = 'material' | 'ionicons';
+import { Platform } from 'react-native';
 
 interface VectorIconProps {
-  library?: IconLibrary;
   name: string;
   size?: number;
   color?: string;
   style?: any;
+  filled?: boolean; // For iOS-style filled/outline behavior
 }
 
 export const VectorIcon: React.FC<VectorIconProps> = ({
-  library = 'material',
   name,
-  size = 24,
+  size = Platform.OS === 'ios' ? 24 : 22,
   color,
-  style
+  style,
+  filled = false
 }) => {
   const { colors } = useTheme();
   const iconColor = color || colors.textSecondary;
+  
+  // Convert icon name to iOS-style outline/filled
+  const getIconName = (iconName: string, isFilled: boolean) => {
+    // If already has -outline suffix, handle it
+    if (iconName.endsWith('-outline')) {
+      return isFilled ? iconName.replace('-outline', '') : iconName;
+    }
+    // If it's a base name, add -outline if not filled
+    return isFilled ? iconName : `${iconName}-outline`;
+  };
 
-  switch (library) {
-    case 'ionicons':
-      return (
-        <Ionicons 
-          name={name} 
-          size={size} 
-          color={iconColor} 
-          style={style} 
-        />
-      );
-    case 'material':
-    default:
-      return (
-        <MaterialIcons 
-          name={name} 
-          size={size} 
-          color={iconColor} 
-          style={style} 
-        />
-      );
-  }
+  const finalIconName = getIconName(name, filled);
+
+  return (
+    <Ionicons 
+      name={finalIconName} 
+      size={size} 
+      color={iconColor} 
+      style={style} 
+    />
+  );
 };
 
-// Common icon mappings for easy migration from SVG
+// Common icon mappings with iOS-style Ionicons
 export const IconMap = {
   // Navigation
-  home: { library: 'material' as IconLibrary, name: 'home' },
-  camera: { library: 'material' as IconLibrary, name: 'camera-alt' },
-  menu: { library: 'material' as IconLibrary, name: 'menu' },
+  home: 'home',
+  camera: 'camera',
+  menu: 'menu',
   
   // Actions
-  close: { library: 'material' as IconLibrary, name: 'close' },
-  check: { library: 'material' as IconLibrary, name: 'check' },
-  edit: { library: 'material' as IconLibrary, name: 'edit' },
-  delete: { library: 'material' as IconLibrary, name: 'delete' },
-  share: { library: 'material' as IconLibrary, name: 'share' },
-  add: { library: 'material' as IconLibrary, name: 'add' },
+  close: 'close',
+  check: 'checkmark',
+  edit: 'create',
+  delete: 'trash',
+  share: 'share',
+  add: 'add',
   
   // Arrows
-  arrowBack: { library: 'material' as IconLibrary, name: 'arrow-back' },
-  arrowForward: { library: 'material' as IconLibrary, name: 'arrow-forward' },
-  arrowUp: { library: 'material' as IconLibrary, name: 'keyboard-arrow-up' },
-  arrowDown: { library: 'material' as IconLibrary, name: 'keyboard-arrow-down' },
+  arrowBack: 'chevron-back',
+  arrowForward: 'chevron-forward',
+  arrowUp: 'chevron-up',
+  arrowDown: 'chevron-down',
   
   // Status
-  error: { library: 'material' as IconLibrary, name: 'error' },
-  warning: { library: 'material' as IconLibrary, name: 'warning' },
-  info: { library: 'material' as IconLibrary, name: 'info' },
-  success: { library: 'material' as IconLibrary, name: 'check-circle' },
+  error: 'alert-circle',
+  warning: 'warning',
+  info: 'information-circle',
+  success: 'checkmark-circle',
   
   // Food & cooking
-  restaurant: { library: 'material' as IconLibrary, name: 'restaurant' },
-  kitchen: { library: 'material' as IconLibrary, name: 'kitchen' },
+  restaurant: 'restaurant',
+  kitchen: 'home',
   
   // Common UI
-  search: { library: 'material' as IconLibrary, name: 'search' },
-  favorite: { library: 'material' as IconLibrary, name: 'favorite' },
-  bookmark: { library: 'material' as IconLibrary, name: 'bookmark' },
-  person: { library: 'material' as IconLibrary, name: 'person' },
-  settings: { library: 'material' as IconLibrary, name: 'settings' },
+  search: 'search',
+  favorite: 'heart',
+  bookmark: 'bookmark',
+  person: 'person',
+  settings: 'settings',
+  
+  // Additional iOS-style icons
+  star: 'star',
+  time: 'time',
+  location: 'location',
+  mail: 'mail',
+  phone: 'call',
+  image: 'image',
+  document: 'document-text',
+  folder: 'folder',
+  download: 'download',
+  upload: 'cloud-upload',
+  refresh: 'refresh',
+  filter: 'filter',
+  sort: 'swap-vertical',
+  grid: 'grid',
+  list: 'list',
+  play: 'play',
+  pause: 'pause',
+  stop: 'stop',
 } as const;
 
 // Convenience component for mapped icons
@@ -91,23 +108,25 @@ interface MappedIconProps {
   size?: number;
   color?: string;
   style?: any;
+  filled?: boolean;
 }
 
 export const MappedIcon: React.FC<MappedIconProps> = ({
   icon,
-  size = 24,
+  size = Platform.OS === 'ios' ? 24 : 22,
   color,
-  style
+  style,
+  filled = false
 }) => {
-  const iconConfig = IconMap[icon];
+  const iconName = IconMap[icon];
   
   return (
     <VectorIcon
-      library={iconConfig.library}
-      name={iconConfig.name}
+      name={iconName}
       size={size}
       color={color}
       style={style}
+      filled={filled}
     />
   );
 };

@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
-import Svg, { Rect } from 'react-native-svg';
+import { VectorIcon, MappedIcon } from '../ui/VectorIcon';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { NotificationModal, NotificationType } from '../modals/NotificationModal';
 import { ImageViewerModal } from '../modals/ImageViewerModal';
@@ -113,7 +113,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = (props) => {
         onPress={handleDelete}
         activeOpacity={0.7}
       >
-        <Ionicons name="trash" size={24} color="white" />
+        <MappedIcon icon="delete" size={24} color="white" filled />
         <Text style={styles.deleteText}>
           {DEFAULT_DELETE_TEXT}
         </Text>
@@ -745,7 +745,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
           </TouchableOpacity>
         </View>
         <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
+          <MappedIcon icon="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
             placeholder={activeTab === 'my-recipes' ? t('recipes.searchPlaceholder') : t('recipes.searchCollections')}
@@ -810,13 +810,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         filteredRecipes.length === 0 ? (
           <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
             <View style={{ marginBottom: 16 }}>
-              <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
-                <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card} />
-                <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary} />
-                <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.primary} />
-                <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.primary} />
-                <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.primary} />
-              </Svg>
+              <Ionicons name="restaurant-outline" size={64} color={colors.primary} />
             </View>
             {recipes.length === 0 ? (
               <>
@@ -867,13 +861,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         ) : filteredPublicRecipes.length === 0 ? (
           <Animated.View style={[styles.emptyContainer, listAnimatedStyle]}>
             <View style={{ marginBottom: 16 }}>
-              <Svg width={64} height={64} viewBox="0 0 48 48" fill="none">
-                <Rect x={6} y={8} width={36} height={32} rx={4} stroke={colors.primary} strokeWidth={2.5} fill={colors.card} />
-                <Rect x={12} y={14} width={24} height={2.5} rx={1.25} fill={colors.primary} />
-                <Rect x={12} y={20} width={18} height={2.5} rx={1.25} fill={colors.primary} />
-                <Rect x={12} y={26} width={14} height={2.5} rx={1.25} fill={colors.primary} />
-                <Rect x={12} y={32} width={10} height={2.5} rx={1.25} fill={colors.primary} />
-              </Svg>
+              <Ionicons name="restaurant-outline" size={64} color={colors.primary} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
               {collectionsSearchQuery || publicDifficultyFilter || publicTagFilter ? t('recipes.noResults') : t('recipes.noPublicRecipes')}

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import Svg, { Path } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { ShareModal } from '../modals/ShareModal';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ChatAIModal } from '../modals/ChatAIModal';
@@ -823,15 +823,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.shareButton} onPress={() => handleShare()}>
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
-                stroke={colors.primary}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
+            <Ionicons name="share-outline" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -898,15 +890,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                               onPress={() => handleViewPhoto(photo.url, index)}
                               activeOpacity={0.8}
                             >
-                              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                                <Path
-                                  d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
-                                  stroke="white"
-                                  strokeWidth={2}
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </Svg>
+                              <Ionicons name="expand-outline" size={18} color="white" />
                             </TouchableOpacity>
 
                             {/* Delete Photo Overlay */}
@@ -919,22 +903,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                                 }}
                                 activeOpacity={0.8}
                               >
-                                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                                  <Path
-                                    d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2"
-                                    stroke="white"
-                                    strokeWidth={2}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                  <Path
-                                    d="M10 11v6M14 11v6"
-                                    stroke="white"
-                                    strokeWidth={2}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </Svg>
+                                <Ionicons name="trash-outline" size={16} color="white" />
                               </TouchableOpacity>
                             )}
                           </View>
@@ -955,15 +924,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                                 <ActivityIndicator size="large" color={colors.primary} testID="loading-indicator" />
                               ) : (
                                 <>
-                                  <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
-                                    <Path
-                                      d="M12 5v14M5 12h14"
-                                      stroke={colors.primary}
-                                      strokeWidth={2}
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                  </Svg>
+                                  <Ionicons name="add-outline" size={40} color={colors.primary} />
                                   <Text style={[styles.addPhotoSlideText, { color: colors.primary }]}>
                                     {t('recipes.addPhoto')}
                                   </Text>
@@ -1005,22 +966,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                         <ActivityIndicator size="large" color={colors.primary} testID="loading-indicator" />
                       ) : (
                         <>
-                          <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                            <Path
-                              d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
-                              stroke={colors.primary}
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <Path
-                              d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z"
-                              stroke={colors.primary}
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </Svg>
+                          <Ionicons name="camera-outline" size={48} color={colors.primary} />
                           <Text style={[styles.noPhotoText, { color: colors.primary }]}>
                             {t('recipes.addPhoto')}
                           </Text>
@@ -1094,11 +1040,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
           {/* AI-Generated Content Disclaimer */}
           <View style={[styles.aiDisclaimer, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.aiDisclaimerHeader}>
-              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={styles.aiIcon}>
-                <Path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                <Path d="M12 8V16" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                <Path d="M8 12H16" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <Ionicons name="sparkles-outline" size={16} color={colors.primary} style={styles.aiIcon} />
               <Text style={[styles.aiDisclaimerTitle, { color: colors.primary }]}>{t('recipe.aiGenerated')}</Text>
             </View>
             <Text style={[styles.aiDisclaimerText, { color: colors.textSecondary }]}>{t('recipe.aiDisclaimerText')}</Text>
@@ -1276,15 +1218,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                     testID="dish-photo-image"
                   />
                   <View style={[styles.photoOverlay, { backgroundColor: colors.overlay }]}>
-                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
-                        stroke="white"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    <Ionicons name="expand-outline" size={24} color="white" />
                   </View>
                 </TouchableOpacity>
 
@@ -1293,22 +1227,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                     style={[styles.photoActionButton, { backgroundColor: colors.card, borderColor: colors.border }]}
                     onPress={() => handleViewPhoto()}
                   >
-                    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                        stroke={colors.primary}
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <Path
-                        d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
-                        stroke={colors.primary}
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    <Ionicons name="eye-outline" size={16} color={colors.primary} />
                     <Text style={[styles.photoActionText, { color: colors.primary }]}>
                       {t('common.view') || 'View'}
                     </Text>
@@ -1318,15 +1237,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                     style={[styles.photoActionButton, { backgroundColor: colors.card, borderColor: colors.border }]}
                     onPress={handleSharePhoto}
                   >
-                    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
-                        stroke={colors.primary}
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    <Ionicons name="share-outline" size={16} color={colors.primary} />
                     <Text style={[styles.photoActionText, { color: colors.primary }]}>
                       {t('common.share')}
                     </Text>
@@ -1336,22 +1247,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             ) : recipe.cookedAt && (
               <View style={styles.noPhotoContainer}>
                 <View style={[styles.noPhotoPlaceholder, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
-                      stroke={colors.textSecondary}
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <Path
-                      d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z"
-                      stroke={colors.textSecondary}
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
+                  <Ionicons name="camera-outline" size={48} color={colors.textSecondary} />
                   <Text style={[styles.noPhotoText, { color: colors.textSecondary }]}>
                     {t('recipes.noPhoto') || 'No photo added'}
                   </Text>
@@ -1367,15 +1263,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                       <ActivityIndicator size="small" color={colors.buttonText} testID="loading-indicator" />
                     ) : (
                       <>
-                        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                          <Path
-                            d="M12 5v14M5 12h14"
-                            stroke={colors.buttonText}
-                            strokeWidth={2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </Svg>
+                        <Ionicons name="add-outline" size={20} color={colors.buttonText} />
                         <Text style={[styles.addPhotoText, { color: colors.buttonText }]}>
                           {t('recipes.addPhoto')}
                         </Text>
@@ -1462,36 +1350,12 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
               style={[styles.deleteButton, { backgroundColor: recipe.isPublicRecipe ? colors.warning : colors.error }]}
               onPress={() => setShowDeleteModal(true)}
             >
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
-                {recipe.isPublicRecipe ? (
-                  // Icon for "remove from saved" (bookmark minus)
-                  <Path
-                    d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16zM12 10H8"
-                    stroke="white"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                ) : (
-                  // Icon for "delete recipe" (trash)
-                  <>
-                    <Path
-                      d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"
-                      stroke="white"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <Path
-                      d="M10 11v6M14 11v6"
-                      stroke="white"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </>
-                )}
-              </Svg>
+              <Ionicons 
+                name={recipe.isPublicRecipe ? "bookmark-outline" : "trash-outline"} 
+                size={20} 
+                color="white" 
+                style={styles.deleteIcon} 
+              />
               <Text style={styles.deleteButtonText}>
                 {recipe.isPublicRecipe ? t('saved.removeFromSaved') : t('recipe.deleteRecipe')}
               </Text>
@@ -1518,9 +1382,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             </TouchableOpacity>
             {!isPublic && !recipe.isPublicRecipe && (
               <TouchableOpacity style={[styles.aiEditButton, { backgroundColor: colors.card }]} onPress={() => setShowChatAIModal(true)}>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
-                  <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </Svg>
+                <Ionicons name="chatbubble-outline" size={20} color={colors.primary} style={styles.deleteIcon} />
                 <Text style={[styles.aiEditButtonText, { color: colors.primary }]}>{t('common.edit') || 'Modifica'}</Text>
               </TouchableOpacity>
             )}
@@ -1534,9 +1396,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
             </TouchableOpacity>
             {!isPublic && !recipe.isPublicRecipe && (
               <TouchableOpacity style={[styles.aiEditButton, { backgroundColor: colors.card }]} onPress={() => setShowChatAIModal(true)}>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={styles.deleteIcon}>
-                  <Path d="M21 11.5C21 16.1944 16.9706 20 12 20C10.3431 20 8.84315 19.6569 7.58579 19.0711L3 20L4.07107 16.4142C3.34315 15.1569 3 13.6569 3 12 C3 6.80558 7.02944 3 12 3C16.9706 3 21 6.80558 21 11.5Z" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </Svg>
+                <Ionicons name="chatbubble-outline" size={20} color={colors.primary} style={styles.deleteIcon} />
                 <Text style={[styles.aiEditButtonText, { color: colors.primary }]}>{t('common.edit') || 'Modifica'}</Text>
               </TouchableOpacity>
             )}

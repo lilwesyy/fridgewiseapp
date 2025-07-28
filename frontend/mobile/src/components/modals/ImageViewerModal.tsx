@@ -12,7 +12,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { VectorIcon, MappedIcon } from '../ui/VectorIcon';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import Animated, {
@@ -58,7 +58,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
 
   // Get current image URL
   const currentImageUrl = imageUrls[currentIndex] || '';
-  
+
   // Reset index when modal opens
   React.useEffect(() => {
     if (visible) {
@@ -72,7 +72,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
       setImageLoaded(false);
       setImageError(false);
       setCachedImageUri(null);
-      
+
       imageCacheService.getCachedImage(currentImageUrl)
         .then(cachedUri => {
           setCachedImageUri(cachedUri);
@@ -95,13 +95,13 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
       Alert.alert(t('common.error'), t('common.shareError'));
     }
   };
-  
+
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
   };
-  
+
   const handleNext = () => {
     if (currentIndex < imageUrls.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -132,22 +132,22 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
             activeOpacity={0.7}
             testID="close-button"
           >
-            <Ionicons name="close" size={28} color="white" />
+            <MappedIcon icon="close" size={28} color="white" filled />
           </TouchableOpacity>
-          
+
           {title && (
             <Text style={styles.headerTitle} numberOfLines={1}>
               {title}
             </Text>
           )}
-          
+
           <TouchableOpacity
             style={styles.headerButton}
             onPress={handleShare}
             activeOpacity={0.7}
             testID="share-button"
           >
-            <Ionicons name="share-outline" size={24} color="white" />
+            <MappedIcon icon="share" size={24} color="white" />
           </TouchableOpacity>
         </View>
 
@@ -178,20 +178,20 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
             </ScrollView>
           ) : (
             <View style={styles.errorContainer}>
-              <Ionicons name="image-outline" size={64} color="rgba(255,255,255,0.5)" />
+              <MappedIcon icon="image" size={64} color="rgba(255,255,255,0.5)" />
               <Text style={styles.errorText}>
                 {imageError ? t('common.imageLoadError') : t('common.loading')}
               </Text>
             </View>
           )}
-          
+
           {!imageLoaded && !imageError && cachedImageUri && (
             <View style={styles.loadingContainer}>
-              <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.7)" />
+              <MappedIcon icon="image" size={48} color="rgba(255,255,255,0.7)" />
               <Text style={styles.loadingText}>{t('common.loading')}</Text>
             </View>
           )}
-          
+
           {/* Navigation Controls */}
           {imageUrls.length > 1 && (
             <>
@@ -202,10 +202,10 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
                   activeOpacity={0.7}
                   testID="previous-button"
                 >
-                  <Ionicons name="chevron-back" size={32} color="white" />
+                  <MappedIcon icon="arrowBack" size={32} color="white" filled />
                 </TouchableOpacity>
               )}
-              
+
               {currentIndex < imageUrls.length - 1 && (
                 <TouchableOpacity
                   style={[styles.navButton, styles.navButtonRight]}
@@ -213,7 +213,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
                   activeOpacity={0.7}
                   testID="next-button"
                 >
-                  <Ionicons name="chevron-forward" size={32} color="white" />
+                  <MappedIcon icon="arrowForward" size={32} color="white" filled />
                 </TouchableOpacity>
               )}
             </>

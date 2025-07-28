@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface StarRatingProps {
   rating: number;
@@ -32,14 +32,11 @@ export const StarRating: React.FC<StarRatingProps> = ({
     const isHalfFilled = rating > index && rating < index + 1;
     
     const StarIcon = ({ filled }: { filled: boolean }) => (
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-          fill={filled ? color : emptyColor}
-          stroke={filled ? color : emptyColor}
-          strokeWidth="1"
-        />
-      </Svg>
+      <Ionicons 
+        name={filled ? "star" : "star-outline"} 
+        size={size} 
+        color={filled ? color : emptyColor} 
+      />
     );
 
     if (interactive) {

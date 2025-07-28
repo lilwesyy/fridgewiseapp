@@ -12,7 +12,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Eas
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../../constants/animations';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
-import Svg, { Path } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -114,15 +114,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
                 }] }>
                   <Animated.View style={pulseHaloStyle} />
                   <Animated.View style={pulseStyle}>
-                    <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
-                        stroke={colors.error}
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    <Ionicons name="trash" size={48} color={colors.error} />
                   </Animated.View>
                 </View>
                 <Text style={styles.title}>{title || t('recipe.deleteTitle')}</Text>

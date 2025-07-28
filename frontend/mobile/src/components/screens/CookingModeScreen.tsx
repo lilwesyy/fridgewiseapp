@@ -16,7 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { NotificationModal, NotificationType } from '../modals/NotificationModal';
 import { PhotoUploadModal } from '../modals/PhotoUploadModal';
 import { RatingModal } from '../modals/RatingModal';
@@ -1202,15 +1202,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                   checkedIngredients[index] && styles.checkboxChecked
                 ]}>
                   {checkedIngredients[index] ? (
-                    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M20 6L9 17L4 12"
-                        stroke={colors.buttonText}
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    <Ionicons name="checkmark-outline" size={16} color={colors.buttonText} />
                   ) : null}
                 </View>
                 <View style={styles.ingredientText}>
@@ -1326,16 +1318,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           </View>
         ) : (
           <View style={styles.completedIcon}>
-            <Svg width={80} height={80} viewBox="0 0 24 24" fill="none">
-              <Circle cx={12} cy={12} r={10} stroke={colors.success} strokeWidth={2} />
-              <Path
-                d="M9 12L11 14L15 10"
-                stroke={colors.success}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
+            <Ionicons name="checkmark-circle-outline" size={80} color={colors.success} />
           </View>
         )}
         <Text style={styles.completedTitle}>{safeT('cookingMode.congratulations', 'Congratulations!')}</Text>
@@ -1370,15 +1353,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       {/* Header */}
       <Animated.View style={[styles.header, headerAnimatedStyle]}>
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              d="M19 12H5M12 19L5 12L12 5"
-              stroke={colors.text}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg>
+          <Ionicons name="arrow-back-outline" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>{String(recipe?.title || 'Ricetta')}</Text>
@@ -1391,27 +1366,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
               onPress={() => setShowHelpModal(true)}
               style={styles.helpButton}
             >
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  fill={colors.primary}
-                />
-                <Path
-                  d="M9.09 9C9.32 8.42 9.77 7.93 10.38 7.59C10.99 7.25 11.72 7.08 12.46 7.11C13.2 7.14 13.91 7.37 14.5 7.78C15.09 8.19 15.54 8.76 15.79 9.42C16.04 10.08 16.08 10.8 15.91 11.48C15.74 12.16 15.37 12.78 14.84 13.25C14.31 13.72 13.65 14.02 12.94 14.11C12.23 14.2 11.52 14.08 10.89 13.77"
-                  stroke={colors.surface}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Circle
-                  cx="12"
-                  cy="17"
-                  r="1"
-                  fill={colors.surface}
-                />
-              </Svg>
+              <Ionicons name="help-circle" size={24} color={colors.primary} />
             </TouchableOpacity>
           )}
       </Animated.View>

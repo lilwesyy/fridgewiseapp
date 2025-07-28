@@ -13,7 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { StarRating } from '../ui/StarRating';
-import Svg, { Path } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

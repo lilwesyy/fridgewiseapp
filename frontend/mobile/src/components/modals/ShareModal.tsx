@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
-import Svg, { Path } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -124,16 +124,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
               <View style={styles.options}>
                 <TouchableOpacity activeOpacity={0.7} style={styles.option} onPress={handleQuickShare}>
                   <View style={styles.optionIcon}>
-                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-                        stroke={colors.success}
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill={colors.card}
-                      />
-                    </Svg>
+                    <Ionicons name="flash" size={24} color={colors.success} />
                   </View>
                   <View style={styles.optionContent}>
                     <Text style={styles.optionTitle}>{t('share.shareQuick')}</Text>
@@ -146,23 +137,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
 
                 <TouchableOpacity activeOpacity={0.7} style={styles.option} onPress={handleFullShare}>
                   <View style={styles.optionIcon}>
-                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                        stroke="rgb(59, 130, 246)"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill={colors.card}
-                      />
-                      <Path
-                        d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
-                        stroke="rgb(59, 130, 246)"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    <Ionicons name="document-text" size={24} color="rgb(59, 130, 246)" />
                   </View>
                   <View style={styles.optionContent}>
                     <Text style={styles.optionTitle}>{t('share.shareFull')}</Text>

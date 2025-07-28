@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
-import Svg, { Path } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -122,12 +122,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
               <View style={styles.handle} />
               <View style={styles.header}>
                 <Animated.View style={[styles.iconContainer, pulseStyle]}>
-                  <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-8h2v6h-2V9z"
-                      fill={colors.warning}
-                    />
-                  </Svg>
+                  <Ionicons name="warning" size={48} color={colors.warning} />
                 </Animated.View>
                 <Text style={styles.title}>{t('camera.noIngredientsTitle')}</Text>
                 <Text style={styles.message}>{t('camera.noIngredientsMessage')}</Text>
@@ -136,21 +131,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
               <View style={styles.actions}>
                 <TouchableOpacity activeOpacity={0.7} style={styles.primaryAction} onPress={handleRetakePhoto}>
                   <View style={styles.actionIcon}>
-                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96071 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
-                        stroke={colors.buttonText}
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <Path
-                        d="M16 13C16 15.2091 14.2091 17 12 17C9.79086 17 8 15.2091 8 13C8 10.7909 9.79086 9 12 9C14.2091 9 16 10.7909 16 13Z"
-                        stroke={colors.buttonText}
-                        strokeWidth="2"
-                        fill="none"
-                      />
-                    </Svg>
+                    <Ionicons name="camera" size={20} color={colors.buttonText} />
                   </View>
                   <Text style={styles.primaryActionText}>{t('camera.retakePicture')}</Text>
                 </TouchableOpacity>
@@ -158,30 +139,13 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
                 <View style={styles.secondaryActions}>
                   {onTryGallery && (
                     <TouchableOpacity activeOpacity={0.7} style={styles.secondaryAction} onPress={handleTryGallery}>
-                      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                        <Path
-                          d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"
-                          stroke={colors.primary}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill="none"
-                        />
-                      </Svg>
+                      <Ionicons name="image" size={20} color={colors.primary} />
                       <Text style={styles.secondaryActionText}>{t('camera.selectImage')}</Text>
                     </TouchableOpacity>
                   )}
 
                   <TouchableOpacity activeOpacity={0.7} style={styles.secondaryAction} onPress={handleManualInput}>
-                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M12 5V19M5 12H19"
-                        stroke="rgb(22, 163, 74)"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
+                    <Ionicons name="add" size={20} color="rgb(22, 163, 74)" />
                     <Text style={styles.secondaryActionText}>{t('camera.addIngredient')}</Text>
                   </TouchableOpacity>
                 </View>

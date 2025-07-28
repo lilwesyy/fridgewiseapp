@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
+import { VectorIcon, MappedIcon } from '../ui/VectorIcon';
 import Svg, { Rect } from 'react-native-svg';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { NotificationModal } from '../modals/NotificationModal';
@@ -320,7 +320,7 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
         <Text style={[styles.title, { color: colors.text }]}>{t('saved.title')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
         <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}> 
-          <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
+          <MappedIcon icon="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text, backgroundColor: 'transparent' }]}
             placeholder={t('recipes.searchPlaceholder')}

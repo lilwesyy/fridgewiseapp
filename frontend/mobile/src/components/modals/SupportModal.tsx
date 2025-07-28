@@ -23,20 +23,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../../constants/animations';
-import Svg, { Path } from 'react-native-svg';
-
-// Send Icon Component
-const SendIcon: React.FC<{ size?: number; color?: string }> = ({ 
-  size = 20, 
-  color = 'white' 
-}) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z"
-      fill={color}
-    />
-  </Svg>
-);
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface SupportModalProps {
   visible: boolean;
@@ -195,7 +182,8 @@ User Information:
                 {t('support.sending')}
               </Text>
             ) : (
-              <SendIcon 
+              <Ionicons 
+                name="send" 
                 size={20} 
                 color={(!subject.trim() || !message.trim()) ? colors.textSecondary : colors.buttonText} 
               />
