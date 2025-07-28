@@ -9,10 +9,10 @@ import {
   ActivityIndicator,
   Switch,
   SafeAreaView,
-  Image,
   Alert,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -285,6 +285,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 <Image
                   source={{ uri: `${user.avatar.url}?v=${Date.now()}` }}
                   style={styles.avatarImage}
+                  contentFit="cover"
+                  transition={300}
+                  cachePolicy="memory-disk"
+                  placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
                 />
               ) : (
                 <View style={styles.avatarPlaceholder}>

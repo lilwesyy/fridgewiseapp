@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Modal,
   View,
   Text,
-  StyleSheet,
+  Modal,
   TouchableOpacity,
-  Image,
+  StyleSheet,
   Alert,
-  Platform,
   ActivityIndicator,
+  Platform,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';

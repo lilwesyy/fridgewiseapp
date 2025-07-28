@@ -8,11 +8,11 @@ import {
   ActivityIndicator,
   PanResponder,
   Dimensions,
-  Image,
   RefreshControl,
   Alert,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -881,7 +881,10 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                               <Image
                                 source={{ uri: photo.url }}
                                 style={[styles.photoSlideImage, { borderColor: colors.border }]}
-                                resizeMode="cover"
+                                contentFit="cover"
+                                transition={500}
+                                cachePolicy="memory-disk"
+                                placeholder={{ blurhash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' }}
                                 testID={`dish-photo-image-${index}`}
                               />
                             </TouchableOpacity>
@@ -1062,6 +1065,10 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                         <Image
                           source={{ uri: creator.avatar.url }}
                           style={styles.userAvatarImage}
+                          contentFit="cover"
+                          transition={300}
+                          cachePolicy="memory-disk"
+                          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
                         />
                       ) : (
                         <Text style={[styles.userAvatarText, { color: colors.buttonText }]}>
@@ -1288,9 +1295,13 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                 <View key={userCooking.user._id} style={[styles.cookedByUserCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
                     {userCooking.user.avatar?.url ? (
-                      <Image
+                    <Image
                         source={{ uri: userCooking.user.avatar.url }}
                         style={styles.userAvatarImage}
+                        contentFit="cover"
+                        transition={300}
+                        cachePolicy="memory-disk"
+                        placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
                       />
                     ) : (
                       <Text style={[styles.userAvatarText, { color: colors.buttonText }]}>

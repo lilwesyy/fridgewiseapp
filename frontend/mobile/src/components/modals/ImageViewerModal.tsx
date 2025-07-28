@@ -5,13 +5,13 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
-  Image,
   Dimensions,
   StatusBar,
   Share,
   Alert,
   ScrollView,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { VectorIcon, MappedIcon } from '../ui/VectorIcon';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -169,7 +169,10 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
                 <Image
                   source={{ uri: cachedImageUri }}
                   style={styles.image}
-                  resizeMode="contain"
+                  contentFit="contain"
+                  transition={300}
+                  cachePolicy="memory-disk"
+                  placeholder={{ blurhash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' }}
                   onLoad={() => setImageLoaded(true)}
                   onError={() => setImageError(true)}
                   testID="dish-image"

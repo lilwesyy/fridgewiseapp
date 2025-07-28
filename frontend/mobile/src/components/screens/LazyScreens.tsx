@@ -4,11 +4,11 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { performanceMonitor } from '../../utils/performanceMonitor';
 
-// Lazy loaded components
-const CameraScreenLazy = React.lazy(() => import('./CameraScreen'));
-const RecipeScreenLazy = React.lazy(() => import('./RecipeScreen'));
-const IngredientsScreenLazy = React.lazy(() => import('./IngredientsScreen'));
-const CookingModeScreenLazy = React.lazy(() => import('./CookingModeScreen'));
+// Lazy loaded components - using named exports
+const CameraScreenLazy = React.lazy(() => import('./CameraScreen').then(module => ({ default: module.CameraScreen })));
+const RecipeScreenLazy = React.lazy(() => import('./RecipeScreen').then(module => ({ default: module.RecipeScreen })));
+const IngredientsScreenLazy = React.lazy(() => import('./IngredientsScreen').then(module => ({ default: module.IngredientsScreen })));
+const CookingModeScreenLazy = React.lazy(() => import('./CookingModeScreen').then(module => ({ default: module.CookingModeScreen })));
 
 // Loading component with proper theming
 const ScreenLoader: React.FC<{ screenName: string }> = ({ screenName }) => {

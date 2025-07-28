@@ -5,12 +5,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   Alert,
   Platform,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,

@@ -4,12 +4,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Image,
   ActivityIndicator,
   Dimensions,
   Platform,
   SafeAreaView,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
@@ -622,7 +622,14 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       <>
         <View style={styles.container}>
           <View style={styles.imageContainer}>
-            <Image source={{ uri: capturedImage }} style={styles.capturedImage} />
+            <Image 
+              source={{ uri: capturedImage }} 
+              style={styles.capturedImage} 
+              contentFit="cover"
+              transition={300}
+              cachePolicy="memory-disk"
+              placeholder={{ blurhash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' }}
+            />
 
             {isAnalyzing && (
               <View style={styles.analysisOverlay}>

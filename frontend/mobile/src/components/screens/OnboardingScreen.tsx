@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
-  SafeAreaView,
-  Image,
+  Platform,
   Animated,
+  SafeAreaView,
   PanResponder,
   Easing,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import Svg, { Path, Circle, G, LinearGradient, Stop, Defs } from 'react-native-svg';

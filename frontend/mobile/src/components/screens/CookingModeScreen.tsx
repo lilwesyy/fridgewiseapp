@@ -9,10 +9,10 @@ import {
   Dimensions,
   Vibration,
   Modal,
-  Image,
   Alert,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -1314,7 +1314,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       <View style={styles.completedContent}>
         {dishPhoto ? (
           <View style={styles.dishPhotoContainer}>
-            <Image source={{ uri: dishPhoto }} style={styles.dishPhoto} />
+            <Image 
+              source={{ uri: dishPhoto }} 
+              style={styles.dishPhoto}
+              contentFit="cover"
+              transition={300}
+              cachePolicy="memory-disk"
+              placeholder={{ blurhash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' }}
+            />
           </View>
         ) : (
           <View style={styles.completedIcon}>

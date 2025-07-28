@@ -10,8 +10,8 @@ import {
   PanResponder,
   Dimensions,
   RefreshControl,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { VectorIcon, MappedIcon } from '../ui/VectorIcon';
