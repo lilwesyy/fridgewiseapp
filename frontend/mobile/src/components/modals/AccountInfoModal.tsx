@@ -64,11 +64,27 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
 
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+
   // Animazioni per il modale di cancellazione dell'account
   const deleteSlideY = useSharedValue(screenHeight);
   const deleteOpacity = useSharedValue(0);
   const deletePulseScale = useSharedValue(1);
 
+
+  useEffect(() => {
+    if (visible) {
+      // Reset animations when modal opens
+      headerOpacity.value = 0;
+      
+      // iOS easing curve
+      const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
+      
+      // Entrance animations
+      headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+    }
+  }, [visible]);
 
   useEffect(() => {
     if (showDeleteModal) {
@@ -88,6 +104,10 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
       deleteSlideY.value = withTiming(screenHeight, { duration: ANIMATION_DURATIONS.QUICK, easing });
     }
   }, [showDeleteModal]);
+
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+  }));
 
   const deleteBackdropStyle = useAnimatedStyle(() => ({
     opacity: 1,
@@ -323,7 +343,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, headerAnimatedStyle]}>
           <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
@@ -335,16 +355,14 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
               <ActivityIndicator size="small" color={colors.primary} />
             )}
           </View>
-        </View>
+        </Animated.View>
 
-        <View style={styles.content}>
-          <ScrollView
-            style={styles.scrollContainer}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            automaticallyAdjustKeyboardInsets={true}
-          >
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
             {/* Profile Avatar */}
             <View style={styles.avatarSection}>
               <View style={styles.avatar}>
@@ -528,8 +546,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                 {safeT('profile.deleteAccountWarning', 'This action cannot be undone. All your data will be permanently deleted.')}
               </Text>
             </View>
-          </ScrollView>
-        </View>
+        </ScrollView>
       </SafeAreaView>
 
       <NotificationModal
@@ -663,12 +680,9 @@ const getStyles = (colors: any) => StyleSheet.create({
   content: {
     flex: 1,
   },
-  scrollContainer: {
-    flex: 1,
-  },
   scrollContent: {
     padding: 20,
-    paddingBottom: 150,
+    paddingBottom: 40,
   },
   avatarSection: {
     alignItems: 'center',

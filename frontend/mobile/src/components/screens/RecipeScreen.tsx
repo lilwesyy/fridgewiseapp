@@ -11,6 +11,7 @@ import {
   Image,
   RefreshControl,
   Alert,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -1756,6 +1757,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#E9ECEF',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
   },
   dualButtonContainer: {
     flexDirection: 'row',

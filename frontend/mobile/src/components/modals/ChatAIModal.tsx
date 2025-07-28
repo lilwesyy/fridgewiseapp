@@ -88,7 +88,27 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
   const [successModal, setSuccessModal] = useState({ visible: false, message: '' });
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Animation values for modal
+  const modalTranslateY = useSharedValue(1000);
+  const backgroundOpacity = useSharedValue(0);
+
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+
+  // Animation effect
+  useEffect(() => {
+    if (visible) {
+      // Background appears instantly
+      backgroundOpacity.value = 1;
+      // Modal slides up with animation
+      modalTranslateY.value = withTiming(0, { 
+        duration: ANIMATION_DURATIONS.MODAL, 
+        easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+      });
+    } else {
+      modalTranslateY.value = 1000;
+      backgroundOpacity.value = 0;
+    }
+  }, [visible]);
 
   // Initialize chat with welcome message
   useEffect(() => {
@@ -202,18 +222,39 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
   };
 
   const handleClose = () => {
-    setMessages([]);
-    onClose();
+    // Animate modal closing
+    modalTranslateY.value = withTiming(1000, { 
+      duration: ANIMATION_DURATIONS.MODAL, 
+      easing: Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2)
+    });
+    backgroundOpacity.value = withTiming(0, { 
+      duration: ANIMATION_DURATIONS.MODAL
+    });
+    
+    // Close modal after animation
+    setTimeout(() => {
+      setMessages([]);
+      onClose();
+    }, ANIMATION_DURATIONS.MODAL);
   };
 
+  // Animated styles
+  const backgroundAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: backgroundOpacity.value,
+  }));
+
+  const modalAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: modalTranslateY.value }],
+  }));
+
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
+    <Modal visible={visible} animationType="none" transparent>
+      <Animated.View style={[styles.overlay, backgroundAnimatedStyle]}>
         <KeyboardAvoidingView
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <SafeAreaView style={styles.safeArea}>
+          <Animated.View style={[styles.safeArea, modalAnimatedStyle]}>
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.headerContent}>
@@ -236,9 +277,9 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
             <View style={styles.aiDisclaimer}>
               <View style={styles.aiDisclaimerHeader}>
                 <Ionicons name="bulb" size={14} color="#007AFF" style={styles.aiIcon} />
-                <Text style={styles.aiDisclaimerTitle}>AI-Generated Content</Text>
+                <Text style={styles.aiDisclaimerTitle}>{t('chatAI.aiGeneratedContent', 'Contenuto Generato da AI')}</Text>
               </View>
-              <Text style={styles.aiDisclaimerText}>Responses are AI-generated and may not always be accurate. Always verify cooking instructions and ingredient safety.</Text>
+              <Text style={styles.aiDisclaimerText}>{t('chatAI.aiDisclaimer', 'Le risposte sono generate dall\'AI e potrebbero non essere sempre accurate. Verifica sempre le istruzioni di cottura e la sicurezza degli ingredienti.')}</Text>
             </View>
 
             {/* Messages */}
@@ -310,7 +351,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                 </TouchableOpacity>
               </View>
             </View>
-          </SafeAreaView>
+          </Animated.View>
         </KeyboardAvoidingView>
 
         {/* Notifications */}
@@ -329,7 +370,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
           message={successModal.message}
           onClose={() => setSuccessModal({ visible: false, message: '' })}
         />
-      </View>
+      </Animated.View>
     </Modal>
   );
 };

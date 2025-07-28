@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
+  Modal,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+  ScrollView,
   ActivityIndicator,
-  RefreshControl,
-  Modal,
+  SafeAreaView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -200,16 +199,20 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
 
   // Animation values
   const headerOpacity = useSharedValue(0);
-  const contentOpacity = useSharedValue(0);
   const sectionsOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
-      // iOS-style entrance animations
+      // Reset animations when modal opens
+      headerOpacity.value = 0;
+      sectionsOpacity.value = 0;
+      
+      // iOS easing curve
       const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-      headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing });
-      contentOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
-      sectionsOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_2, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+      
+      // Entrance animations
+      headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+      sectionsOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing }));
 
       fetchStats();
       fetchUsers();
@@ -219,10 +222,6 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
-  }));
-
-  const contentAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
   }));
 
   const sectionsAnimatedStyle = useAnimatedStyle(() => ({
@@ -605,6 +604,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
+      onRequestClose={onClose}
     >
       <SafeAreaView style={styles.container}>
         <Animated.View style={[styles.header, headerAnimatedStyle]}>
@@ -615,19 +615,11 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
           <View style={styles.headerRight} />
         </Animated.View>
 
-      <Animated.View style={[styles.content, contentAnimatedStyle]}>
-        <ScrollView
-          style={styles.scrollView}
+        <ScrollView 
+          style={styles.content} 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={onRefresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
-            />
-          }
+          keyboardShouldPersistTaps="handled"
         >
           {/* Overview Stats */}
           <Animated.View style={[styles.section, sectionsAnimatedStyle]}>
@@ -918,7 +910,6 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
             <Text style={styles.footerText}>{t('admin.lastUpdated')}: {new Date().toLocaleTimeString()}</Text>
           </View>
         </ScrollView>
-      </Animated.View>
 
       {/* Users Management Modal */}
       <Modal
@@ -1167,9 +1158,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     width: 44,
   },
   content: {
-    flex: 1,
-  },
-  scrollView: {
     flex: 1,
   },
   scrollContent: {
