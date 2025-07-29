@@ -31,18 +31,18 @@ export const RootStackNavigator: React.FC = () => {
         gestureDirection: 'horizontal',
         cardStyle: { backgroundColor: colors.background },
         ...iOSTransition,
-        // Custom animation timing for smoother transitions
+        // Super fast iOS-like animation timing
         transitionSpec: {
           open: {
             animation: 'timing',
             config: {
-              duration: 350,
+              duration: 200, // Super fast open
             },
           },
           close: {
             animation: 'timing',
             config: {
-              duration: 300,
+              duration: 150, // Super fast close
             },
           },
         },

@@ -21,8 +21,14 @@ export const RecipeScreenWrapper: React.FC = () => {
       // If recipe was just generated, go back to ingredients
       navigation.goBack();
     } else {
-      // Otherwise go back to the tab we came from
-      navigation.navigate('MainTabs');
+      // Use React Navigation's goBack to return to previous screen
+      // This will correctly return to RecipesScreen, SavedScreen, or HomeScreen
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        // Fallback to main tabs if no history
+        navigation.navigate('MainTabs');
+      }
     }
   };
 
