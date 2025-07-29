@@ -79,8 +79,16 @@ export const sanitizeInput = {
         sanitized[key] = value;
       } else if (Array.isArray(value)) {
         sanitized[key] = sanitizeInput.array(value);
+      } else if (typeof value === 'object' && value !== null) {
+        // Allow recipe objects to pass through for AI chat
+        if (key === 'recipe') {
+          sanitized[key] = value;
+        } else {
+          // Recursively sanitize other objects
+          sanitized[key] = sanitizeInput.object(value);
+        }
       }
-      // Skip complex objects and functions for security
+      // Skip functions for security
     }
     return sanitized;
   }
@@ -202,6 +210,23 @@ export const validationRules = {
       .optional()
       .isIn(['en', 'it'])
       .withMessage('Language must be en or it')
+  ],
+
+  // AI Chat validation (includes recipe context)
+  aiChat: [
+    body('message')
+      .isLength({ min: 1, max: 2000 })
+      .withMessage('Message must be between 1 and 2000 characters')
+      .matches(/^[a-zA-Z0-9\s\-_.,!?àáèéìíòóùúç'"()\[\]{}]+$/)
+      .withMessage('Message contains invalid characters'),
+    body('recipe')
+      .optional()
+      .isObject()
+      .withMessage('Recipe must be an object'),
+    body('context')
+      .optional()
+      .isIn(['recipe_modification', 'general_cooking'])
+      .withMessage('Invalid context')
   ]
 };
 

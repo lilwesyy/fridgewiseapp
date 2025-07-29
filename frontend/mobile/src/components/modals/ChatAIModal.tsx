@@ -81,6 +81,13 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
   const { t } = useTranslation();
   const { token } = useAuth();
   const insets = useSafeAreaInsets();
+  
+  // Debug log to check recipe data
+  useEffect(() => {
+    if (visible) {
+      console.log('🔍 ChatAIModal opened with recipe:', recipe?.title || 'No recipe title', recipe?._id || 'No recipe ID');
+    }
+  }, [visible, recipe]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -153,6 +160,9 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
     const userMessage = input.trim();
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setInput('');
+    
+    // Log the recipe being sent for debugging
+    console.log('🔍 Sending message with recipe:', recipe?.title || 'No recipe', recipe?._id || 'No ID');
 
     try {
       const response = await fetch(`${API_URL}/api/ai/chat`, {
@@ -311,7 +321,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                         style={styles.modificationButton}
                         onPress={() => handleApplyModifications(msg.updatedRecipe)}
                       >
-                        <Ionicons name="checkmark" size={16} color="#28a745" style={styles.modificationIcon} />
+                        <Ionicons name="checkmark" size={16} color="#fff" style={styles.modificationIcon} />
                         <Text style={styles.modificationButtonText}>Applica Modifiche</Text>
                       </TouchableOpacity>
                     )}
@@ -554,6 +564,7 @@ const styles = StyleSheet.create({
   },
   modificationIcon: {
     marginRight: 6,
+    marginLeft: -2,
   },
   modificationButtonText: {
     color: '#fff',

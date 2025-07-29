@@ -27,16 +27,6 @@ services:
     networks:
       - fridgewiseai-network
 
-  recognize-api:
-    image: mnahkies/recognize-anything-api:latest
-    container_name: fridgewiseai-recognize-api
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      - CUDA_VISIBLE_DEVICES=""
-    networks:
-      - fridgewiseai-network
 
 volumes:
   mongodb_data:

@@ -15,7 +15,7 @@ router.use(protect);
 
 // POST /api/ai/chat - Chat with AI about recipes
 router.post('/chat', 
-  ...validationRules.chatMessage,
+  ...validationRules.aiChat,
   handleValidationErrors,
   createRateLimit(20, 60000), // 20 chat messages per minute
   rateLimits.aiChat, 

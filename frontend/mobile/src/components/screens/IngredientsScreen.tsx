@@ -307,7 +307,19 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
     setIsGenerating(true);
 
     try {
-      const ingredientNames = ingredients.map(ing => ing.name);
+      const validIngredients = ingredients
+        .filter(ing => ing.name && ing.name.trim().length > 0 && ing.name.trim().length <= 100)
+        .map(ing => ({ name: ing.name.trim() }));
+      
+      if (validIngredients.length === 0) {
+        setNotification({
+          visible: true,
+          type: 'warning',
+          title: t('recipe.noValidIngredients', 'No Valid Ingredients'),
+          message: t('recipe.noValidIngredientsMessage', 'Please add at least one valid ingredient to generate recipes.'),
+        });
+        return;
+      }
 
       const response = await fetch(`${API_URL}/api/recipe/generate`, {
         method: 'POST',
@@ -316,7 +328,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ingredients: ingredientNames,
+          ingredients: validIngredients,
           language: i18n.language,
           dietaryRestrictions: user?.dietaryRestrictions || [],
           portions: parseInt(preferences.portions),

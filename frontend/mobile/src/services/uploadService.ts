@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { tempFileCleanupService } from '../utils/tempFileCleanup';
 
@@ -345,7 +344,8 @@ class UploadService {
    */
   private async getAuthToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem('auth_token');
+      const { secureStorage } = await import('./secureStorage');
+      return await secureStorage.getToken();
     } catch (error) {
       this.log('Failed to get auth token', { error: error instanceof Error ? error.message : String(error) });
       return null;
