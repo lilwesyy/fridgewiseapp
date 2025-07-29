@@ -874,8 +874,20 @@ export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse
     recipe.completionCount = (recipe.completionCount || 0) + 1;
     
     // When a recipe is cooked, request approval to make it public
+    // But only if there isn't already a similar recipe approved or pending
     if (recipe.status === 'private' && recipe.cookedAt) {
-      recipe.status = 'pending_approval';
+      // Check if there's already a recipe with the same title that's approved or pending
+      const existingSimilarRecipe = await Recipe.findOne({
+        title: recipe.title,
+        _id: { $ne: recipe._id }, // Exclude the current recipe
+        status: { $in: ['approved', 'pending_approval'] },
+        isDeleted: false
+      });
+
+      // Only request approval if no similar recipe exists
+      if (!existingSimilarRecipe) {
+        recipe.status = 'pending_approval';
+      }
     }
     
     await recipe.save();
@@ -1109,15 +1121,44 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
             sort = { cookedAt: -1, createdAt: -1 };
         }
 
-        const recipes = await Recipe
-          .find(query)
-          .populate('userId', 'name email avatar')
-          .sort(sort)
-          .skip(skip)
-          .limit(Number(limit))
-          .lean();
+        // Use aggregation to get only one recipe per title (avoid duplicates)
+        const aggregation = [
+          { $match: query },
+          {
+            $sort: {
+              // Sort by creation date to get the original (first created) version
+              createdAt: 1 // Ascending to get the oldest/original first
+            }
+          },
+          {
+            $group: {
+              _id: '$title', // Group by title to eliminate duplicates
+              recipe: { $first: '$$ROOT' } // Take the first (original) recipe from each group
+            }
+          },
+          { $replaceRoot: { newRoot: '$recipe' } }, // Replace root to get original recipe structure
+          { $sort: sort }, // Apply the requested sort
+          { $skip: skip },
+          { $limit: Number(limit) }
+        ];
 
-        const total = await Recipe.countDocuments(query);
+        const recipes = await Recipe.aggregate(aggregation);
+        
+        // Populate userId after aggregation
+        await Recipe.populate(recipes, {
+          path: 'userId',
+          select: 'name email avatar'
+        });
+
+        // Get total count of unique titles
+        const totalCountAggregation = [
+          { $match: query },
+          { $group: { _id: '$title' } },
+          { $count: 'total' }
+        ];
+        
+        const totalResult = await Recipe.aggregate(totalCountAggregation);
+        const total = totalResult.length > 0 ? totalResult[0].total : 0;
 
         return {
           recipes,
