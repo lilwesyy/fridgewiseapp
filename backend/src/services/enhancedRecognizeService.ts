@@ -3,68 +3,46 @@ import fetch from 'node-fetch';
 import fs from 'fs';
 import path from 'path';
 
-interface RecognitionResult {
-  tags?: string[];
-  english?: string[];
-  chinese?: string[];
-  confidence?: number;
-  model?: string;
-}
-
-interface VisionApiResult {
-  predictions?: Array<{
-    label: string;
-    confidence: number;
-  }>;
-  labels?: Array<{
-    name: string;
-    score: number;
-  }>;
-}
 
 interface ProcessedIngredient {
   name: string;
   category: string;
   confidence: number;
-  source: 'vision-api' | 'gemini-vision' | 'local-model' | 'fallback';
+  source: 'gemini-vision' | 'fallback';
 }
 
 // Rimosso database statico - ora si basa completamente sui risultati dinamici di Gemini
 
 export class EnhancedRecognizeService {
   private geminiApiKey: string;
-  private visionApiUrl: string;
 
   constructor() {
     this.geminiApiKey = process.env.GEMINI_API_KEY || '';
-    this.visionApiUrl = process.env.RECOGNIZE_API_URL || 'http://localhost:8000';
   }
 
   async analyzeImage(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
     console.log('🔍 Starting enhanced image analysis for:', imagePath, 'Language:', language);
+    console.log('🎯 Using Gemini Vision only (local services disabled)');
 
+    // Only use Gemini Vision - local services disabled
     const results = await Promise.allSettled([
-      this.analyzeWithGeminiVision(imagePath, language),
-      this.analyzeWithVisionAPI(imagePath, language),
-      this.analyzeWithLocalModel(imagePath, language)
+      this.analyzeWithGeminiVision(imagePath, language)
     ]);
 
     const allIngredients: ProcessedIngredient[] = [];
 
-    // Combina risultati da tutte le fonti
+    // Process Gemini Vision results only
     results.forEach((result, index) => {
       if (result.status === 'fulfilled' && result.value.length > 0) {
-        const sources = ['gemini-vision', 'vision-api', 'local-model'] as const;
-        console.log(`✅ ${sources[index]} found ${result.value.length} ingredients`);
+        console.log(`✅ Gemini Vision found ${result.value.length} ingredients`);
         allIngredients.push(...result.value);
       } else {
-        const sources = ['Gemini Vision', 'Vision API', 'Local Model'];
-        console.log(`❌ ${sources[index]} failed or found no ingredients`);
+        console.log(`❌ Gemini Vision failed or found no ingredients`);
       }
     });
 
     if (allIngredients.length === 0) {
-      console.log('🔄 All services failed, trying smart fallback');
+      console.log('🔄 Gemini Vision failed, trying smart fallback');
       const fallbackResults = await this.getSmartFallback(imagePath, language);
       if (fallbackResults.length === 0) {
         console.log('❌ No ingredients detected in image - will trigger NoIngredientsModal');
@@ -284,36 +262,7 @@ Focus on actual food ingredients that could be used in cooking.`;
     }
   }
 
-  private async analyzeWithVisionAPI(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
-    try {
-      const formData = new FormData();
-      formData.append('file', fs.createReadStream(imagePath));
 
-      const response = await fetch(`${this.visionApiUrl}/`, {
-        method: 'POST',
-        body: formData,
-        headers: formData.getHeaders(),
-        timeout: 15000
-      });
-
-      if (!response.ok) {
-        throw new Error(`Vision API error: ${response.status}`);
-      }
-
-      const result = await response.json() as RecognitionResult;
-      return this.processVisionAPIResults(result, language);
-
-    } catch (error) {
-      console.error('❌ Vision API error:', error);
-      throw error;
-    }
-  }
-
-  private async analyzeWithLocalModel(imagePath: string, language: string = 'en'): Promise<ProcessedIngredient[]> {
-    // Placeholder per un modello locale futuro (TensorFlow.js, ONNX, etc.)
-    // Per ora ritorna array vuoto
-    return [];
-  }
 
   private processGeminiResults(ingredients: any[], language: string = 'en'): ProcessedIngredient[] {
     const processed: ProcessedIngredient[] = [];
@@ -341,31 +290,6 @@ Focus on actual food ingredients that could be used in cooking.`;
     return processed;
   }
 
-  private processVisionAPIResults(result: RecognitionResult, language: string = 'en'): ProcessedIngredient[] {
-    const tags = result.tags || result.english || [];
-    const processed: ProcessedIngredient[] = [];
-
-    tags.forEach((tag, index) => {
-      // Filtra solo termini che sembrano essere ingredienti alimentari
-      if (this.looksLikeFood(tag)) {
-        const confidence = Math.max(0.5, 1 - (index * 0.1)) * 0.8; // Reduce confidence for legacy API
-        const category = this.guessCategory(tag);
-        
-        processed.push({
-          name: tag.toLowerCase().trim(),
-          category,
-          confidence: confidence * 0.9, // Lower confidence for legacy API
-          source: 'vision-api'
-        });
-        
-        console.log(`🆕 Legacy API found ingredient: ${tag} (${category})`);
-      } else {
-        console.log(`🚫 Filtered non-food term: ${tag}`);
-      }
-    });
-
-    return processed;
-  }
 
   // Rimosso database statico e funzioni correlate
 
@@ -434,19 +358,16 @@ Focus on actual food ingredients that could be used in cooking.`;
     return [];
   }
 
-  async healthCheck(): Promise<{ gemini: boolean; visionApi: boolean; overall: boolean }> {
+  async healthCheck(): Promise<{ gemini: boolean; overall: boolean }> {
     const checks = await Promise.allSettled([
-      this.checkGeminiHealth(),
-      this.checkVisionAPIHealth()
+      this.checkGeminiHealth()
     ]);
 
     const gemini = checks[0].status === 'fulfilled' && checks[0].value;
-    const visionApi = checks[1].status === 'fulfilled' && checks[1].value;
 
     return {
       gemini,
-      visionApi,
-      overall: gemini || visionApi
+      overall: gemini
     };
   }
 
@@ -454,17 +375,6 @@ Focus on actual food ingredients that could be used in cooking.`;
     return !!this.geminiApiKey;
   }
 
-  private async checkVisionAPIHealth(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.visionApiUrl}/`, {
-        method: 'OPTIONS',
-        timeout: 5000
-      });
-      return response.status < 500;
-    } catch {
-      return false;
-    }
-  }
 
   private looksLikeFood(term: string): boolean {
     const normalizedTerm = term.toLowerCase().trim();

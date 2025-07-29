@@ -18,6 +18,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../../constants/animations';
+import { HapticService } from '../../services/hapticService';
+import HapticTouchableOpacity from '../common/HapticTouchableOpacity';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -93,6 +95,7 @@ export const RecipePreferencesModal: React.FC<RecipePreferencesModalProps> = ({
   };
   
   const handleGenerate = () => {
+    HapticService.recipeGenerationStart();
     onGenerate({ portions, difficulty, maxTime });
   };
   

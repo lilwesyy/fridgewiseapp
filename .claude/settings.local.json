@@ -39,7 +39,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npm install:*)",
       "Bash(docker stop:*)",
-      "Bash(docker rm:*)"
+      "Bash(docker rm:*)",
+      "Bash(npx expo install:*)"
     ],
     "deny": []
   }

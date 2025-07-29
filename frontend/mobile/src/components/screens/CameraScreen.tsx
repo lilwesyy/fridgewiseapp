@@ -17,6 +17,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { NoIngredientsModal } from '../modals/NoIngredientsModal';
 import { NotificationModal, NotificationType } from '../modals/NotificationModal';
+import { HapticService } from '../../services/hapticService';
+import HapticTouchableOpacity from '../common/HapticTouchableOpacity';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
@@ -285,6 +287,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       setIsCapturing(true);
       setCameraError(null);
       console.log('📸 Taking picture...');
+      HapticService.scanStart();
 
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
@@ -479,12 +482,16 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
 
       if (filteredIngredients.length === 0) {
         console.log('⚠️ No valid ingredients found after filtering');
+        HapticService.warning();
         setShowNoIngredientsModal(true);
       } else {
+        HapticService.scanComplete();
+        filteredIngredients.forEach(() => HapticService.ingredientDetected());
         onImageAnalyzed(filteredIngredients);
       }
     } catch (error) {
       console.error('❌ Analysis error:', error);
+      HapticService.error();
       setCameraError('Analysis failed');
 
       const rateLimitNotification = handleRateLimitError(
@@ -694,17 +701,17 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
 
             {!isCapturing && (
               <View style={styles.bottomBar}>
-                <TouchableOpacity activeOpacity={0.7} style={styles.galleryButton} onPress={pickImageFromGallery}>
+                <HapticTouchableOpacity hapticType="light" activeOpacity={0.7} style={styles.galleryButton} onPress={pickImageFromGallery}>
                   <Ionicons name="images" size={24} color="white" />
-                </TouchableOpacity>
+                </HapticTouchableOpacity>
 
-                <TouchableOpacity activeOpacity={0.7} style={styles.captureButton} onPress={takePicture}>
+                <HapticTouchableOpacity hapticType="primary" activeOpacity={0.7} style={styles.captureButton} onPress={takePicture}>
                   <View style={styles.captureButtonInner} />
-                </TouchableOpacity>
+                </HapticTouchableOpacity>
 
-                <TouchableOpacity activeOpacity={0.7} style={styles.flipButton} onPress={toggleCameraFacing}>
+                <HapticTouchableOpacity hapticType="selection" activeOpacity={0.7} style={styles.flipButton} onPress={toggleCameraFacing}>
                   <Ionicons name="camera-reverse" size={24} color="white" />
-                </TouchableOpacity>
+                </HapticTouchableOpacity>
               </View>
             )}
           </View>

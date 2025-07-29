@@ -20,6 +20,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { NotificationModal, NotificationType } from '../modals/NotificationModal';
 import { PhotoUploadModal } from '../modals/PhotoUploadModal';
 import { RatingModal } from '../modals/RatingModal';
+import { HapticService } from '../../services/hapticService';
+import HapticTouchableOpacity from '../common/HapticTouchableOpacity';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   useSharedValue,
@@ -187,18 +189,22 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
   const { user } = useAuth();
 
-  // Timer completion alert with enhanced vibration
+  // Timer completion alert with enhanced haptic and vibration feedback
   const playTimerCompletionAlert = () => {
-    // Enhanced vibration pattern - more noticeable and distinctive
+    // Modern haptic feedback for iOS
+    HapticService.success();
+    
+    // Enhanced vibration pattern for all platforms - more noticeable and distinctive
     // Pattern: [wait, vibrate, pause, vibrate, pause, vibrate, pause, vibrate]
     // This creates a distinctive "alarm" pattern that's hard to miss
     const alertPattern = [0, 600, 200, 600, 200, 600, 200, 400, 300, 400, 300, 400];
 
     Vibration.vibrate(alertPattern);
 
-    // Additional reminder vibration after 3 seconds
+    // Additional reminder with haptic after 3 seconds
     setTimeout(() => {
       // Only vibrate again if timer is still at 0 (user hasn't interacted)
+      HapticService.warning();
       Vibration.vibrate([0, 300, 150, 300, 150, 300]);
     }, 3000);
   };
@@ -471,6 +477,9 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const nextStep = () => {
     const instructionsLength = recipe?.instructions?.length || 0;
     if (currentStep < instructionsLength - 1) {
+      // Haptic feedback for step completion
+      HapticService.stepCompleted();
+      
       // Stop current timer and reset states
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -720,6 +729,9 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   const finishCooking = async () => {
     setShowFinishModal(false);
+    
+    // Haptic feedback for recipe completion
+    HapticService.recipeCompleted();
 
     // Check if recipe has already been cooked (has cookedAt timestamp)
     const hasBeenCookedBefore = recipe?.cookedAt;
@@ -1075,6 +1087,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   }, [showForceExitModal]);
 
   const startTimer = (minutes: number) => {
+    HapticService.buttonTap();
     setTimerSeconds(minutes * 60);
     setIsTimerRunning(true);
     timerPulse.value = withTiming(1.1, {
@@ -1284,13 +1297,14 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           </Animated.View>
           <View style={styles.timerControls}>
             {presetMinutes.map(min => (
-              <TouchableOpacity
+              <HapticTouchableOpacity
                 key={min}
+                hapticType="light"
                 style={[styles.timerButton, styles.timerButtonSmall]}
                 onPress={() => startTimer(min)}
               >
                 <Text style={styles.timerButtonText}>{String(min)}m</Text>
-              </TouchableOpacity>
+              </HapticTouchableOpacity>
             ))}
           </View>
           <View style={styles.timerMainControls}>
@@ -1407,7 +1421,8 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
         {currentPhase === 'cooking' && (
           <View style={styles.navigationButtons}>
-            <TouchableOpacity
+            <HapticTouchableOpacity
+              hapticType="light"
               style={[styles.navButton, currentStep === 0 && styles.navButtonDisabled]}
               onPress={prevStep}
               disabled={currentStep === 0}
@@ -1423,9 +1438,10 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
               ]}>
                 {safeT('cookingMode.previous', 'Previous')}
               </Text>
-            </TouchableOpacity>
+            </HapticTouchableOpacity>
 
-            <TouchableOpacity
+            <HapticTouchableOpacity
+              hapticType="primary"
               style={styles.navButton}
               onPress={nextStep}
             >
@@ -1440,7 +1456,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
                 size={20} 
                 color={colors.text} 
               />
-            </TouchableOpacity>
+            </HapticTouchableOpacity>
           </View>
         )}
 

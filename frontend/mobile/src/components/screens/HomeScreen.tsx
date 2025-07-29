@@ -18,6 +18,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStatistics } from '../../hooks/useStatistics';
 import { ShareModal } from '../modals/ShareModal';
+import { HapticService } from '../../services/hapticService';
+import HapticTouchableOpacity from '../common/HapticTouchableOpacity';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { LogoComponent } from '../ui/LogoComponent';
 import Animated, {
@@ -265,6 +267,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
   };
 
   const handleRefresh = async () => {
+    HapticService.refreshTriggered();
     setIsRefreshing(true);
     try {
       await refreshStatistics();
@@ -360,7 +363,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
       <Animated.View style={[styles.section, actionStyle]}>
         <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
         <Animated.View style={buttonAnimatedStyle}>
-          <TouchableOpacity
+          <HapticTouchableOpacity
+            hapticType="primary"
             activeOpacity={0.8}
             style={styles.primaryAction}
             onPress={handleCameraPress}
@@ -375,7 +379,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
               <Text style={{ ...styles.actionDescription, color: 'rgba(255,255,255,0.8)' }}>{t('home.scanDescription')}</Text>
             </View>
             <Text style={{ ...styles.actionArrow, color: 'white' }}>→</Text>
-          </TouchableOpacity>
+          </HapticTouchableOpacity>
         </Animated.View>
       </Animated.View>
 
@@ -407,7 +411,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                 }
 
                 return (
-                  <TouchableOpacity activeOpacity={0.7} key={recipe._id} style={styles.recipeCard} onPress={() => handleRecipePress(recipe, index)}>
+                  <HapticTouchableOpacity hapticType="light" activeOpacity={0.7} key={recipe._id} style={styles.recipeCard} onPress={() => handleRecipePress(recipe, index)}>
                     <View style={styles.recipeImagePlaceholder}>
                       {firstPhoto?.url ? (
                         <Image
@@ -422,12 +426,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                     <View style={styles.recipeInfo}>
                       <View style={styles.recipeHeader}>
                         <Text style={styles.recipeTitle} numberOfLines={2}>{recipe.title}</Text>
-                        <TouchableOpacity activeOpacity={0.7}
+                        <HapticTouchableOpacity hapticType="light" activeOpacity={0.7}
                           style={styles.recipeShareButton}
                           onPress={(event) => handleShareRecipe(recipe, event)}
                         >
                           <Ionicons name="share-outline" size={16} color={colors.textSecondary} />
-                        </TouchableOpacity>
+                        </HapticTouchableOpacity>
                       </View>
                       <Text style={styles.recipeDetails}>
                         {recipe.cookingTime} min • {recipe.servings} {t('recipe.servings')}
@@ -439,7 +443,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                         )}
                       </View>
                     </View>
-                  </TouchableOpacity>
+                  </HapticTouchableOpacity>
                 );
               })
             )}

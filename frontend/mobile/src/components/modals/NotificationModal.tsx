@@ -10,6 +10,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, EASING_CURVES } from '../../constants/animations';
+import { HapticService } from '../../services/hapticService';
+import HapticTouchableOpacity from '../common/HapticTouchableOpacity';
 
 export type NotificationType = 'success' | 'warning' | 'error';
 
@@ -62,6 +64,19 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 
   React.useEffect(() => {
     if (visible) {
+      // Trigger haptic feedback based on notification type
+      switch (type) {
+        case 'success':
+          HapticService.success();
+          break;
+        case 'warning':
+          HapticService.warning();
+          break;
+        case 'error':
+          HapticService.error();
+          break;
+      }
+      
       opacity.value = withTiming(1, {
         duration: ANIMATION_DURATIONS.MODAL,
         easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2),
@@ -82,7 +97,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         mass: 0.8,
       });
     }
-  }, [visible]);
+  }, [visible, type]);
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -152,7 +167,9 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           {buttons && buttons.length > 0 && (
             <View style={styles.buttonsContainer}>
               {buttons.map((button, index) => (
-                <TouchableOpacity activeOpacity={0.7}
+                <HapticTouchableOpacity 
+                  hapticType={button.style === 'destructive' ? 'medium' : 'light'}
+                  activeOpacity={0.7}
                   key={index}
                   style={getButtonStyle(button.style)}
                   onPress={() => {
@@ -163,7 +180,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                   <Text style={getButtonTextStyle(button.style)}>
                     {button.text}
                   </Text>
-                </TouchableOpacity>
+                </HapticTouchableOpacity>
               ))}
             </View>
           )}

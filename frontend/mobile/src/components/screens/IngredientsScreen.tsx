@@ -16,6 +16,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { RecipeGenerationLoader } from '../ui/RecipeGenerationLoader';
 import { NotificationModal, NotificationType } from '../modals/NotificationModal';
 import { RecipePreferencesModal } from '../modals/RecipePreferencesModal';
+import { HapticService } from '../../services/hapticService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
@@ -343,6 +344,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       }
 
       const data = await response.json();
+      HapticService.recipeGenerated();
       onGenerateRecipe(data.data);
 
       // Refresh usage data after successful generation
@@ -357,6 +359,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
         t
       );
 
+      HapticService.error();
       setNotification(rateLimitNotification);
     } finally {
       setIsGenerating(false);

@@ -23,6 +23,8 @@ import { NotificationModal, NotificationType } from '../modals/NotificationModal
 import { ImageViewerModal } from '../modals/ImageViewerModal';
 import { StarRating } from '../ui/StarRating';
 import { PhotoUploadModal } from '../modals/PhotoUploadModal';
+import { HapticService } from '../../services/hapticService';
+import HapticTouchableOpacity from '../common/HapticTouchableOpacity';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -405,6 +407,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         console.log('🎯 Updated recipe:', updatedRecipe);
 
         // Update recipe with saved data and show normal recipe view
+        HapticService.itemSaved();
         if (onRecipeUpdate) {
           console.log('🎯 Calling onRecipeUpdate...');
           onRecipeUpdate(updatedRecipe);
@@ -420,8 +423,10 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
       // For saved recipes, go directly to cooking mode
       if (onStartCooking) {
+        HapticService.recipeCompleted();
         onStartCooking(recipe);
       } else {
+        HapticService.itemSaved();
         // Fallback: just go back
         onGoBack();
       }
@@ -1378,12 +1383,12 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
       <Animated.View style={[styles.footer, buttonsAnimatedStyle, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
         {isJustGenerated ? (
           <View style={styles.dualButtonContainer}>
-            <TouchableOpacity style={[styles.startOverButton, { backgroundColor: colors.textSecondary }]} onPress={onStartOver}>
+            <HapticTouchableOpacity hapticType="medium" style={[styles.startOverButton, { backgroundColor: colors.textSecondary }]} onPress={onStartOver}>
               <Text style={[styles.startOverButtonText, { color: colors.buttonText }]}>{t('common.startOver')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
+            </HapticTouchableOpacity>
+            <HapticTouchableOpacity hapticType="primary" style={[styles.startCookingButton, { backgroundColor: colors.primary }]} onPress={handleStartCooking}>
               <Text style={[styles.startCookingButtonText, { color: colors.buttonText }]}>{t('recipe.saveRecipe')}</Text>
-            </TouchableOpacity>
+            </HapticTouchableOpacity>
           </View>
         ) : recipe.isSaved === true ? (
           <View style={styles.dualButtonContainer}>
