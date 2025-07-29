@@ -9,6 +9,7 @@ import { HapticService } from '../services/hapticService';
 // Import screen wrappers
 import { 
   HomeScreenWrapper, 
+  CameraTabScreenWrapper,
   RecipesScreenWrapper, 
   SavedScreenWrapper, 
   ProfileScreenWrapper 
@@ -28,6 +29,7 @@ export const MainTabNavigator: React.FC = () => {
   // Debug: Check if translations work
   console.log('Navigation translations:', {
     home: t('navigation.home'),
+    camera: t('navigation.camera'),
     recipes: t('navigation.recipes'),
     saved: t('navigation.saved'),
     profile: t('navigation.profile')
@@ -43,6 +45,9 @@ export const MainTabNavigator: React.FC = () => {
           switch (route.name) {
             case 'Home':
               iconName = focused ? 'home' : 'home-outline';
+              break;
+            case 'Camera':
+              iconName = focused ? 'camera' : 'camera-outline';
               break;
             case 'Recipes':
               iconName = focused ? 'restaurant' : 'restaurant-outline';
@@ -97,6 +102,14 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: t('navigation.home'),
           tabBarAccessibilityLabel: t('navigation.home'),
+        }}
+      />
+      <Tab.Screen 
+        name="Camera" 
+        component={CameraTabScreenWrapper}
+        options={{
+          tabBarLabel: t('navigation.camera'),
+          tabBarAccessibilityLabel: t('navigation.camera'),
         }}
       />
       <Tab.Screen 

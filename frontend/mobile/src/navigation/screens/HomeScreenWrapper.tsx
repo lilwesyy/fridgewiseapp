@@ -7,6 +7,7 @@ export const HomeScreenWrapper: React.FC = () => {
   const navigation = useNavigation<MainTabScreenProps<'Home'>['navigation']>();
 
   const handleNavigateToCamera = () => {
+    // Navigate to Camera tab instead of modal
     navigation.navigate('Camera');
   };
 

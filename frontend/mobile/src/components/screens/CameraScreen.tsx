@@ -672,7 +672,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
 
   return (
     <>
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.cameraWrapper}>
           <CameraView
             ref={cameraRef}
@@ -716,7 +716,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
             )}
           </View>
         </View>
-      </SafeAreaView>
+      </View>
 
       <NoIngredientsModal
         visible={showNoIngredientsModal}
@@ -743,6 +743,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
+    marginTop: 0, // Ensure no top margin
+    paddingTop: 0, // Ensure no top padding
   },
   cameraWrapper: {
     flex: 1,

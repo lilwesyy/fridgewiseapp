@@ -17,6 +17,7 @@ export const RecipesScreenWrapper: React.FC = () => {
   };
 
   const handleGoToCamera = () => {
+    // Navigate to Camera tab
     navigation.navigate('Camera');
   };
 

@@ -26,6 +26,7 @@ export type RootStackParamList = {
 // Bottom Tab Navigator
 export type MainTabParamList = {
   Home: undefined;
+  Camera: undefined;
   Recipes: undefined;
   Saved: undefined;
   Profile: undefined;
@@ -43,6 +44,7 @@ export type MainTabScreenProps<Screen extends keyof MainTabParamList> =
 
 // Specific screen props
 export type HomeScreenProps = MainTabScreenProps<'Home'>;
+export type CameraTabScreenProps = MainTabScreenProps<'Camera'>;
 export type RecipesScreenProps = MainTabScreenProps<'Recipes'>;
 export type SavedScreenProps = MainTabScreenProps<'Saved'>;
 export type ProfileScreenProps = MainTabScreenProps<'Profile'>;
