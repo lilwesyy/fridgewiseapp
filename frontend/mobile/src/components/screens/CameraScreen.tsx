@@ -8,7 +8,9 @@ import {
   Dimensions,
   Platform,
   SafeAreaView,
+  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -45,6 +47,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   const { t, i18n } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -672,6 +675,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
 
   return (
     <>
+      <StatusBar barStyle="light-content" backgroundColor="black" />
       <View style={styles.container}>
         <View style={styles.cameraWrapper}>
           <CameraView
@@ -743,8 +747,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
-    marginTop: 0, // Ensure no top margin
-    paddingTop: 0, // Ensure no top padding
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   cameraWrapper: {
     flex: 1,

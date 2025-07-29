@@ -110,6 +110,8 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: t('navigation.camera'),
           tabBarAccessibilityLabel: t('navigation.camera'),
+          // Override safe area behavior for camera
+          headerShown: false,
         }}
       />
       <Tab.Screen 
