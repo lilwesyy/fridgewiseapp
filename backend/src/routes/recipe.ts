@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe, deleteRecipePhoto, completeRecipe, getCookedRecipes, getPublicRecipes, getUsersWhoCookedRecipe, savePublicRecipe } from '../controllers/recipeController';
+import { generateRecipe, getRecipes, getRecipe, updateRecipe, deleteRecipe, getSavedRecipes, saveRecipe, unsaveRecipe, createRecipe, deleteRecipePhoto, completeRecipe, getCookedRecipes, getPublicRecipes, getUsersWhoCookedRecipe, savePublicRecipe, getPendingRecipes, approveRecipe, rejectRecipe } from '../controllers/recipeController';
 import { protect } from '../middleware/auth';
 import { rateLimits } from '../middleware/rateLimiter';
 import { checkDailyLimit, incrementDailyUsage } from '../middleware/dailyLimits';
@@ -9,6 +9,7 @@ import {
   handleValidationErrors, 
   createRateLimit 
 } from '../middleware/inputValidation';
+import { body } from 'express-validator';
 
 const router = Router();
 
@@ -51,5 +52,20 @@ router.put('/:id', updateRecipe);
 router.delete('/:id', deleteRecipe);
 router.delete('/:id/photo', deleteRecipePhoto);
 router.get('/:id', getRecipe); // Move this to the end to avoid conflicts
+
+// Admin routes for recipe approval
+router.get('/admin/pending', 
+  ...validationRules.pagination,
+  handleValidationErrors,
+  getPendingRecipes
+);
+router.post('/admin/approve/:id', approveRecipe);
+router.post('/admin/reject/:id', 
+  body('reason')
+    .isLength({ min: 1, max: 500 })
+    .withMessage('Rejection reason must be between 1 and 500 characters'),
+  handleValidationErrors,
+  rejectRecipe
+);
 
 export { router as recipeRoutes };

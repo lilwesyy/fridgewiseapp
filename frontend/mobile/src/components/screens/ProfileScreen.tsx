@@ -25,6 +25,7 @@ import { AvatarEditModal } from '../modals/AvatarEditModal';
 import { PrivacyPolicyModal } from '../modals/PrivacyPolicyModal';
 import { TermsOfServiceModal } from '../modals/TermsOfServiceModal';
 import { AdminStatsModal } from '../modals/AdminStatsModal';
+import { RecipeApprovalModal } from '../modals/RecipeApprovalModal';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
@@ -103,6 +104,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showAdminStatsModal, setShowAdminStatsModal] = useState(false);
+  const [showRecipeApprovalModal, setShowRecipeApprovalModal] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [notification, setNotification] = useState<{
     visible: boolean;
@@ -396,6 +398,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               >
                 <ChevronIcon color={colors.textSecondary} />
               </SettingRow>
+              <SettingRow 
+                title={safeT('admin.recipeApproval', 'Recipe Approvals')}
+                subtitle={safeT('admin.recipeApprovalDesc', 'Review and approve pending recipes')}
+                onPress={() => setShowRecipeApprovalModal(true)}
+              >
+                <ChevronIcon color={colors.textSecondary} />
+              </SettingRow>
             </Section>
           )}
 
@@ -460,6 +469,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <AdminStatsModal
         visible={showAdminStatsModal}
         onClose={() => setShowAdminStatsModal(false)}
+      />
+      
+      <RecipeApprovalModal
+        visible={showRecipeApprovalModal}
+        onClose={() => setShowRecipeApprovalModal(false)}
       />
       
       <NotificationModal

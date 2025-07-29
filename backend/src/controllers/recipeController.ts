@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { Recipe } from '../models/Recipe';
+import mongoose from 'mongoose';
 import { SavedPublicRecipe } from '../models/SavedPublicRecipe';
 import { Rating } from '../models/Rating';
 import { GeminiService } from '../services/geminiService';
@@ -677,11 +678,12 @@ export const savePublicRecipe = async (req: AuthRequest, res: Response<APIRespon
       }
     }
 
-    // Find the public recipe (not owned by current user)
+    // Find the public recipe (not owned by current user and approved)
     const publicRecipe = await Recipe.findOne({ 
       _id: id, 
       userId: { $ne: user._id }, // Not owned by current user
       isDeleted: false,
+      status: 'approved', // Only approved recipes can be saved
       $or: [
         { dishPhotos: { $exists: true, $ne: [] } },
         { cookedAt: { $exists: true, $ne: null } }
@@ -871,9 +873,14 @@ export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse
     // Update completion count
     recipe.completionCount = (recipe.completionCount || 0) + 1;
     
+    // When a recipe is cooked, request approval to make it public
+    if (recipe.status === 'private' && recipe.cookedAt) {
+      recipe.status = 'pending_approval';
+    }
+    
     await recipe.save();
 
-    // Invalidate public recipes cache since this recipe is now public (cooked)
+    // Invalidate public recipes cache since this recipe might become public after approval
     await CacheService.invalidatePublicRecipesCache();
 
     res.status(200).json({
@@ -1061,9 +1068,10 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
         
         const skip = (Number(page) - 1) * Number(limit);
         
-        // Build query for public recipes (recipes with photos or that have been cooked)
+        // Build query for public recipes (only approved recipes with photos or that have been cooked)
         const query: any = { 
           isDeleted: false,
+          status: 'approved', // Only show approved recipes
           $or: [
             { dishPhotos: { $exists: true, $ne: [] } }, // Has photos
             { cookedAt: { $exists: true, $ne: null } } // Has been cooked
@@ -1290,4 +1298,168 @@ export const getUsersWhoCookedRecipe = async (req: Request, res: Response<APIRes
   }
 };
 
+// Admin functions for recipe approval
+export const getPendingRecipes = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = req.user!;
+    
+    // Check if user is admin
+    if (user.role !== 'admin') {
+      res.status(403).json({
+        success: false,
+        error: 'Access denied. Admin role required.'
+      });
+      return;
+    }
 
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const pendingRecipes = await Recipe.find({ 
+      status: 'pending_approval',
+      isDeleted: false 
+    })
+    .populate('userId', 'name email')
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(Number(limit))
+    .lean();
+
+    const total = await Recipe.countDocuments({ 
+      status: 'pending_approval', 
+      isDeleted: false 
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        recipes: pendingRecipes,
+        pagination: {
+          currentPage: Number(page),
+          totalPages: Math.ceil(total / Number(limit)),
+          totalRecipes: total,
+          hasNextPage: skip + Number(limit) < total,
+          hasPreviousPage: Number(page) > 1
+        }
+      }
+    });
+  } catch (error: any) {
+    console.error('Error fetching pending recipes:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch pending recipes'
+    });
+  }
+};
+
+export const approveRecipe = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+    
+    // Check if user is admin
+    if (user.role !== 'admin') {
+      res.status(403).json({
+        success: false,
+        error: 'Access denied. Admin role required.'
+      });
+      return;
+    }
+
+    const recipe = await Recipe.findOne({ 
+      _id: id, 
+      status: 'pending_approval',
+      isDeleted: false 
+    });
+
+    if (!recipe) {
+      res.status(404).json({
+        success: false,
+        error: 'Pending recipe not found'
+      });
+      return;
+    }
+
+    // Approve the recipe
+    recipe.status = 'approved';
+    recipe.approvedBy = user._id as mongoose.Types.ObjectId;
+    recipe.approvedAt = new Date();
+    recipe.rejectionReason = undefined; // Clear any previous rejection reason
+
+    await recipe.save();
+
+    // Invalidate public recipes cache
+    await CacheService.invalidatePublicRecipesCache();
+
+    res.status(200).json({
+      success: true,
+      message: 'Recipe approved successfully',
+      data: recipe
+    });
+  } catch (error: any) {
+    console.error('Error approving recipe:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to approve recipe'
+    });
+  }
+};
+
+export const rejectRecipe = async (req: AuthRequest, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+    const { reason } = req.body;
+    
+    // Check if user is admin
+    if (user.role !== 'admin') {
+      res.status(403).json({
+        success: false,
+        error: 'Access denied. Admin role required.'
+      });
+      return;
+    }
+
+    if (!reason || reason.trim().length === 0) {
+      res.status(400).json({
+        success: false,
+        error: 'Rejection reason is required'
+      });
+      return;
+    }
+
+    const recipe = await Recipe.findOne({ 
+      _id: id, 
+      status: 'pending_approval',
+      isDeleted: false 
+    });
+
+    if (!recipe) {
+      res.status(404).json({
+        success: false,
+        error: 'Pending recipe not found'
+      });
+      return;
+    }
+
+    // Reject the recipe
+    recipe.status = 'rejected';
+    recipe.rejectionReason = reason.trim();
+    recipe.approvedBy = user._id as mongoose.Types.ObjectId;
+    recipe.approvedAt = new Date();
+
+    await recipe.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Recipe rejected successfully',
+      data: recipe
+    });
+  } catch (error: any) {
+    console.error('Error rejecting recipe:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to reject recipe'
+    });
+  }
+};

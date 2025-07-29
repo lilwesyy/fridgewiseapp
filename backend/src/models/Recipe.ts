@@ -52,6 +52,12 @@ export interface IRecipe extends Document {
   // Rating system
   averageRating: number;
   totalRatings: number;
+  
+  // Public recipe approval system
+  status: 'private' | 'pending_approval' | 'approved' | 'rejected';
+  approvedBy?: mongoose.Types.ObjectId;
+  approvedAt?: Date;
+  rejectionReason?: string;
 
   createdAt: Date;
   updatedAt: Date;
@@ -332,6 +338,27 @@ const recipeSchema = new Schema<IRecipe>({
     type: Number,
     default: 0,
     min: [0, 'Total ratings cannot be negative']
+  },
+  // Public recipe approval system
+  status: {
+    type: String,
+    enum: ['private', 'pending_approval', 'approved', 'rejected'],
+    default: 'private'
+  },
+  approvedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
+  },
+  approvedAt: {
+    type: Date,
+    required: false
+  },
+  rejectionReason: {
+    type: String,
+    trim: true,
+    maxlength: 500,
+    required: false
   }
 }, {
   timestamps: true

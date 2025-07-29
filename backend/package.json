@@ -13,7 +13,8 @@
     "optimize-db": "node src/scripts/optimizeDatabase.js",
     "rebuild-indexes": "node src/scripts/rebuildIndexes.js",
     "cache:check": "ts-node src/scripts/cache-monitor.ts",
-    "cache:fix": "ts-node src/scripts/cache-monitor.ts --fix"
+    "cache:fix": "ts-node src/scripts/cache-monitor.ts --fix",
+    "migrate-recipe-status": "ts-node src/scripts/migrate-recipe-status.ts"
   },
   "keywords": [],
   "author": "",

@@ -22,3 +22,4 @@ export { SupportModal } from './SupportModal';
 
 // Admin Modals
 export { AdminStatsModal } from './AdminStatsModal';
+export { RecipeApprovalModal } from './RecipeApprovalModal';

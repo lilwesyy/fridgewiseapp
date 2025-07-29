@@ -145,6 +145,7 @@ export class CacheService {
           const recipes = await Recipe
             .find({ 
               isDeleted: false,
+              status: 'approved', // Only show approved recipes
               $or: [
                 { dishPhotos: { $exists: true, $ne: [] } },
                 { cookedAt: { $exists: true, $ne: null } }
@@ -157,6 +158,7 @@ export class CacheService {
 
           const total = await Recipe.countDocuments({
             isDeleted: false,
+            status: 'approved', // Only count approved recipes
             $or: [
               { dishPhotos: { $exists: true, $ne: [] } },
               { cookedAt: { $exists: true, $ne: null } }
@@ -182,6 +184,7 @@ export class CacheService {
           const recipes = await Recipe
             .find({ 
               isDeleted: false,
+              status: 'approved', // Only show approved recipes
               $or: [
                 { dishPhotos: { $exists: true, $ne: [] } },
                 { cookedAt: { $exists: true, $ne: null } }
@@ -194,6 +197,7 @@ export class CacheService {
 
           const total = await Recipe.countDocuments({
             isDeleted: false,
+            status: 'approved', // Only count approved recipes
             $or: [
               { dishPhotos: { $exists: true, $ne: [] } },
               { cookedAt: { $exists: true, $ne: null } }
