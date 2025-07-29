@@ -408,7 +408,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
               </View>
 
               {/* Member Since */}
-              <View style={styles.fieldContainer}>
+              <View style={[styles.fieldContainer, { marginBottom: 0 }]}>
                 <Text style={styles.fieldLabel}>
                   {safeT('profile.memberSince', 'Member since')}
                 </Text>
@@ -417,23 +417,6 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ visible, onC
                 </Text>
               </View>
 
-              {/* Account Type */}
-              <View style={styles.fieldContainer}>
-                <Text style={styles.fieldLabel}>
-                  {safeT('profile.accountType', 'Account Type')}
-                </Text>
-                <View style={styles.badgeContainer}>
-                  <Text style={[
-                    styles.badge,
-                    user?.role === 'admin' ? styles.adminBadge : styles.userBadge
-                  ]}>
-                    {user?.role === 'admin' ?
-                      safeT('profile.admin', 'Admin') :
-                      safeT('profile.user', 'User')
-                    }
-                  </Text>
-                </View>
-              </View>
             </View>
 
             {/* Account Security */}

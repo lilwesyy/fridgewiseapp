@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { performanceMonitor } from '../../utils/performanceMonitor';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface PerformanceDebuggerProps {
   enabled?: boolean;
@@ -11,6 +13,7 @@ export const PerformanceDebugger: React.FC<PerformanceDebuggerProps> = ({
   enabled = __DEV__ 
 }) => {
   const { colors } = useTheme();
+  const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [performanceData, setPerformanceData] = useState<any>({});
 
@@ -26,12 +29,13 @@ export const PerformanceDebugger: React.FC<PerformanceDebuggerProps> = ({
     return () => clearInterval(interval);
   }, [enabled]);
 
-  if (!enabled) return null;
+  // Only show to admins
+  if (!enabled || user?.role !== 'admin') return null;
 
   const styles = StyleSheet.create({
     debugButton: {
       position: 'absolute',
-      top: 100,
+      top: 200,
       right: 10,
       backgroundColor: colors.primary,
       padding: 8,
@@ -46,13 +50,28 @@ export const PerformanceDebugger: React.FC<PerformanceDebuggerProps> = ({
     modal: {
       flex: 1,
       backgroundColor: colors.background,
-      padding: 20,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
     },
     title: {
       fontSize: 18,
       fontWeight: 'bold',
       color: colors.text,
-      marginBottom: 20,
+    },
+    closeButton: {
+      padding: 8,
+    },
+    content: {
+      flex: 1,
+      padding: 20,
     },
     section: {
       marginBottom: 20,
@@ -96,18 +115,6 @@ export const PerformanceDebugger: React.FC<PerformanceDebuggerProps> = ({
     slowLoad: {
       color: colors.error || '#EF4444',
     },
-    closeButton: {
-      backgroundColor: colors.surface,
-      padding: 12,
-      borderRadius: 8,
-      alignItems: 'center',
-      marginTop: 20,
-    },
-    closeButtonText: {
-      color: colors.text,
-      fontSize: 16,
-      fontWeight: '600',
-    },
   });
 
   const getLoadTimeColor = (time: number) => {
@@ -131,9 +138,17 @@ export const PerformanceDebugger: React.FC<PerformanceDebuggerProps> = ({
         presentationStyle="pageSheet"
       >
         <View style={styles.modal}>
-          <Text style={styles.title}>🚀 Lazy Loading Performance</Text>
+          <View style={styles.header}>
+            <Text style={styles.title}>🚀 Lazy Loading Performance</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setIsVisible(false)}
+            >
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
           
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Performance Summary */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>📊 Summary</Text>
@@ -182,13 +197,6 @@ export const PerformanceDebugger: React.FC<PerformanceDebuggerProps> = ({
               </Text>
             </View>
           </ScrollView>
-
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setIsVisible(false)}
-          >
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
         </View>
       </Modal>
     </>

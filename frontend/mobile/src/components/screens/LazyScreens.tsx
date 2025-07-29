@@ -41,7 +41,7 @@ const ScreenLoader: React.FC<{ screenName: string }> = ({ screenName }) => {
     <View style={styles.container}>
       <ActivityIndicator size="large" color={colors.primary} />
       <Text style={styles.text}>
-        {t('common.loading')} {screenName}...
+        {t('common.loading')}...
       </Text>
     </View>
   );
