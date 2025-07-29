@@ -17,6 +17,7 @@ export interface IUser extends Document {
   emailVerificationToken?: string;
   emailVerificationExpiry?: Date;
   isEmailVerified: boolean;
+  pushToken?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -99,6 +100,10 @@ const userSchema = new Schema<IUser>({
   isEmailVerified: {
     type: Boolean,
     default: false
+  },
+  pushToken: {
+    type: String,
+    required: false
   }
 }, {
   timestamps: true

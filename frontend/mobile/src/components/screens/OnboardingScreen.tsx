@@ -487,7 +487,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
                     <Image 
                       source={require('../../../assets/fridge.png')} 
                       style={styles.cameraPreview}
-                      resizeMode="cover"
+                      contentFit="cover"
                     />
                     
                     {/* Animated Scanning Line */}

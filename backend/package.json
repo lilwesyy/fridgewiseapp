@@ -21,6 +21,8 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@types/apn": "^0.0.31",
+    "apn": "^2.2.0",
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.41.1",
     "cors": "^2.8.5",

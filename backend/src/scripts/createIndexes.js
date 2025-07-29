@@ -93,6 +93,18 @@ const createIndexes = async () => {
       { name: 'user_completion_tracking', background: true }
     );
 
+    console.log('  - Recipes: Admin approval status filter');
+    await recipes.createIndex(
+      { status: 1, isDeleted: 1, createdAt: -1 },
+      { name: 'admin_approval_status', background: true }
+    );
+
+    console.log('  - Recipes: Admin pending approval queue');
+    await recipes.createIndex(
+      { status: 1, isDeleted: 1, updatedAt: -1 },
+      { name: 'admin_pending_queue', background: true }
+    );
+
     // 3. Analysis Collection - Statistics optimization
     console.log('  - Analysis: User status date filter');
     await analyses.createIndex(

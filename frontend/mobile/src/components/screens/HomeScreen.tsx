@@ -413,7 +413,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToCamera, onSe
                         <Image
                           source={{ uri: firstPhoto.url }}
                           style={styles.recipeImage}
-                          resizeMode="cover"
+                          contentFit="cover"
                         />
                       ) : (
                         <Ionicons name="book" size={32} color={colors.success} />

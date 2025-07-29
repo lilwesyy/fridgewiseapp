@@ -1222,7 +1222,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                   <Image
                     source={{ uri: recipe.dishPhoto }}
                     style={[styles.dishPhotoLarge, { borderColor: colors.border }]}
-                    resizeMode="cover"
+                    contentFit="cover"
                     testID="dish-photo-image"
                   />
                   <View style={[styles.photoOverlay, { backgroundColor: colors.overlay }]}>

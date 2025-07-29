@@ -9,6 +9,8 @@ import { cloudinaryService } from '../services/cloudinaryService';
 import { CacheService } from '../services/cacheService';
 import { DailyUsage } from '../models/DailyUsage';
 import { APIResponse } from '@/types';
+import { User } from '../models/User';
+import { PushNotificationService } from '../services/pushNotificationService';
 
 // Helper function to normalize dietary tags
 const normalizeDietaryTags = (tags: string[]): string[] => {
@@ -1432,6 +1434,23 @@ export const approveRecipe = async (req: AuthRequest, res: Response<APIResponse<
     // Invalidate public recipes cache
     await CacheService.invalidatePublicRecipesCache();
 
+    // Send push notification to recipe author
+    try {
+      // Get the recipe author with their push token
+      const recipeAuthor = await User.findById(recipe.userId);
+      if (recipeAuthor && recipeAuthor.pushToken) {
+        await PushNotificationService.sendRecipeApprovedNotification(
+          recipeAuthor.pushToken,
+          recipe.title,
+          recipeAuthor.name || 'Chef'
+        );
+        console.log(`✅ Push notification sent to ${recipeAuthor.name} for approved recipe: ${recipe.title}`);
+      }
+    } catch (pushError) {
+      console.error('❌ Failed to send push notification for approved recipe:', pushError);
+      // Don't fail the request if push notification fails
+    }
+
     res.status(200).json({
       success: true,
       message: 'Recipe approved successfully',
@@ -1490,6 +1509,24 @@ export const rejectRecipe = async (req: AuthRequest, res: Response<APIResponse<a
     recipe.approvedAt = new Date();
 
     await recipe.save();
+
+    // Send push notification to recipe author
+    try {
+      // Get the recipe author with their push token
+      const recipeAuthor = await User.findById(recipe.userId);
+      if (recipeAuthor && recipeAuthor.pushToken) {
+        await PushNotificationService.sendRecipeRejectedNotification(
+          recipeAuthor.pushToken,
+          recipe.title,
+          reason.trim(),
+          recipeAuthor.name || 'Chef'
+        );
+        console.log(`📱 Push notification sent to ${recipeAuthor.name} for rejected recipe: ${recipe.title}`);
+      }
+    } catch (pushError) {
+      console.error('❌ Failed to send push notification for rejected recipe:', pushError);
+      // Don't fail the request if push notification fails
+    }
 
     res.status(200).json({
       success: true,

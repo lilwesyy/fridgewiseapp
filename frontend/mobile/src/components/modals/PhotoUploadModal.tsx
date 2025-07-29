@@ -705,7 +705,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   imagePreview: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    contentFit: 'cover',
   },
   compressionOverlay: {
     position: 'absolute',
