@@ -43,7 +43,7 @@ i18n
       },
     },
     fallbackLng: 'en',
-    debug: false,
+    debug: __DEV__, // Enable debug in development
     interpolation: {
       escapeValue: false,
     },
