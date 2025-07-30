@@ -10,6 +10,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
@@ -41,6 +42,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
   const { t } = useTranslation();
   const { user, uploadAvatar, deleteAvatar } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [isUploading, setIsUploading] = useState(false);
 
   // Bottom sheet style animations
@@ -76,7 +78,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
     transform: [{ translateY: translateY.value }],
   }));
 
-  const styles = getStyles(colors);
+  const styles = getStyles(colors, insets);
 
   const requestPermissions = async () => {
     if (Platform.OS !== 'web') {
@@ -303,7 +305,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets?: { bottom: number }) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: colors.overlay,
@@ -318,7 +320,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 34,
+    paddingBottom: Math.max(insets?.bottom || 0, 16), // Dynamic safe area with minimum padding
     alignItems: 'center',
     shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: -2 },

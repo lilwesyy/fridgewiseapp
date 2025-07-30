@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, TextInput, StyleSheet, Dimensions, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface OTPInputProps {
@@ -16,6 +17,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   autoFocus = false
 }) => {
   const { colors, isHighContrast } = useTheme();
+  const { t } = useTranslation();
   const [focusedIndex, setFocusedIndex] = useState<number | null>(autoFocus ? 0 : null);
   const inputs = useRef<(TextInput | null)[]>([]);
 
@@ -118,8 +120,8 @@ export const OTPInput: React.FC<OTPInputProps> = ({
             isHighContrast && styles.inputHighContrast
           ]}
           accessible={true}
-          accessibilityLabel={`Digit ${index + 1} of ${length}`}
-          accessibilityHint={digit ? `Contains digit ${digit}` : 'Empty field'}
+          accessibilityLabel={t('accessibility.digitPosition', { index: index + 1, length }, `Digit ${index + 1} of ${length}`)}
+          accessibilityHint={digit ? t('accessibility.containsDigit', { digit }, `Contains digit ${digit}`) : t('accessibility.emptyField', 'Empty field')}
           accessibilityRole="text"
           value={digit}
           onChangeText={(text) => handleChangeText(text, index)}
@@ -145,10 +147,11 @@ export const OTPInput: React.FC<OTPInputProps> = ({
 const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 20,
     paddingHorizontal: 10,
+    gap: 12,
   },
   input: {
     width: 45,

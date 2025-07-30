@@ -494,7 +494,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.background === '#FFFFFF' ? '#F0F2F5' : 
                      colors.background === '#000000' ? '#1A1A1A' : 
                      colors.backgroundDark || colors.background,
-    paddingTop: Platform.OS === 'ios' ? 0 : 24, // SafeAreaView handles iOS automatically
   },
   scrollView: {
     flex: 1,

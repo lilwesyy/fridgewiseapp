@@ -12,6 +12,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -136,6 +137,8 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   const { t } = useTranslation();
   const { token, user } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const [recipe, setRecipe] = useState(initialRecipe);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -1494,7 +1497,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any, insets: { top: number; bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -1502,7 +1505,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 50,
+    paddingTop: insets.top + 10,
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,

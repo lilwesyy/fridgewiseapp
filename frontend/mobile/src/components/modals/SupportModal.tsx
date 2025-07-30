@@ -11,6 +11,7 @@ import {
   Platform,
   SafeAreaView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -34,7 +35,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({ visible, onClose }) 
   const { t } = useTranslation();
   const { user } = useAuth();
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -280,7 +282,7 @@ User Information:
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets: { bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -340,7 +342,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: Math.max(insets.bottom, 16) + 24,
   },
   section: {
     marginBottom: 24,

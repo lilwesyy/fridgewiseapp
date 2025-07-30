@@ -10,6 +10,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -57,7 +58,8 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
 
   // State management
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
@@ -625,7 +627,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets?: { bottom: number }) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: colors.overlay,
@@ -640,7 +642,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 34,
+    paddingBottom: Math.max(insets?.bottom || 0, 16), // Dynamic safe area with minimum padding
     alignItems: 'center',
     shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: -2 },

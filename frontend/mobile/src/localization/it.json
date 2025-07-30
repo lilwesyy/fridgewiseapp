@@ -31,6 +31,11 @@
     "refreshError": "Impossibile aggiornare i dati",
     "you": "Tu"
   },
+  "accessibility": {
+    "digitPosition": "Cifra {{index}} di {{length}}",
+    "containsDigit": "Contiene la cifra {{digit}}",
+    "emptyField": "Campo vuoto"
+  },
   "auth": {
     "login": "Accedi",
     "register": "Registrati",
@@ -47,11 +52,19 @@
     "logoutSuccess": "Disconnessione effettuata con successo",
     "signIn": "Accedi",
     "acceptTerms": "Accetto i",
+    "tagline": "INTELLIGENTE. SEMPLICE. DELIZIOSO.",
+    "welcomeSubtitle": "Scansiona, organizza e cucina in modo intelligente",
     "termsOfService": "Termini di Servizio",
     "privacyPolicy": "Privacy Policy",
     "and": "e la",
     "alreadyHaveAccount": "Hai già un account?",
     "dontHaveAccount": "Non hai un account?",
+    "resetOnboarding": "Resetta Onboarding",
+    "resetOnboardingConfirm": "Sei sicuro di voler resettare l'onboarding? Questo mostrerà nuovamente le schermate di benvenuto al prossimo avvio dell'app.",
+    "resetOnboardingSuccess": "Onboarding resettato con successo. Riavvia l'app per vedere nuovamente le schermate di benvenuto.",
+    "resetOnboardingError": "Impossibile resettare l'onboarding.",
+    "createAccount": "Crea Account",
+    "termsAndConditions": "Termini e Condizioni",
     "resetPassword": "Reimposta Password",
     "sendResetEmail": "Invia Email di Reset",
     "resetPasswordInstructions": "Inserisci il tuo indirizzo email e ti invieremo un codice per reimpostare la password.",
@@ -73,12 +86,16 @@
     "backToLogin": "Torna al Login",
     "verifyEmail": "Verifica Email",
     "verifyEmailInstructions": "Inserisci il codice a 6 cifre inviato al tuo indirizzo email per verificare il tuo account.",
+    "invalidVerificationCode": "Codice di verifica non valido o scaduto. Riprova o richiedi un nuovo codice.",
     "verificationSuccess": "Email Verificata",
     "verificationSuccessMessage": "La tua email è stata verificata con successo!",
     "verificationError": "Impossibile verificare l'email. Riprova.",
     "codeSent": "Codice Inviato",
     "verificationCodeSent": "Un nuovo codice di verifica è stato inviato alla tua email.",
-    "resendError": "Impossibile reinviare il codice. Riprova."
+    "resendError": "Impossibile reinviare il codice. Riprova.",
+    "passwordWeak": "Password debole",
+    "passwordMedium": "Password media",
+    "passwordStrong": "Password forte"
   },
   "validation": {
     "nameRequired": "Il nome è obbligatorio",
@@ -167,7 +184,8 @@
     "features": {
       "scan": "Scansiona il contenuto del tuo frigorifero",
       "ai": "Riconoscimento ingredienti basato su IA",
-      "recipes": "Ricevi ricette personalizzate"
+      "recipes": "Ricevi ricette personalizzate",
+      "waste": "Riduci gli sprechi alimentari"
     },
     "recipesCreated": "Ricette\nCreate",
     "ingredientsScanned": "Ingredienti\nScansionati",

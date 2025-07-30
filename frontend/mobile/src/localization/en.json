@@ -29,6 +29,11 @@
     "skip": "Skip",
     "start": "Start"
   },
+  "accessibility": {
+    "digitPosition": "Digit {{index}} of {{length}}",
+    "containsDigit": "Contains digit {{digit}}",
+    "emptyField": "Empty field"
+  },
   "auth": {
     "login": "Login",
     "register": "Register",
@@ -45,11 +50,19 @@
     "logoutSuccess": "Logout successful",
     "signIn": "Sign In",
     "acceptTerms": "I accept the",
+    "tagline": "SMART. SIMPLE. DELICIOUS.",
+    "welcomeSubtitle": "Scan, organize and cook smart",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",
     "and": "and",
     "alreadyHaveAccount": "Already have an account?",
     "dontHaveAccount": "Don't have an account?",
+    "resetOnboarding": "Reset Onboarding",
+    "resetOnboardingConfirm": "Are you sure you want to reset the onboarding? This will show the welcome screens again next time you open the app.",
+    "resetOnboardingSuccess": "Onboarding reset successfully. Restart the app to see the welcome screens again.",
+    "resetOnboardingError": "Failed to reset onboarding.",
+    "createAccount": "Create Account",
+    "termsAndConditions": "Terms & Conditions",
     "resetPassword": "Reset Password",
     "sendResetEmail": "Send Reset Email",
     "resetPasswordInstructions": "Enter your email address and we'll send you a code to reset your password.",
@@ -71,12 +84,16 @@
     "backToLogin": "Back to Login",
     "verifyEmail": "Verify Email",
     "verifyEmailInstructions": "Enter the 6-digit code sent to your email address to verify your account.",
+    "invalidVerificationCode": "Invalid or expired verification code. Please try again or request a new code.",
     "verificationSuccess": "Email Verified",
     "verificationSuccessMessage": "Your email has been verified successfully!",
     "verificationError": "Failed to verify email. Please try again.",
     "codeSent": "Code Sent",
     "verificationCodeSent": "A new verification code has been sent to your email.",
-    "resendError": "Failed to resend code. Please try again."
+    "resendError": "Failed to resend code. Please try again.",
+    "passwordWeak": "Weak password",
+    "passwordMedium": "Medium password",
+    "passwordStrong": "Strong password"
   },
   "validation": {
     "nameRequired": "Name is required",
@@ -164,8 +181,9 @@
     "noAnalyses": "No analyses yet. Start by analyzing your fridge!",
     "features": {
       "scan": "Scan your fridge contents",
-      "ai": "AI-powered ingredient recognition",
-      "recipes": "Get personalized recipes"
+      "ai": "AI-powered ingredient recognition", 
+      "recipes": "Get personalized recipes",
+      "waste": "Reduce food waste"
     },
     "recipesCreated": "Recipes\nCreated",
     "ingredientsScanned": "Ingredients\nScanned",

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiService } from '../services/apiService';
 import { secureStorage } from '../services/secureStorage';
 import { expoSecurityService } from '../services/certificatePinning';
@@ -14,6 +15,9 @@ interface User {
     url: string;
     publicId: string;
   };
+  themeMode?: 'auto' | 'light' | 'dark';
+  notifications?: boolean;
+  autoSave?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -54,6 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { i18n } = useTranslation();
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
 
@@ -76,6 +81,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       clearInterval(tokenRefreshInterval);
     };
   }, []);
+
+  // Apply user's preferred language when user data changes
+  useEffect(() => {
+    if (user?.preferredLanguage && i18n.language !== user.preferredLanguage) {
+      i18n.changeLanguage(user.preferredLanguage);
+    }
+  }, [user?.preferredLanguage, i18n]);
 
   // Check if token is near expiry and handle accordingly
   const checkTokenExpiration = async () => {

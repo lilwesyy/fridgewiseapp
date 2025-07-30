@@ -10,6 +10,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { StarRating } from '../ui/StarRating';
@@ -42,6 +43,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [showCommentInput, setShowCommentInput] = useState(false);
@@ -134,7 +136,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
       elevation: 6,
       paddingHorizontal: 24,
       paddingTop: 24,
-      paddingBottom: 34,
+      paddingBottom: Math.max(insets?.bottom || 0, 16), // Dynamic safe area with minimum padding
     },
     modalHandle: {
       width: 40,

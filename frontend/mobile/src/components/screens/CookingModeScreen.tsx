@@ -12,6 +12,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -120,7 +121,8 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const { t } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
 
   // Safe translation helper
   const safeT = useCallback((key: string, fallback: string = key) => {
@@ -1724,7 +1726,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets: { top: number; bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -2219,7 +2221,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 34,
+    paddingBottom: Math.max(insets.bottom, 16) + 18,
     alignItems: 'center',
     shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -2298,7 +2300,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 34,
+    paddingBottom: Math.max(insets.bottom, 16) + 18,
     shadowColor: colors.shadow || '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.15,
@@ -2441,7 +2443,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 34,
+    paddingBottom: Math.max(insets.bottom, 16) + 18,
     maxHeight: screenHeight * 0.8,
     minHeight: screenHeight * 0.4,
     shadowColor: colors.shadow || '#000',

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -173,7 +174,8 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
   const { t } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const [stats, setStats] = useState<AppStats | null>(null);
   const [securityStats, setSecurityStats] = useState<SecurityStats | null>(null);
   const [cspStats, setCSPStats] = useState<CSPStats | null>(null);
@@ -1098,7 +1100,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets: { bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1162,7 +1164,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: Math.max(insets.bottom, 16) + 24,
   },
   section: {
     marginBottom: 24,

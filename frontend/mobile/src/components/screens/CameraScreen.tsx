@@ -48,6 +48,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   const { token } = useAuth();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const styles = getStyles(insets);
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -743,7 +744,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (insets: { top: number; bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
@@ -816,7 +817,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 50,
+    paddingTop: insets.top + 10,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
@@ -895,7 +896,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 40,
-    paddingBottom: 40,
+    paddingBottom: Math.max(insets.bottom, 20) + 20,
   },
   galleryButton: {
     width: 60,

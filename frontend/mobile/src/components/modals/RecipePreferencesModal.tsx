@@ -8,6 +8,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import Animated, {
@@ -38,6 +39,7 @@ export const RecipePreferencesModal: React.FC<RecipePreferencesModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   
   // State
   const [portions, setPortions] = useState('2');
@@ -265,7 +267,7 @@ export const RecipePreferencesModal: React.FC<RecipePreferencesModalProps> = ({
       elevation: 6,
       paddingHorizontal: 24,
       paddingTop: 24,
-      paddingBottom: 34,
+      paddingBottom: Math.max(insets?.bottom || 0, 16), // Dynamic safe area with minimum padding
     },
     modalHandle: {
       width: 40,

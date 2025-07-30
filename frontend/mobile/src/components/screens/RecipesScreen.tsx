@@ -11,6 +11,7 @@ import {
   Dimensions,
   RefreshControl,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -330,6 +331,8 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   const { t } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -916,14 +919,14 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any, insets: { top: number; bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
     // backgroundColor: '#F8F9FA', // rimosso, ora gestito dal tema
   },
   header: {
     padding: 20,
-    paddingTop: 60,
+    paddingTop: insets.top + 20,
     // backgroundColor: 'white', // rimosso, ora gestito dal tema
     borderBottomWidth: 1,
     // borderBottomColor: '#E9ECEF', // rimosso, ora gestito dal tema

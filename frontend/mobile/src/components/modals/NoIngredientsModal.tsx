@@ -8,6 +8,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -42,7 +43,8 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
 
   // Animation for the warning icon background pulse
   const pulseScale = useSharedValue(1);
@@ -162,7 +164,7 @@ export const NoIngredientsModal: React.FC<NoIngredientsModalProps> = ({
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets?: { bottom: number }) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -172,7 +174,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 34, // Safe area for iPhone
+    paddingBottom: Math.max(insets?.bottom || 0, 16), // Dynamic safe area with minimum padding
     minHeight: 400,
   },
   handle: {

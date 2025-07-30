@@ -112,9 +112,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 interface ThemeProviderProps {
   children: ReactNode;
+  userThemeMode?: 'auto' | 'light' | 'dark';
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, userThemeMode }) => {
   const systemColorScheme = useColorScheme();
   const [themeMode, setThemeMode] = useState<ThemeMode>('auto');
   const [isLoading, setIsLoading] = useState(true);
@@ -127,10 +128,24 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     : themeMode === 'dark';
 
 
-  // Load theme preference from storage
+  // Load theme preference from storage or user data
   useEffect(() => {
-    loadThemePreference();
-  }, []);
+    if (userThemeMode) {
+      // Use user's database preference if available
+      setThemeMode(userThemeMode);
+      setIsLoading(false);
+    } else {
+      // Fall back to local storage
+      loadThemePreference();
+    }
+  }, [userThemeMode]);
+
+  // Sync with user theme mode changes
+  useEffect(() => {
+    if (userThemeMode && userThemeMode !== themeMode) {
+      setThemeMode(userThemeMode);
+    }
+  }, [userThemeMode]);
 
   // Monitor high contrast accessibility setting
   useEffect(() => {

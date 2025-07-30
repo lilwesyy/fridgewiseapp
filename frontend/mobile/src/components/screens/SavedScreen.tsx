@@ -12,6 +12,7 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { VectorIcon, MappedIcon } from '../ui/VectorIcon';
@@ -86,6 +87,8 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<SavedRecipe[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -488,17 +491,17 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any, insets: { top: number; bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
   header: {
     padding: 20,
-    paddingTop: 60,
-    backgroundColor: 'white',
+    paddingTop: insets.top + 20,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: 28,

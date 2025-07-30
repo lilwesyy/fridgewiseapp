@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme, ThemeMode } from '../../contexts/ThemeContext';
@@ -37,14 +38,15 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
   const { t, i18n } = useTranslation();
   const { user, updateProfile } = useAuth();
   const { isDarkMode, themeMode, setThemeMode, colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isClearingCache, setIsClearingCache] = useState(false);
   const [showClearCacheModal, setShowClearCacheModal] = useState(false);
   const [preferences, setPreferences] = useState({
     preferredLanguage: user?.preferredLanguage || 'en',
-    notifications: true,
-    autoSave: true,
+    notifications: user?.notifications ?? true,
+    autoSave: user?.autoSave ?? true,
   });
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [notification, setNotification] = useState({
@@ -62,6 +64,17 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
   // Clear cache modal animation values
   const clearCacheModalTranslateY = useSharedValue(screenHeight);
   const clearCacheModalOpacity = useSharedValue(0);
+
+  // Sync preferences when user data changes
+  useEffect(() => {
+    if (user) {
+      setPreferences({
+        preferredLanguage: user.preferredLanguage || 'en',
+        notifications: user.notifications ?? true,
+        autoSave: user.autoSave ?? true,
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (visible) {
@@ -321,14 +334,16 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               <PreferenceRow
                 title={safeT('profile.pushNotifications', 'Push Notifications')}
                 subtitle={safeT('profile.pushNotificationsDesc', 'Receive notifications about new recipes and updates')}
-                disabled
               >
                 <Switch
                   value={preferences.notifications}
-                  onValueChange={() => { }}
+                  onValueChange={(value) => {
+                    const updates = { ...preferences, notifications: value };
+                    setPreferences(updates);
+                    debouncedSave({ notifications: value });
+                  }}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="white"
-                  disabled
                 />
               </PreferenceRow>
 
@@ -359,7 +374,11 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
               >
                 <Switch
                   value={preferences.autoSave}
-                  onValueChange={(value) => setPreferences({ ...preferences, autoSave: value })}
+                  onValueChange={(value) => {
+                    const updates = { ...preferences, autoSave: value };
+                    setPreferences(updates);
+                    debouncedSave({ autoSave: value });
+                  }}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="white"
                 />
@@ -377,21 +396,30 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
                 title={safeT('profile.themeAuto', 'Automatic')}
                 subtitle={safeT('profile.themeAutoDesc', 'Follow system setting')}
                 isSelected={themeMode === 'auto'}
-                onPress={() => setThemeMode('auto')}
+                onPress={() => {
+                  setThemeMode('auto');
+                  debouncedSave({ themeMode: 'auto' });
+                }}
               />
 
               <ThemeOption
                 title={safeT('profile.themeLight', 'Light')}
                 subtitle={safeT('profile.themeLightDesc', 'Always use light theme')}
                 isSelected={themeMode === 'light'}
-                onPress={() => setThemeMode('light')}
+                onPress={() => {
+                  setThemeMode('light');
+                  debouncedSave({ themeMode: 'light' });
+                }}
               />
 
               <ThemeOption
                 title={safeT('profile.themeDark', 'Dark')}
                 subtitle={safeT('profile.themeDarkDesc', 'Always use dark theme')}
                 isSelected={themeMode === 'dark'}
-                onPress={() => setThemeMode('dark')}
+                onPress={() => {
+                  setThemeMode('dark');
+                  debouncedSave({ themeMode: 'dark' });
+                }}
               />
             </Animated.View>
 
@@ -499,7 +527,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets: { bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -539,7 +567,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: Math.max(insets.bottom, 16) + 24,
   },
   section: {
     backgroundColor: colors.surface,
@@ -714,7 +742,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     elevation: 6,
     paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 34,
+    paddingBottom: Math.max(insets.bottom, 16) + 18,
   },
   confirmModalHandle: {
     width: 40,

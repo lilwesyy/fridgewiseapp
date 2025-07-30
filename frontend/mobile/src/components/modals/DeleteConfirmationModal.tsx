@@ -8,6 +8,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing, withRepeat } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../../constants/animations';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +38,8 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const slideY = useSharedValue(screenHeight);
   const opacity = useSharedValue(0);
   // Animation for the warning icon background pulse (come NoIngredientsModal)
@@ -136,7 +138,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets: { bottom: number }) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -147,7 +149,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     paddingTop: 16,
-    paddingBottom: 32,
+    paddingBottom: Math.max(insets.bottom, 16) + 16,
     paddingHorizontal: 24,
     alignItems: 'center',
     shadowColor: colors.shadow || '#000',

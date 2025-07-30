@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Keyboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -114,7 +115,8 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   const { t, i18n } = useTranslation();
   const { token, user } = useAuth();
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);
 
   // Sync with external ingredient changes (from camera)
@@ -507,7 +509,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
   );
 };
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, insets: { top: number; bottom: number }) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -515,7 +517,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 50,
+    paddingTop: insets.top + 10,
     paddingHorizontal: 20,
     paddingBottom: 20,
     backgroundColor: colors.surface,

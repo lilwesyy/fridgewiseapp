@@ -39,6 +39,7 @@ const AppContent: React.FC = () => {
   // State for onboarding and app status
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [shouldStartWithRegister, setShouldStartWithRegister] = useState(false);
   const [i18nInitialized, setI18nInitialized] = useState(false);
   const [backendStatus, setBackendStatus] = useState({
     isHealthy: true,
@@ -157,10 +158,12 @@ const AppContent: React.FC = () => {
       i18nInstance.changeLanguage(preferences.preferredLanguage);
       setShowOnboarding(false);
       setOnboardingCompleted(true);
+      setShouldStartWithRegister(true);
     } catch (error) {
       console.error('Error saving onboarding completion:', error);
       setShowOnboarding(false);
       setOnboardingCompleted(true);
+      setShouldStartWithRegister(true);
     }
   };
 
@@ -244,6 +247,7 @@ const AppContent: React.FC = () => {
       <>
         <AuthFlowComponent 
           onNotification={setNotification}
+          initialMode={shouldStartWithRegister ? 'register' : 'welcome'}
         />
         <StatusBar style={isDarkMode ? "light" : "dark"} />
         <NotificationModal
@@ -274,14 +278,32 @@ const AppContent: React.FC = () => {
   );
 };
 
-export default function App() {
+const AppWithProviders: React.FC = () => {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <AppContent />
+          <ThemeSync />
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
+};
+
+const ThemeSync: React.FC = () => {
+  const { user } = useAuth();
+  const { setThemeMode } = useTheme();
+  
+  // Sync theme when user data changes
+  React.useEffect(() => {
+    if (user?.themeMode) {
+      setThemeMode(user.themeMode);
+    }
+  }, [user?.themeMode, setThemeMode]);
+  
+  return <AppContent />;
+};
+
+export default function App() {
+  return <AppWithProviders />;
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -21,6 +22,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 export const MainTabNavigator: React.FC = () => {
   const { t } = useTranslation();
   const { colors, isHighContrast } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const handleTabPress = () => {
     HapticService.navigate();
@@ -70,9 +72,9 @@ export const MainTabNavigator: React.FC = () => {
           backgroundColor: Platform.OS === 'ios' ? colors.surface + 'F5' : colors.surface,
           borderTopWidth: Platform.OS === 'ios' ? 0.5 : (isHighContrast ? 2 : 1),
           borderTopColor: Platform.OS === 'ios' ? colors.border + '80' : (isHighContrast ? colors.text : colors.border),
-          paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+          paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 16 : 20),
           paddingTop: Platform.OS === 'ios' ? 8 : 12,
-          height: Platform.OS === 'ios' ? 88 : 76,
+          height: Platform.OS === 'ios' ? 56 + Math.max(insets.bottom, 32) : 76,
           shadowColor: colors.shadow || '#000',
           shadowOffset: { width: 0, height: Platform.OS === 'ios' ? -1 : -2 },
           shadowOpacity: Platform.OS === 'ios' ? 0.05 : 0.1,
