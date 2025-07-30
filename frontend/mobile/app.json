@@ -7,7 +7,16 @@
     "privacy": "public",
     "primaryColor": "#16A34A",
     "category": "Food & Drink",
-    "keywords": ["food", "recipes", "cooking", "AI", "ingredients", "fridge", "meal planning", "food recognition"],
+    "keywords": [
+      "food",
+      "recipes",
+      "cooking",
+      "AI",
+      "ingredients",
+      "fridge",
+      "meal planning",
+      "food recognition"
+    ],
     "orientation": "portrait",
     "contentRating": {
       "rating": "13+",
@@ -66,7 +75,10 @@
             "scheme": "https",
             "host": "fridgewiseai.com"
           },
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -95,8 +107,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-eas-project-id"
+        "projectId": "443e86bf-9639-46cb-bd76-d75955ae97ce"
       }
-    }
+    },
+    "owner": "lilwesyy"
   }
 }
