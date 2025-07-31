@@ -23,6 +23,10 @@ on:
       - 'frontend/web/next.config.ts'
       - 'frontend/web/tailwind.config.js'
       - 'frontend/web/Dockerfile'
+    paths-ignore:
+      - 'frontend/web/README.md'
+      - 'frontend/web/deploy*.sh'
+      - 'frontend/web/.htaccess'
 
 env:
   REGISTRY: ghcr.io
@@ -100,13 +104,3 @@ jobs:
           docker image prune -f
           
           echo "✅ FridgeWise Landing Page deployed successfully!"
-
-    - name: Notify deployment status
-      if: always()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        channel: '#deployments'
-        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
