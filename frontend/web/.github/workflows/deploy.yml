@@ -1,0 +1,112 @@
+name: Deploy FridgeWise Landing Page
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'frontend/web/src/**'
+      - 'frontend/web/public/**'
+      - 'frontend/web/package*.json'
+      - 'frontend/web/next.config.ts'
+      - 'frontend/web/tailwind.config.js'
+      - 'frontend/web/Dockerfile'
+    paths-ignore:
+      - 'frontend/web/README.md'
+      - 'frontend/web/deploy*.sh'
+      - 'frontend/web/.htaccess'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'frontend/web/src/**'
+      - 'frontend/web/public/**'
+      - 'frontend/web/package*.json'
+      - 'frontend/web/next.config.ts'
+      - 'frontend/web/tailwind.config.js'
+      - 'frontend/web/Dockerfile'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: fridgewise-landing
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend/web
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Deploy to server
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          # Login to GitHub Container Registry
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # Pull latest image
+          docker pull ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          
+          # Stop and remove old container
+          docker stop fridgewise-landing || true
+          docker rm fridgewise-landing || true
+          
+          # Run new container
+          docker run -d \
+            --name fridgewise-landing \
+            --restart unless-stopped \
+            -p 3000:3000 \
+            -e NODE_ENV=production \
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          
+          # Clean up old images
+          docker image prune -f
+          
+          echo "✅ FridgeWise Landing Page deployed successfully!"
+
+    - name: Notify deployment status
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
