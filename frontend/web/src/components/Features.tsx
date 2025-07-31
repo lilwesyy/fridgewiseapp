@@ -6,7 +6,7 @@ import { IoPhonePortrait, IoRestaurant, IoTime, IoFitness, IoStatsChart, IoLeaf,
 const features = [
   {
     icon: IoPhonePortrait,
-    title: 'Scansione AI Avanzata',
+    title: 'Scansione AI Acccvanzata',
     description: 'Riconosce automaticamente gli ingredienti nel tuo frigo con precisione del 95%',
     color: 'from-blue-500 to-blue-600'
   },
