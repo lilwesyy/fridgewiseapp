@@ -106,16 +106,34 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
       // Fetch recipes that are cooked but not yet approved/rejected
       // This should include all recipes with cookedAt but no approval status
       let response = await apiService.get('/api/recipe/admin/cooked-pending');
+      
+      console.log('🔍 RecipeApprovalModal - Response from cooked-pending:', {
+        success: response.success,
+        dataExists: !!response.data,
+        recipesCount: response.data?.recipes?.length || 0,
+        fullResponse: response
+      });
 
       if (response.success) {
-        setPendingRecipes(response.data?.recipes || []);
+        const recipes = response.data?.recipes || [];
+        console.log('✅ RecipeApprovalModal - Setting recipes:', recipes.length, 'recipes');
+        setPendingRecipes(recipes);
       } else {
         // Fallback to old endpoint if new one doesn't exist yet
         console.warn('Cooked-pending endpoint not available, falling back to pending endpoint');
         const fallbackResponse = await apiService.get('/api/recipe/admin/pending');
         
+        console.log('🔍 RecipeApprovalModal - Fallback response from pending:', {
+          success: fallbackResponse.success,
+          dataExists: !!fallbackResponse.data,
+          recipesCount: fallbackResponse.data?.recipes?.length || 0,
+          fullResponse: fallbackResponse
+        });
+        
         if (fallbackResponse.success) {
-          setPendingRecipes(fallbackResponse.data?.recipes || []);
+          const recipes = fallbackResponse.data?.recipes || [];
+          console.log('✅ RecipeApprovalModal - Setting fallback recipes:', recipes.length, 'recipes');
+          setPendingRecipes(recipes);
         } else {
           setNotification({
             visible: true,

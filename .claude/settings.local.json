@@ -41,7 +41,8 @@
       "Bash(docker stop:*)",
       "Bash(docker rm:*)",
       "Bash(npx expo install:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

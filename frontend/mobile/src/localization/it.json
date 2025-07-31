@@ -633,6 +633,9 @@
     "themeDarkDesc": "Usa sempre tema scuro",
     "dataStorage": "Dati e Archiviazione",
     "clearCache": "Cancella Cache",
+    "clearCacheDesc": "Libera spazio di archiviazione cancellando i dati temporanei",
+    "clearCacheConfirm": "Cancella",  
+    "clearCacheMessage": "Sei sicuro di voler cancellare tutti i dati temporanei? Questa azione non può essere annullata.",
     "exportData": "Esporta i Miei Dati",
     "featuresComingSoon": "Alcune funzionalità arriveranno nei prossimi aggiornamenti",
     "selectedRestrictions": "Restrizioni Selezionate",
@@ -666,7 +669,8 @@
       "pickError": "Selezione immagine fallita. Riprova.",
       "deleteTitle": "Elimina Avatar",
       "deleteMessage": "Sei sicuro di voler rimuovere la tua foto del profilo?",
-      "deleteError": "Eliminazione avatar fallita. Riprova."
+      "deleteError": "Eliminazione avatar fallita. Riprova.",
+      "gallery": "Galleria"
     },
     "dietary": {
       "vegetarian": "Vegetariano",

@@ -875,9 +875,9 @@ export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse
     // Update completion count
     recipe.completionCount = (recipe.completionCount || 0) + 1;
     
-    // When a recipe is cooked, request approval to make it public
-    // But only if there isn't already a similar recipe approved or pending
-    if (recipe.status === 'private' && recipe.cookedAt) {
+    // When a recipe is cooked, automatically request approval to make it public
+    // But only if it's not already approved or pending, and if there isn't already a similar recipe
+    if (recipe.cookedAt && recipe.status !== 'approved' && recipe.status !== 'pending_approval') {
       // Check if there's already a recipe with the same title that's approved or pending
       const existingSimilarRecipe = await Recipe.findOne({
         title: recipe.title,
@@ -889,6 +889,9 @@ export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse
       // Only request approval if no similar recipe exists
       if (!existingSimilarRecipe) {
         recipe.status = 'pending_approval';
+        console.log(`🔄 Recipe "${recipe.title}" set to pending_approval after cooking`);
+      } else {
+        console.log(`⚠️ Recipe "${recipe.title}" not set to pending_approval - similar recipe already exists`);
       }
     }
     

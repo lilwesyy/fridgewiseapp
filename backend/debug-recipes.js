@@ -16,10 +16,7 @@ const Recipe = mongoose.model('Recipe', recipeSchema);
 async function debugRecipes() {
   try {
     // Connetti al database MongoDB
-    await mongoose.connect('mongodb://localhost:27017/fridgewise', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect('mongodb://fridgewiseai_user:fridgewiseai_password@localhost:27017/fridgewiseai');
     
     console.log('🔌 Connesso al database MongoDB');
     console.log('====================================');
@@ -38,10 +35,10 @@ async function debugRecipes() {
     const publicRecipes = await Recipe.countDocuments({ isPublic: true });
     console.log(`🌍 RICETTE PUBBLICHE: ${publicRecipes}`);
     
-    // 4. Conta ricette con approval status
-    const pendingApproval = await Recipe.countDocuments({ approvalStatus: 'pending' });
-    const approvedRecipes = await Recipe.countDocuments({ approvalStatus: 'approved' });
-    const rejectedRecipes = await Recipe.countDocuments({ approvalStatus: 'rejected' });
+    // 4. Conta ricette con status (non approvalStatus)
+    const pendingApproval = await Recipe.countDocuments({ status: 'pending_approval' });
+    const approvedRecipes = await Recipe.countDocuments({ status: 'approved' });
+    const rejectedRecipes = await Recipe.countDocuments({ status: 'rejected' });
     
     console.log(`⏳ RICETTE IN ATTESA DI APPROVAZIONE: ${pendingApproval}`);
     console.log(`✅ RICETTE APPROVATE: ${approvedRecipes}`);
@@ -67,17 +64,17 @@ async function debugRecipes() {
     const cookedRecipesList = await Recipe.find({ 
       cookedAt: { $exists: true, $ne: null } 
     })
-    .populate('userId', 'name email')
-    .select('title userId cookedAt isPublic approvalStatus createdAt')
+    .select('title userId cookedAt isPublic approvalStatus createdAt status')
     .sort({ cookedAt: -1 })
     .limit(10);
     
     cookedRecipesList.forEach((recipe, index) => {
       console.log(`\n${index + 1}. "${recipe.title}"`);
-      console.log(`   👤 Utente: ${recipe.userId?.name || 'N/A'} (${recipe.userId?.email || 'N/A'})`);
+      console.log(`   👤 User ID: ${recipe.userId || 'N/A'}`);
       console.log(`   🍳 Cucinata il: ${recipe.cookedAt?.toISOString() || 'N/A'}`);
       console.log(`   🌍 Pubblica: ${recipe.isPublic ? 'Sì' : 'No'}`);
       console.log(`   📋 Stato approvazione: ${recipe.approvalStatus || 'Non impostato'}`);
+      console.log(`   🔧 Status: ${recipe.status || 'Non impostato'}`);
       console.log(`   📅 Creata il: ${recipe.createdAt?.toISOString() || 'N/A'}`);
     });
     
