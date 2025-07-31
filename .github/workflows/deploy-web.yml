@@ -10,10 +10,9 @@ on:
       - 'frontend/web/next.config.ts'
       - 'frontend/web/tailwind.config.js'
       - 'frontend/web/Dockerfile'
-    paths-ignore:
-      - 'frontend/web/README.md'
-      - 'frontend/web/deploy*.sh'
-      - 'frontend/web/.htaccess'
+      - 'frontend/web/docker-compose.yml'
+      - 'frontend/web/nginx.conf'
+      - 'frontend/web/vercel.json'
   pull_request:
     branches: [ main, master ]
     paths:
@@ -23,10 +22,9 @@ on:
       - 'frontend/web/next.config.ts'
       - 'frontend/web/tailwind.config.js'
       - 'frontend/web/Dockerfile'
-    paths-ignore:
-      - 'frontend/web/README.md'
-      - 'frontend/web/deploy*.sh'
-      - 'frontend/web/.htaccess'
+      - 'frontend/web/docker-compose.yml'
+      - 'frontend/web/nginx.conf'
+      - 'frontend/web/vercel.json'
 
 env:
   REGISTRY: ghcr.io
