@@ -1,17 +1,15 @@
 #!/bin/bash
 
 # Configurazione
-SERVER_USER="your-username"
-SERVER_HOST="your-server.com"
+SERVER_USER="mirco"
+SERVER_HOST="fridgewiseai.com"
 IMAGE_NAME="fridgewise-landing"
 
-echo "🐳 Deploying FridgeWise Landing Page with Docker..."
+echo "🐳 Deploying FridgeWiseAI Landing Page with Docker..."
 
 # Build Docker image
 echo "🔨 Building Docker image..."
-docker build -t $IMAGE_NAME .
-
-if [ $? -ne 0 ]; then
+if ! docker build -t $IMAGE_NAME .; then
     echo "❌ Docker build failed!"
     exit 1
 fi
@@ -56,4 +54,4 @@ EOF
 rm fridgewise-landing.tar.gz
 
 echo "🎉 FridgeWise landing page deployed with Docker!"
-echo "🔗 Check your site at: https://your-domain.com"
+echo "🔗 Check your site at: https://fridgewiseai.com"

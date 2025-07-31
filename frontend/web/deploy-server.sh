@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Configurazione
-SERVER_USER="your-username"
-SERVER_HOST="your-server.com"
+SERVER_USER="mirco"
+SERVER_HOST="fridgewiseai.com"
 SERVER_PATH="/var/www/fridgewise"
 PM2_APP_NAME="fridgewise-landing"
 
