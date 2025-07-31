@@ -71,7 +71,7 @@ export default function Download() {
                 <span className="block">la tua cucina?</span>
               </h2>
               <p className="text-xl text-green-100 leading-relaxed">
-                Scarica FridgeWise oggi e inizia a cucinare in modo più intelligente, 
+                Scarica Adessssosososso FridgeWise oggi e inizia a cucinare in modo più intelligente, 
                 sostenibile e delizioso.
               </p>
             </div>
