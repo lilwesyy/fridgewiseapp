@@ -54,7 +54,7 @@ export const handleRateLimitError = (
   const dailyLimitInfo = error.dailyLimitInfo;
   
   let message = t ? t('rateLimit.tooManyRequests') : 'You have made too many requests. Please wait before trying again.';
-  let retryAfter = 60; // default 60 seconds
+  let retryAfter = error.retryAfter || 60; // Use retryAfter from error or default 60 seconds
   let isDailyLimit = false;
 
   if (dailyLimitInfo) {
@@ -83,11 +83,16 @@ export const handleRateLimitError = (
   } else if (rateLimitInfo) {
     // Handle rate limit (per minute)
     const { limit, retryAfter: apiRetryAfter } = rateLimitInfo;
-    retryAfter = apiRetryAfter || 60;
+    retryAfter = apiRetryAfter || retryAfter;
     
     message = t ? 
       t('rateLimit.rateLimitMessage', { limit, retryAfter }) : 
       `You can make ${limit} requests per minute. Please wait ${retryAfter} seconds before trying again.`;
+  } else {
+    // Fallback when rateLimitInfo is not available but we know it's a rate limit
+    message = t ? 
+      t('rateLimit.genericRateLimit', `You are making requests too quickly. Please wait ${retryAfter} seconds before trying again.`) : 
+      `You are making requests too quickly. Please wait ${retryAfter} seconds before trying again.`;
   }
 
   const buttons = onRetry && !isDailyLimit ? [

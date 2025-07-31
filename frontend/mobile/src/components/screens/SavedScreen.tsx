@@ -110,13 +110,13 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
   const headerOpacity = useSharedValue(0);
   const headerScale = useSharedValue(0.8);
   const headerTranslateY = useSharedValue(-30);
-  
+
   const searchOpacity = useSharedValue(0);
   const searchTranslateY = useSharedValue(20);
-  
+
   const filtersOpacity = useSharedValue(0);
   const filtersTranslateX = useSharedValue(-50);
-  
+
   const listOpacity = useSharedValue(0);
   const listTranslateY = useSharedValue(40);
 
@@ -126,15 +126,15 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
     headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
     headerScale.value = withSpring(1, { damping: 15, stiffness: 100 });
     headerTranslateY.value = withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) });
-    
+
     // Search bar animation
     searchOpacity.value = withDelay(150, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     searchTranslateY.value = withDelay(150, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
-    
+
     // Filters animation
     filtersOpacity.value = withDelay(300, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     filtersTranslateX.value = withDelay(300, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
-    
+
     // List animation
     listOpacity.value = withDelay(450, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
     listTranslateY.value = withDelay(450, withTiming(0, { duration: ANIMATION_DURATIONS.STANDARD, easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) }));
@@ -319,10 +319,10 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
+      <Animated.View style={[styles.header, headerAnimatedStyle, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>{t('saved.title')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
-        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+        <Animated.View style={[styles.searchBarContainer, searchAnimatedStyle, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <MappedIcon icon="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text, backgroundColor: 'transparent' }]}
@@ -356,7 +356,7 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
                 fontWeight: '500',
               }}>{t('common.all')}</Text>
             </TouchableOpacity>
-            {['easy','medium','hard'].map(diff => (
+            {['easy', 'medium', 'hard'].map(diff => (
               <TouchableOpacity activeOpacity={0.7}
                 key={diff}
                 style={{
@@ -737,14 +737,14 @@ const getStyles = (colors: any, insets: { top: number; bottom: number }) => Styl
 
 
 // Rimuovo SwipeableRow e uso solo la card
-const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({ 
-  item, 
-  index, 
-  onPress, 
-  onDelete, 
-  resetTrigger, 
-  t, 
-  formatDate, 
+const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
+  item,
+  index,
+  onPress,
+  onDelete,
+  resetTrigger,
+  t,
+  formatDate,
   getDifficultyColor,
   colors
 }) => {
@@ -769,7 +769,8 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
 
   return (
     <Animated.View style={cardAnimatedStyle}>
-      <TouchableOpacity activeOpacity={0.7}
+      <TouchableOpacity
+        activeOpacity={0.7}
         style={{
           backgroundColor: colors.surface,
           borderRadius: 12,
@@ -782,7 +783,6 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
           elevation: 2,
         }}
         onPress={onPress}
-        activeOpacity={0.7}
       >
         <View style={{ flexDirection: 'row', marginBottom: 12 }}>
           <View style={{ flex: 1 }}>
@@ -793,9 +793,9 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
                 </Text>
                 {/* Badge per ricette pubbliche */}
                 {item.isPublicRecipe && (
-                  <View style={{ 
-                    flexDirection: 'row', 
-                    alignItems: 'center', 
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
                     backgroundColor: colors.primary + '15',
                     borderColor: colors.primary,
                     borderWidth: 1,
@@ -835,9 +835,9 @@ const SavedRecipeItem: React.FC<SavedRecipeItemProps & { colors: any }> = ({
 
             {/* Indicatore "già cucinato" se disponibile */}
             {item.cookedAt && (
-              <View style={{ 
-                flexDirection: 'row', 
-                alignItems: 'center', 
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
                 backgroundColor: colors.success + '15',
                 borderColor: colors.success,
                 borderWidth: 1,

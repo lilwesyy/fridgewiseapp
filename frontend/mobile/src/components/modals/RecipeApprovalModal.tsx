@@ -24,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, EASING_CURVES } from '../../constants/animations';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { apiService } from '../../services/apiService';
 
 interface PendingRecipe {
   _id: string;
@@ -76,8 +77,6 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
   const headerOpacity = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
-
   useEffect(() => {
     if (visible) {
       fetchPendingRecipes();
@@ -104,33 +103,35 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
   const fetchPendingRecipes = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/recipe/admin/pending`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Fetch recipes that are cooked but not yet approved/rejected
+      // This should include all recipes with cookedAt but no approval status
+      let response = await apiService.get('/api/recipe/admin/cooked-pending');
 
-      const result = await response.json();
-
-      if (result.success) {
-        setPendingRecipes(result.data.recipes);
+      if (response.success) {
+        setPendingRecipes(response.data?.recipes || []);
       } else {
-        setNotification({
-          visible: true,
-          type: 'error',
-          title: t('common.error', 'Error'),
-          message: result.error || 'Failed to fetch pending recipes',
-        });
+        // Fallback to old endpoint if new one doesn't exist yet
+        console.warn('Cooked-pending endpoint not available, falling back to pending endpoint');
+        const fallbackResponse = await apiService.get('/api/recipe/admin/pending');
+        
+        if (fallbackResponse.success) {
+          setPendingRecipes(fallbackResponse.data?.recipes || []);
+        } else {
+          setNotification({
+            visible: true,
+            type: 'error',
+            title: t('common.error', 'Error'),
+            message: fallbackResponse.error || 'Failed to fetch pending recipes',
+          });
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching pending recipes:', error);
       setNotification({
         visible: true,
         type: 'error',
         title: t('common.error', 'Error'),
-        message: 'Network error. Please try again.',
+        message: error.message || 'Network error. Please try again.',
       });
     } finally {
       setIsLoading(false);
@@ -146,17 +147,9 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
   const handleApprove = async (recipeId: string) => {
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_URL}/api/recipe/admin/approve/${recipeId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiService.post(`/api/recipe/admin/approve/${recipeId}`);
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (response.success) {
         setNotification({
           visible: true,
           type: 'success',
@@ -171,16 +164,16 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
           visible: true,
           type: 'error',
           title: t('common.error', 'Error'),
-          message: result.error || 'Failed to approve recipe',
+          message: response.error || 'Failed to approve recipe',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error approving recipe:', error);
       setNotification({
         visible: true,
         type: 'error',
         title: t('common.error', 'Error'),
-        message: 'Network error. Please try again.',
+        message: error.message || 'Network error. Please try again.',
       });
     } finally {
       setIsProcessing(false);
@@ -200,20 +193,11 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
 
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_URL}/api/recipe/admin/reject/${selectedRecipe._id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reason: rejectReason.trim(),
-        }),
+      const response = await apiService.post(`/api/recipe/admin/reject/${selectedRecipe._id}`, {
+        reason: rejectReason.trim(),
       });
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (response.success) {
         setNotification({
           visible: true,
           type: 'success',
@@ -233,16 +217,16 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
           visible: true,
           type: 'error',
           title: t('common.error', 'Error'),
-          message: result.error || 'Failed to reject recipe',
+          message: response.error || 'Failed to reject recipe',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error rejecting recipe:', error);
       setNotification({
         visible: true,
         type: 'error',
         title: t('common.error', 'Error'),
-        message: 'Network error. Please try again.',
+        message: error.message || 'Network error. Please try again.',
       });
     } finally {
       setIsProcessing(false);
@@ -295,7 +279,7 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
               </Text>
             </TouchableOpacity>
             <Text style={styles.title}>
-              {showPreviewModal ? t('admin.recipePreview', 'Recipe Preview') : t('admin.pendingRecipes', 'Pending Recipes')}
+              {showPreviewModal ? t('admin.recipePreview', 'Recipe Preview') : t('admin.cookedRecipesApproval', 'Cooked Recipes - Approval')}
             </Text>
             <View style={styles.headerRight}>
               {!showPreviewModal && (
@@ -444,7 +428,7 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={styles.loadingText}>
-                  {t('admin.loadingRecipes', 'Loading pending recipes...')}
+                  {t('admin.loadingCookedRecipes', 'Loading cooked recipes for approval...')}
                 </Text>
               </View>
             ) : (
@@ -463,10 +447,10 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
                   <View style={styles.emptyContainer}>
                     <Ionicons name="checkmark-circle" size={64} color={colors.success} />
                     <Text style={styles.emptyTitle}>
-                      {t('admin.noPendingRecipes', 'No Pending Recipes')}
+                      {t('admin.noCookedRecipesPending', 'No Cooked Recipes Pending')}
                     </Text>
                     <Text style={styles.emptyMessage}>
-                      {t('admin.allRecipesReviewed', 'All recipes have been reviewed!')}
+                      {t('admin.allCookedRecipesReviewed', 'All cooked recipes have been reviewed! Users need to cook recipes to submit them for public approval.')}
                     </Text>
                   </View>
                 ) : (

@@ -51,7 +51,7 @@ class ExpoSecurityService {
   /**
    * Make a secure fetch request with additional security validations
    */
-  async secureFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  async secureFetch(url: string, options: RequestInit = {}, timeout: number = 60000): Promise<Response> {
     try {
       // Perform security validations
       await this.validateRequest(url, options);
@@ -60,7 +60,7 @@ class ExpoSecurityService {
       const secureOptions = this.addSecurityHeaders(options);
 
       // Make the request with timeout
-      const response = await this.fetchWithTimeout(url, secureOptions, 30000);
+      const response = await this.fetchWithTimeout(url, secureOptions, timeout);
 
       // Validate response
       await this.validateResponse(response, url);
@@ -107,6 +107,8 @@ class ExpoSecurityService {
       // Add security headers
       'X-Requested-With': 'XMLHttpRequest',
       'Cache-Control': 'no-cache',
+      // Add ngrok bypass header to skip warning page
+      'ngrok-skip-browser-warning': 'true',
     };
 
     return {

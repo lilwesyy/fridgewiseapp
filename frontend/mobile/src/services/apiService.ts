@@ -123,7 +123,8 @@ class ApiService {
 
   async request<T = any>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    timeout?: number
   ): Promise<ApiResponse<T>> {
     try {
       // Check network connectivity
@@ -169,7 +170,7 @@ class ApiService {
         }
       }
 
-      const response = await expoSecurityService.secureFetch(requestConfig.url, requestConfig.options);
+      const response = await expoSecurityService.secureFetch(requestConfig.url, requestConfig.options, timeout);
 
       // Handle 401 Unauthorized
       if (response.status === 401) {
@@ -180,7 +181,22 @@ class ApiService {
         };
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        const responseText = await response.text();
+        if (!responseText) {
+          data = {};
+        } else if (responseText.trim().startsWith('<')) {
+          // Response is HTML (likely an error page)
+          console.error('🔴 Server returned HTML instead of JSON:', responseText.substring(0, 200));
+          throw new Error('Server returned HTML instead of JSON. This usually indicates a server error or authentication issue.');
+        } else {
+          data = JSON.parse(responseText);
+        }
+      } catch (parseError: any) {
+        console.error('🔴 JSON parsing failed:', parseError.message);
+        throw new Error(`Failed to parse server response: ${parseError.message}`);
+      }
 
       // Apply response interceptors
       let processedData = data;
@@ -232,11 +248,11 @@ class ApiService {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  async post<T = any>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T = any>(endpoint: string, data?: any, timeout?: number): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
-    });
+    }, timeout);
   }
 
   async put<T = any>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
@@ -281,7 +297,22 @@ class ApiService {
         };
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        const responseText = await response.text();
+        if (!responseText) {
+          data = {};
+        } else if (responseText.trim().startsWith('<')) {
+          // Response is HTML (likely an error page)
+          console.error('🔴 Server returned HTML instead of JSON:', responseText.substring(0, 200));
+          throw new Error('Server returned HTML instead of JSON. This usually indicates a server error or authentication issue.');
+        } else {
+          data = JSON.parse(responseText);
+        }
+      } catch (parseError: any) {
+        console.error('🔴 JSON parsing failed:', parseError.message);
+        throw new Error(`Failed to parse server response: ${parseError.message}`);
+      }
 
       if (!response.ok) {
         return {

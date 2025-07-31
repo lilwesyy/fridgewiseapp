@@ -29,6 +29,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS } from '../../constants/animations';
 import { handleRateLimitError, extractErrorFromResponse } from '../../utils/rateLimitHandler';
+import { apiService } from '../../services/apiService';
 import { DailyUsageIndicator } from '../ui/DailyUsageIndicator';
 import { useDailyUsage } from '../../hooks/useDailyUsage';
 
@@ -66,7 +67,8 @@ interface IngredientItemProps {
 
 const IngredientItem: React.FC<IngredientItemProps> = ({ item, index, onRemove, language }) => {
   const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const itemOpacity = useSharedValue(0);
   const itemScale = useSharedValue(0.8);
   const itemTranslateY = useSharedValue(20);
@@ -197,8 +199,6 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
     transform: [{ translateY: footerTranslateY.value }],
   }));
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
-
   const searchUSDAIngredients = async (query: string) => {
     if (query.length < 2) {
       setSearchResults([]);
@@ -208,12 +208,11 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
 
     setIsSearching(true);
     try {
-      const response = await fetch(`${API_URL}/api/analysis/search-ingredients?query=${encodeURIComponent(query)}&limit=10`);
-      const data = await response.json();
+      const response = await apiService.get(`/api/analysis/search-ingredients?query=${encodeURIComponent(query)}&limit=10`);
 
-      if (data.success) {
-        setSearchResults(data.data.ingredients);
-        setShowSuggestions(data.data.ingredients.length > 0);
+      if (response.success && response.data) {
+        setSearchResults(response.data.ingredients || []);
+        setShowSuggestions((response.data.ingredients || []).length > 0);
       } else {
         setSearchResults([]);
         setShowSuggestions(false);
@@ -324,28 +323,39 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/recipe/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ingredients: validIngredients,
-          language: i18n.language,
-          dietaryRestrictions: user?.dietaryRestrictions || [],
-          portions: parseInt(preferences.portions),
-          difficulty: preferences.difficulty,
-          maxTime: parseInt(preferences.maxTime),
-        }),
-      });
+      const response = await apiService.post('/api/recipe/generate', {
+        ingredients: validIngredients,
+        language: i18n.language,
+        dietaryRestrictions: user?.dietaryRestrictions || [],
+        portions: parseInt(preferences.portions),
+        difficulty: preferences.difficulty,
+        maxTime: parseInt(preferences.maxTime),
+      }, 90000); // 90 second timeout for AI recipe generation
 
-      if (!response.ok) {
-        const errorData = await extractErrorFromResponse(response);
-        throw errorData;
+      if (!response.success) {
+        // Create a proper error object with the response data
+        let status = 500; // Default to server error
+        
+        // Check for rate limit indicators
+        if (response.error && (
+          response.error.includes('Too many requests') ||
+          response.error.includes('rate limit') ||
+          response.error.includes('429')
+        )) {
+          status = 429;
+        }
+        
+        const error = {
+          status,
+          message: response.error || 'Recipe generation failed',
+          error: response.error,
+          retryAfter: 45, // Default retry after 45 seconds for rate limits
+          ...response
+        };
+        throw error;
       }
 
-      const data = await response.json();
+      const data = response;
       HapticService.recipeGenerated();
       onGenerateRecipe(data.data);
 

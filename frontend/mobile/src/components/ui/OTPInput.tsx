@@ -120,8 +120,8 @@ export const OTPInput: React.FC<OTPInputProps> = ({
             isHighContrast && styles.inputHighContrast
           ]}
           accessible={true}
-          accessibilityLabel={t('accessibility.digitPosition', { index: index + 1, length }, `Digit ${index + 1} of ${length}`)}
-          accessibilityHint={digit ? t('accessibility.containsDigit', { digit }, `Contains digit ${digit}`) : t('accessibility.emptyField', 'Empty field')}
+          accessibilityLabel={t('accessibility.digitPosition', `Digit ${index + 1} of ${length}`, { index: index + 1, length })}
+          accessibilityHint={digit ? t('accessibility.containsDigit', `Contains digit ${digit}`, { digit }) : t('accessibility.emptyField', 'Empty field')}
           accessibilityRole="text"
           value={digit}
           onChangeText={(text) => handleChangeText(text, index)}

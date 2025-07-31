@@ -184,6 +184,8 @@ interface RecipeItemProps {
 
 const RecipeItem: React.FC<RecipeItemProps> = (props) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(colors, insets);
   const cardOpacity = useSharedValue(0);
 
   // Helper function to determine if recipe is public (should show rating)
