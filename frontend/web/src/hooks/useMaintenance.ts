@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MAINTENANCE_CONFIG, isMaintenanceModeEnabled, setMaintenanceMode } from '@/config/maintenance';
+import { MAINTENANCE_CONFIG } from '@/config/maintenance';
 
 export function useMaintenance() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

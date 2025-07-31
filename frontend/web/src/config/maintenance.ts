@@ -28,21 +28,3 @@ export const MAINTENANCE_CONFIG = {
   }
 };
 
-// Funzione per controllare se siamo in modalità manutenzione
-export const isMaintenanceModeEnabled = (): boolean => {
-  // La modalità manutenzione è sempre attiva di default
-  // Solo chi si autentica può accedere al sito
-  return true;
-};
-
-// Funzione per abilitare/disabilitare la modalità manutenzione
-export const setMaintenanceMode = (enabled: boolean): void => {
-  if (typeof window !== 'undefined') {
-    if (enabled) {
-      localStorage.setItem('maintenance_mode_enabled', 'true');
-      localStorage.removeItem(MAINTENANCE_CONFIG.STORAGE_KEY);
-    } else {
-      localStorage.removeItem('maintenance_mode_enabled');
-    }
-  }
-};
