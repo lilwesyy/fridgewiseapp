@@ -4,16 +4,8 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Install dependencies
-COPY package.json ./
-COPY package-lock.json ./
-
-# Verify files are copied and install dependencies
-RUN ls -la && \
-    if [ -f package-lock.json ]; then \
-        echo "Using npm ci with lock file" && npm ci; \
-    else \
-        echo "No lock file found, using npm install" && npm install; \
-    fi
+COPY package*.json ./
+RUN npm ci
 
 # Copy source code
 COPY . .
