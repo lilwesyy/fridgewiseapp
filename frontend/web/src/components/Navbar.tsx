@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { IoMenu, IoClose, IoPhonePortrait, IoPlay } from 'react-icons/io5';
+import { IoMenu, IoClose, IoPhonePortrait, IoPlay, IoLogOut } from 'react-icons/io5';
+import { useMaintenance } from '@/hooks/useMaintenance';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { logout } = useMaintenance();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -86,6 +88,14 @@ export default function Navbar() {
               <IoPhonePortrait className="text-lg" />
               Scarica App
             </button>
+            <button 
+              onClick={logout}
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium transition-colors duration-300"
+              title="Logout (torna alla manutenzione)"
+            >
+              <IoLogOut className="text-lg" />
+              Logout
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -141,6 +151,13 @@ export default function Navbar() {
               <button className="flex items-center gap-2 w-full justify-center bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300">
                 <IoPhonePortrait className="text-lg" />
                 Scarica App
+              </button>
+              <button 
+                onClick={logout}
+                className="flex items-center gap-2 w-full justify-center text-red-600 hover:text-red-700 font-medium py-2 transition-colors duration-300"
+              >
+                <IoLogOut className="text-lg" />
+                Logout
               </button>
             </div>
           </div>

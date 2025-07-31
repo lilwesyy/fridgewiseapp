@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import MaintenanceWrapper from "@/components/MaintenanceWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -63,7 +64,9 @@ export default function RootLayout({
   return (
     <html lang="it" className="scroll-smooth">
       <body className={`${inter.className} antialiased`}>
-        {children}
+        <MaintenanceWrapper>
+          {children}
+        </MaintenanceWrapper>
       </body>
     </html>
   );
