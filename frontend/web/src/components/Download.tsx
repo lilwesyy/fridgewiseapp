@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { IoPhonePortrait, IoCheckmarkCircle, IoRestaurant, IoLeaf, IoStar, IoHappy } from 'react-icons/io5';
+import { colors } from '@/config/theme';
 
 export default function Download() {
   const [isVisible, setIsVisible] = useState(false);
@@ -71,7 +72,7 @@ export default function Download() {
                 <span className="block">la tua cucina?</span>
               </h2>
               <p className="text-xl text-green-100 leading-relaxed">
-                Scarica Adesso FridgeWise oggi e inizia a cucinare in modo più intelligente, 
+                Scarica Adesso FridgeWiseAI oggi e inizia a cucinare in modo più intelligente, 
                 sostenibile e delizioso.
               </p>
             </div>
@@ -93,10 +94,42 @@ export default function Download() {
             </div>
 
             {/* Download Buttons */}
-            <div className="space-y-4">
-              <button className="w-full bg-white text-green-600 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3">
-                <IoPhonePortrait className="text-2xl" />
-                Scarica per iOS
+            <div className="space-y-6">
+              <button className="group w-full px-8 py-5 rounded-2xl font-bold text-lg transition-all duration-500 transform hover:scale-105 flex items-center justify-center gap-3 relative overflow-hidden"
+                      style={{
+                        backgroundColor: colors.background.surface,
+                        color: colors.primary[600],
+                        boxShadow: `
+                          0 10px 30px -5px rgba(0, 0, 0, 0.3),
+                          0 4px 6px -2px rgba(0, 0, 0, 0.1),
+                          inset 0 1px 0 0 rgba(255, 255, 255, 0.1)
+                        `
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
+                        e.currentTarget.style.boxShadow = `
+                          0 20px 40px -10px rgba(0, 0, 0, 0.4),
+                          0 8px 16px -4px rgba(0, 0, 0, 0.2),
+                          inset 0 1px 0 0 rgba(255, 255, 255, 0.2)
+                        `;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = `
+                          0 10px 30px -5px rgba(0, 0, 0, 0.3),
+                          0 4px 6px -2px rgba(0, 0, 0, 0.1),
+                          inset 0 1px 0 0 rgba(255, 255, 255, 0.1)
+                        `;
+                      }}>
+                {/* Animated background */}
+                <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                     style={{ background: `linear-gradient(90deg, ${colors.primary[100]}, ${colors.primary[200]})` }}></div>
+                
+                <IoPhonePortrait className="text-3xl group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" />
+                <span className="group-hover:tracking-wide transition-all duration-300">Scarica per iOS</span>
+                
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-10 transform -skew-x-12 transition-all duration-1000 group-hover:translate-x-full"></div>
               </button>
               
               <div className="text-center">
@@ -104,26 +137,74 @@ export default function Download() {
                   Oppure ricevi il link via email
                 </p>
                 {!isSubmitted ? (
-                  <form onSubmit={handleEmailSubmit} className="flex gap-2">
+                  <form onSubmit={handleEmailSubmit} className="flex gap-3">
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="La tua email"
-                      className="flex-1 px-4 py-3 rounded-xl border-0 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white focus:outline-none"
+                      className="flex-1 px-5 py-4 rounded-xl border-0 text-lg font-medium transition-all duration-300 focus:scale-105"
+                      style={{
+                        backgroundColor: colors.background.surface,
+                        color: colors.text.primary,
+                        boxShadow: `
+                          0 4px 15px -3px rgba(0, 0, 0, 0.2),
+                          inset 0 1px 0 0 rgba(255, 255, 255, 0.1)
+                        `
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.boxShadow = `
+                          0 8px 25px -5px rgba(0, 0, 0, 0.3),
+                          0 0 0 3px ${colors.primary[200]}50,
+                          inset 0 1px 0 0 rgba(255, 255, 255, 0.2)
+                        `;
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.boxShadow = `
+                          0 4px 15px -3px rgba(0, 0, 0, 0.2),
+                          inset 0 1px 0 0 rgba(255, 255, 255, 0.1)
+                        `;
+                      }}
                       required
                     />
                     <button
                       type="submit"
-                      className="bg-green-800 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-900 transition-colors duration-300"
+                      className="group px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 relative overflow-hidden"
+                      style={{
+                        backgroundColor: colors.primary[700],
+                        color: colors.background.surface,
+                        boxShadow: `
+                          0 4px 15px -3px ${colors.primary[700]}50,
+                          inset 0 1px 0 0 rgba(255, 255, 255, 0.1)
+                        `
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.primary[800];
+                        e.currentTarget.style.transform = 'scale(1.05) translateY(-1px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.primary[700];
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
                     >
-                      Invia
+                      <span className="group-hover:tracking-wide transition-all duration-300">Invia</span>
+                      {/* Button shimmer */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 transition-all duration-700 group-hover:translate-x-full"></div>
                     </button>
                   </form>
                 ) : (
-                  <div className="bg-green-800/50 backdrop-blur-sm text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2">
-                    <IoCheckmarkCircle />
-                    Link inviato! Controlla la tua email
+                  <div className="px-8 py-4 rounded-xl flex items-center justify-center gap-3 transition-all duration-500 animate-pulse"
+                       style={{
+                         backgroundColor: colors.primary[700] + '80',
+                         color: colors.background.surface,
+                         backdropFilter: 'blur(10px)',
+                         boxShadow: `
+                           0 8px 25px -5px ${colors.primary[500]}40,
+                           inset 0 1px 0 0 rgba(255, 255, 255, 0.2)
+                         `
+                       }}>
+                    <IoCheckmarkCircle className="text-2xl animate-bounce" />
+                    <span className="font-bold text-lg">Link inviato! Controlla la tua email</span>
                   </div>
                 )}
               </div>
@@ -170,7 +251,7 @@ export default function Download() {
                           <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">
                             <IoRestaurant className="text-white" />
                           </div>
-                          <h3 className="text-xl font-bold text-gray-900">FridgeWise</h3>
+                          <h3 className="text-xl font-bold text-gray-900">FridgeWiseAI</h3>
                           <p className="text-sm text-gray-600">La tua cucina intelligente</p>
                         </div>
                         

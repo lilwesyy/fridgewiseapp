@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { IoPhonePortrait, IoRestaurant, IoTime, IoFitness, IoStatsChart, IoLeaf, IoSparkles } from 'react-icons/io5';
+import { colors } from '@/config/theme';
 
 const features = [
   {
@@ -73,16 +74,16 @@ export default function Features() {
   }, []);
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20" style={{ backgroundColor: colors.background.surface }}>
       <div className="container mx-auto px-6">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl lg:text-5xl font-bold mb-6" style={{ color: colors.text.primary }}>
             Tutto quello che ti serve per
-            <span className="text-green-600 block">cucinare meglio</span>
+            <span className="block" style={{ color: colors.primary[500] }}>cucinare meglio</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            FridgeWise combina intelligenza artificiale e design intuitivo per trasformare 
+          <p className="text-xl max-w-3xl mx-auto" style={{ color: colors.text.secondary }}>
+            FridgeWiseAI combina intelligenza artificiale e design intuitivo per trasformare 
             il modo in cui cucini e gestisci la tua cucina.
           </p>
         </div>
@@ -93,42 +94,102 @@ export default function Features() {
             <div
               key={index}
               ref={el => { featureRefs.current[index] = el; }}
-              className={`group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform ${
+              className={`group relative rounded-3xl p-8 transition-all duration-700 transform cursor-pointer ${
                 visibleFeatures[index] 
                   ? 'opacity-100 translate-y-0' 
-                  : 'opacity-0 translate-y-8'
-              } hover:-translate-y-2`}
-              style={{ transitionDelay: `${index * 100}ms` }}
+                  : 'opacity-0 translate-y-12'
+              } hover:-translate-y-3 hover:rotate-1`}
+              style={{ 
+                backgroundColor: colors.background.surface,
+                transitionDelay: `${index * 150}ms`,
+                boxShadow: `
+                  0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                  0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                  0 0 0 1px ${colors.primary[100]}20
+                `
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = `
+                  0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                  0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                  0 0 0 1px ${colors.primary[200]}40,
+                  inset 0 1px 0 0 rgba(255, 255, 255, 0.05)
+                `;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = `
+                  0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                  0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                  0 0 0 1px ${colors.primary[100]}20
+                `;
+              }}
             >
-              {/* Background Gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300`}></div>
+              {/* Animated Background Gradient */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-10 rounded-3xl transition-all duration-500"
+                   style={{ 
+                     background: `linear-gradient(135deg, ${colors.primary[100]}, ${colors.primary[200]})` 
+                   }}></div>
               
-              {/* Icon */}
-              <div className="relative mb-6">
-                <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center text-2xl text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+              {/* Floating Icon Container */}
+              <div className="relative mb-8">
+                <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden"
+                     style={{ 
+                       backgroundColor: colors.primary[500],
+                       color: colors.background.surface,
+                       boxShadow: `
+                         0 10px 25px -5px ${colors.primary[500]}40,
+                         0 4px 6px -2px ${colors.primary[500]}20
+                       `
+                     }}>
                   <feature.icon />
+                  {/* Icon shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 transition-all duration-1000 group-hover:translate-x-full"></div>
                 </div>
+                {/* Icon reflection */}
+                <div className="absolute -bottom-2 left-2 w-16 h-16 rounded-2xl opacity-20 blur-md"
+                     style={{ backgroundColor: colors.primary[300] }}></div>
               </div>
 
-              {/* Content */}
-              <div className="relative">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-green-600 transition-colors duration-300">
+              {/* Enhanced Content */}
+              <div className="relative space-y-4">
+                <h3 className="text-2xl font-bold transition-all duration-300 group-hover:text-opacity-90"
+                    style={{ 
+                      color: colors.text.primary,
+                      fontWeight: '700',
+                      lineHeight: '1.2'
+                    }}>
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-lg leading-relaxed transition-colors duration-300 group-hover:text-opacity-80" 
+                   style={{ 
+                     color: colors.text.secondary,
+                     lineHeight: '1.6'
+                   }}>
                   {feature.description}
                 </p>
               </div>
 
-              {/* Hover Effect Border */}
-              <div className="absolute inset-0 border-2 border-transparent group-hover:border-green-200 rounded-2xl transition-colors duration-300"></div>
+              {/* Interactive Border */}
+              <div className="absolute inset-0 border-2 border-transparent rounded-3xl transition-all duration-500 group-hover:border-opacity-30"
+                   style={{ 
+                     background: `linear-gradient(135deg, transparent, ${colors.primary[100]}20, transparent)`,
+                     borderColor: colors.primary[300]
+                   }}></div>
+              
+              {/* Corner accent */}
+              <div className="absolute top-4 right-4 w-2 h-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                   style={{ backgroundColor: colors.primary[400] }}></div>
             </div>
           ))}
         </div>
 
         {/* Bottom CTA */}
         <div className="text-center mt-16">
-          <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-6 py-3 rounded-full font-medium">
+          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium"
+               style={{ 
+                 backgroundColor: colors.primary[50], 
+                 color: colors.primary[700] 
+               }}>
             <IoSparkles className="text-lg" />
             <span>E molto altro ancora nell&apos;app!</span>
           </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MAINTENANCE_CONFIG } from '@/config/maintenance';
 
 export function useMaintenance() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -9,7 +8,7 @@ export function useMaintenance() {
 
   useEffect(() => {
     // Controlla se l'utente è già autenticato
-    const authenticated = localStorage.getItem(MAINTENANCE_CONFIG.STORAGE_KEY) === 'true';
+    const authenticated = localStorage.getItem('maintenance_authenticated') === 'true';
     setIsAuthenticated(authenticated);
     
     setIsLoading(false);
@@ -20,7 +19,7 @@ export function useMaintenance() {
   };
 
   const logout = () => {
-    localStorage.removeItem(MAINTENANCE_CONFIG.STORAGE_KEY);
+    localStorage.removeItem('maintenance_authenticated');
     setIsAuthenticated(false);
   };
 
@@ -29,6 +28,6 @@ export function useMaintenance() {
     isLoading,
     authenticate,
     logout,
-    shouldShowMaintenance: !isAuthenticated
+    shouldShowMaintenance: !isAuthenticated // Show maintenance only if not authenticated
   };
 }

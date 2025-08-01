@@ -65,7 +65,7 @@ export default function HowItWorks() {
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
             Come funziona
-            <span className="text-green-600 block">FridgeWise</span>
+            <span className="text-green-600 block">FridgeWiseAI</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Tre semplici passaggi per trasformare i tuoi ingredienti in piatti deliziosi

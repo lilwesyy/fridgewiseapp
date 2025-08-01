@@ -13,7 +13,7 @@ export default function Footer() {
               <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
                 <IoRestaurant className="text-xl text-white" />
               </div>
-              <span className="text-xl font-bold">FridgeWise</span>
+              <span className="text-xl font-bold">FridgeWiseAI</span>
             </div>
             <p className="text-gray-400 leading-relaxed">
               Trasforma i tuoi ingredienti in ricette deliziose con l&apos;intelligenza artificiale. 
@@ -89,7 +89,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-400 text-sm">
-            © {currentYear} FridgeWise. Tutti i diritti riservati.
+            © {currentYear} FridgeWiseAI. Tutti i diritti riservati.
           </p>
           <div className="flex items-center gap-6 text-sm text-gray-400">
             <span>🇮🇹 Italiano</span>

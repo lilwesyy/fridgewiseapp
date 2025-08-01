@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { IoPhonePortrait, IoRestaurant, IoList, IoSnow, IoHeart, IoCamera } from 'react-icons/io5';
+import { IoPhonePortrait, IoRestaurant, IoList, IoSnow, IoHeart, IoCamera, IoAdd, IoTime } from 'react-icons/io5';
+import { colors } from '@/config/theme';
+import Image from 'next/image';
 
 const screenshots = [
   {
@@ -91,155 +93,388 @@ export default function Screenshots() {
           <div className={`relative transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
           }`}>
-            <div className="relative mx-auto w-80 h-[600px]">
+            <div className="relative mx-auto w-96 h-[800px]">
               {/* Phone Frame */}
               <div className="absolute inset-0 bg-gray-900 rounded-[3rem] shadow-2xl">
-                <div className="absolute inset-2 bg-black rounded-[2.5rem] overflow-hidden">
+                <div className="absolute inset-3 bg-black rounded-[2.5rem] overflow-hidden">
                   {/* Screen Content */}
-                  <div className="relative w-full h-full bg-gradient-to-b from-gray-50 to-white">
-                    {/* Status Bar */}
-                    <div className="flex justify-between items-center px-6 py-3 text-xs font-medium">
-                      <span>9:41</span>
-                      <div className="flex items-center gap-1">
-                        <div className="w-4 h-2 bg-green-500 rounded-sm"></div>
-                        <span>100%</span>
-                      </div>
-                    </div>
-                    
-                    {/* Dynamic Content */}
-                    <div className="px-4 py-2 h-full">
+                  <div className="relative w-full h-full">
+                    {/* Dynamic Content - Full Screen */}
+                    <div className="w-full h-full">
                       {activeIndex === 0 && (
-                        <div className="space-y-4">
-                          <div className="text-center">
-                            <h3 className="text-lg font-bold">Scansiona Ingredienti</h3>
-                            <p className="text-sm text-gray-600">Punta la fotocamera verso il frigo</p>
-                          </div>
-                          <div className="bg-gray-900 rounded-2xl h-64 flex items-center justify-center relative">
-                            <IoCamera className="text-4xl text-white animate-pulse" />
-                            <div className="absolute inset-4 border-2 border-green-400 rounded-2xl animate-pulse"></div>
-                            <div className="absolute bottom-4 left-4 right-4">
-                              <div className="bg-white/90 backdrop-blur-sm rounded-lg p-2">
-                                <div className="text-xs text-gray-700">Rilevati:</div>
-                                <div className="flex gap-1 mt-1">
-                                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs flex items-center gap-1">
-                                    <IoRestaurant className="text-xs" /> Pomodori
-                                  </span>
-                                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs flex items-center gap-1">
-                                    <IoRestaurant className="text-xs" /> Aglio
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <button className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold">
-                            Conferma Ingredienti
-                          </button>
+                        <div className="h-full overflow-hidden relative">
+                          {/* Real HomeScreen Screenshot */}
+                          <Image 
+                            src="/assets/screenshots_ita/home.png"
+                            alt="FridgeWiseAI Home Screen"
+                            fill
+                            className="object-cover object-top"
+                            style={{ 
+                              objectFit: 'cover',
+                              objectPosition: 'top center'
+                            }}
+                          />
                         </div>
                       )}
 
                       {activeIndex === 1 && (
-                        <div className="space-y-4">
-                          <div className="text-center">
-                            <h3 className="text-lg font-bold">Ricette per Te</h3>
-                            <p className="text-sm text-gray-600">Basate sui tuoi ingredienti</p>
+                        <div className="h-full px-5 py-4" style={{ backgroundColor: colors.background.light }}>
+                          {/* Faithful FeaturesOverview Replica */}
+                          
+                          {/* Section Title */}
+                          <div className="mb-4">
+                            <h2 className="text-2xl font-bold" style={{ color: colors.text.primary }}>Cosa Puoi Fare</h2>
                           </div>
-                          <div className="space-y-3">
-                            {['Pasta al Pomodoro', 'Insalata Mista', 'Zuppa di Verdure'].map((recipe, i) => (
-                              <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <IoRestaurant className="text-green-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <h4 className="font-medium">{recipe}</h4>
-                                    <p className="text-xs text-gray-500">{20 + i * 5} min • Facile</p>
-                                  </div>
-                                  <div className="text-yellow-500">★ 4.{8 - i}</div>
-                                </div>
+                          
+                          {/* Features Grid - 2x2 layout exactly like mobile */}
+                          <div className="grid grid-cols-2 gap-4">
+                            {/* Feature 1: AI Recognition */}
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <div className="mb-3 p-3 rounded-xl self-start" style={{ backgroundColor: colors.background.light }}>
+                                <IoCamera className="text-2xl" style={{ color: colors.primary[500] }} />
                               </div>
-                            ))}
+                              <h3 className="font-bold text-base mb-2" style={{ color: colors.text.primary }}>Riconoscimento IA</h3>
+                              <p className="text-sm leading-5" style={{ color: colors.text.secondary }}>
+                                Rilevamento avanzato degli ingredienti con intelligenza artificiale
+                              </p>
+                            </div>
+
+                            {/* Feature 2: Smart Recipes */}
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <div className="mb-3 p-3 rounded-xl self-start" style={{ backgroundColor: colors.background.light }}>
+                                <IoRestaurant className="text-2xl" style={{ color: '#10B981' }} />
+                              </div>
+                              <h3 className="font-bold text-base mb-2" style={{ color: colors.text.primary }}>Ricette Intelligenti</h3>
+                              <p className="text-sm leading-5" style={{ color: colors.text.secondary }}>
+                                Ricette personalizzate basate sui tuoi ingredienti disponibili
+                              </p>
+                            </div>
+
+                            {/* Feature 3: Save Recipes */}
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <div className="mb-3 p-3 rounded-xl self-start" style={{ backgroundColor: colors.background.light }}>
+                                <IoHeart className="text-2xl" style={{ color: '#F59E0B' }} />
+                              </div>
+                              <h3 className="font-bold text-base mb-2" style={{ color: colors.text.primary }}>Salva Preferite</h3>
+                              <p className="text-sm leading-5" style={{ color: colors.text.secondary }}>
+                                Conserva le tue ricette preferite per un accesso rapido
+                              </p>
+                            </div>
+
+                            {/* Feature 4: Personal Experience */}
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <div className="mb-3 p-3 rounded-xl self-start" style={{ backgroundColor: colors.background.light }}>
+                                <IoPhonePortrait className="text-2xl" style={{ color: colors.primary[500] }} />
+                              </div>
+                              <h3 className="font-bold text-base mb-2" style={{ color: colors.text.primary }}>Profilo Personale</h3>
+                              <p className="text-sm leading-5" style={{ color: colors.text.secondary }}>
+                                Personalizza le tue preferenze e restrizioni dietetiche
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Tips Section */}
+                          <div className="mt-6">
+                            <h2 className="text-2xl font-bold mb-4" style={{ color: colors.text.primary }}>Consiglio</h2>
+                            
+                            <div className="bg-white rounded-xl p-4 flex items-center shadow-sm">
+                              <div className="mr-4 p-3 rounded-xl" style={{ backgroundColor: colors.background.light }}>
+                                <span className="text-2xl">💡</span>
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-bold text-base mb-1" style={{ color: colors.text.primary }}>Migliori Risultati</h3>
+                                <p className="text-sm leading-5" style={{ color: colors.text.secondary }}>
+                                  Per un migliore riconoscimento degli ingredienti, assicurati di avere buona illuminazione e visibilità degli oggetti
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
 
                       {activeIndex === 2 && (
-                        <div className="space-y-4">
-                          <div className="text-center">
-                            <h3 className="text-lg font-bold">Pasta al Pomodoro</h3>
-                            <p className="text-sm text-gray-600">Passo 2 di 5</p>
-                          </div>
-                          <div className="bg-orange-50 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <IoRestaurant className="text-2xl text-orange-600" />
-                              <span className="font-medium">Scalda l&apos;olio</span>
+                        <div className="h-full px-5 py-4" style={{ backgroundColor: colors.background.light }}>
+                          {/* Header with back button and title */}
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                              <span className="text-lg" style={{ color: colors.text.primary }}>←</span>
                             </div>
-                            <p className="text-sm text-gray-700">
-                              In una padella, scalda 2 cucchiai di olio extravergine di oliva a fuoco medio.
-                            </p>
+                            <h1 className="text-xl font-bold" style={{ color: colors.text.primary }}>Ricette per Te</h1>
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                              <IoRestaurant className="text-lg" style={{ color: colors.primary[500] }} />
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg">Indietro</button>
-                            <button className="flex-1 bg-green-600 text-white py-2 rounded-lg">Avanti</button>
+
+                          {/* Search/Filter Bar */}
+                          <div className="mb-4">
+                            <div className="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3">
+                              <div className="text-gray-400">🔍</div>
+                              <span className="text-sm" style={{ color: colors.text.secondary }}>Cerca ricette...</span>
+                              <div className="ml-auto flex gap-2">
+                                <div className="w-6 h-6 rounded bg-green-100 flex items-center justify-center">
+                                  <span className="text-xs text-green-600">V</span>
+                                </div>
+                                <div className="w-6 h-6 rounded bg-orange-100 flex items-center justify-center">
+                                  <span className="text-xs text-orange-600">G</span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="bg-gray-200 rounded-full h-2">
-                            <div className="bg-green-600 h-2 rounded-full w-2/5"></div>
+
+                          {/* Available Ingredients Summary */}
+                          <div className="mb-4">
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <h3 className="font-bold text-sm mb-2" style={{ color: colors.text.primary }}>Ingredienti Disponibili</h3>
+                              <div className="flex flex-wrap gap-2">
+                                <span className="px-2 py-1 rounded-full text-xs text-green-700" style={{ backgroundColor: '#E8F5E8' }}>🍅 Pomodori</span>
+                                <span className="px-2 py-1 rounded-full text-xs text-green-700" style={{ backgroundColor: '#E8F5E8' }}>🌿 Basilico</span>
+                                <span className="px-2 py-1 rounded-full text-xs text-blue-700" style={{ backgroundColor: '#E8F2FF' }}>🧀 Mozzarella</span>
+                                <span className="px-2 py-1 rounded-full text-xs text-gray-600" style={{ backgroundColor: colors.background.light }}>+4 altri</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Recipe List */}
+                          <div className="space-y-3 flex-1">
+                            {[
+                              { name: 'Caprese Fresca', time: '5 min', difficulty: 'Facile', rating: '4.9', match: '98%', image: '🥗', ingredients: 3 },
+                              { name: 'Bruschetta al Pomodoro', time: '10 min', difficulty: 'Facile', rating: '4.8', match: '95%', image: '🍞', ingredients: 4 },
+                              { name: 'Insalata Mediterranea', time: '8 min', difficulty: 'Facile', rating: '4.7', match: '92%', image: '🥙', ingredients: 5 },
+                            ].map((recipe, i) => (
+                              <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: colors.background.light }}>
+                                    {recipe.image}
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-bold text-base mb-1" style={{ color: colors.text.primary }}>{recipe.name}</h4>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-xs flex items-center gap-1" style={{ color: colors.text.secondary }}>
+                                        <IoTime className="text-gray-400" />
+                                        {recipe.time}
+                                      </span>
+                                      <span className="text-xs" style={{ color: colors.text.secondary }}>{recipe.difficulty}</span>
+                                      <span className="text-xs" style={{ color: colors.text.secondary }}>{recipe.ingredients} ingredienti</span>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-yellow-500 font-bold text-sm mb-1">★ {recipe.rating}</div>
+                                    <div className="text-xs font-medium" style={{ color: colors.primary[500] }}>{recipe.match} match</div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Bottom Action */}
+                          <div className="mt-4">
+                            <button 
+                              className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
+                              style={{ backgroundColor: colors.primary[500] }}
+                            >
+                              <IoAdd className="text-white" />
+                              Genera Nuove Ricette
+                            </button>
                           </div>
                         </div>
                       )}
 
                       {activeIndex === 3 && (
-                        <div className="space-y-4">
-                          <div className="text-center">
-                            <h3 className="text-lg font-bold">Il Mio Frigo</h3>
-                            <p className="text-sm text-gray-600">Gestisci le scadenze</p>
+                        <div className="h-full px-5 py-4" style={{ backgroundColor: colors.background.light }}>
+                          {/* Header */}
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                              <span className="text-lg" style={{ color: colors.text.primary }}>←</span>
+                            </div>
+                            <h1 className="text-xl font-bold" style={{ color: colors.text.primary }}>Il Mio Frigo</h1>
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                              <IoAdd className="text-lg" style={{ color: colors.primary[500] }} />
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            {[
-                              { name: 'Pomodori', days: 3, color: 'green' },
-                              { name: 'Latte', days: 1, color: 'orange' },
-                              { name: 'Yogurt', days: 0, color: 'red' }
-                            ].map((item, i) => (
-                              <div key={i} className="flex items-center justify-between bg-white border rounded-lg p-3">
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-3 h-3 rounded-full ${
-                                    item.color === 'green' ? 'bg-green-500' : 
-                                    item.color === 'orange' ? 'bg-orange-500' : 'bg-red-500'
-                                  }`}></div>
-                                  <span className="font-medium">{item.name}</span>
+
+                          {/* Stats Cards */}
+                          <div className="grid grid-cols-2 gap-3 mb-6">
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-2xl font-bold" style={{ color: colors.text.primary }}>12</p>
+                                  <p className="text-xs" style={{ color: colors.text.secondary }}>Ingredienti</p>
                                 </div>
-                                <span className={`text-sm ${
-                                  item.color === 'green' ? 'text-green-600' : 
-                                  item.color === 'orange' ? 'text-orange-600' : 'text-red-600'
-                                }`}>
-                                  {item.days === 0 ? 'Scade oggi' : `${item.days} giorni`}
-                                </span>
+                                <div className="text-2xl">🥬</div>
+                              </div>
+                            </div>
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-2xl font-bold text-orange-600">3</p>
+                                  <p className="text-xs" style={{ color: colors.text.secondary }}>In Scadenza</p>
+                                </div>
+                                <div className="text-2xl">⚠️</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Category Tabs */}
+                          <div className="flex gap-2 mb-4">
+                            {['Tutti', 'Fresco', 'Latticini', 'Conserve'].map((tab, i) => (
+                              <button 
+                                key={tab}
+                                className={`px-3 py-2 rounded-full text-xs font-medium ${
+                                  i === 0 
+                                    ? 'text-white' 
+                                    : 'bg-white text-gray-600'
+                                }`}
+                                style={i === 0 ? { backgroundColor: colors.primary[500] } : {}}
+                              >
+                                {tab}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Items List */}
+                          <div className="space-y-3 flex-1">
+                            {[
+                              { name: 'Pomodori Cherry', category: 'Fresco', days: 3, quantity: '250g', emoji: '🍅', color: 'green' },
+                              { name: 'Latte Intero', category: 'Latticini', days: 1, quantity: '1L', emoji: '🥛', color: 'orange' },
+                              { name: 'Yogurt Greco', category: 'Latticini', days: 0, quantity: '150g', emoji: '🥛', color: 'red' },
+                              { name: 'Basilico Fresco', category: 'Fresco', days: 2, quantity: '50g', emoji: '🌿', color: 'orange' },
+                              { name: 'Mozzarella', category: 'Latticini', days: 5, quantity: '125g', emoji: '🧀', color: 'green' },
+                            ].map((item, i) => (
+                              <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: colors.background.light }}>
+                                    {item.emoji}
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-bold text-base" style={{ color: colors.text.primary }}>{item.name}</h4>
+                                    <p className="text-xs" style={{ color: colors.text.secondary }}>
+                                      {item.category} • {item.quantity}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      item.color === 'green' ? 'bg-green-100 text-green-700' : 
+                                      item.color === 'orange' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                      {item.days === 0 ? 'Scade oggi' : `${item.days}g rimanenti`}
+                                    </div>
+                                    <div className="text-xs mt-1" style={{ color: colors.text.secondary }}>
+                                      {item.days === 0 ? '⚠️ Urgente' : `${item.days} giorni`}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             ))}
+                          </div>
+
+                          {/* Bottom Action */}
+                          <div className="mt-4">
+                            <button 
+                              className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
+                              style={{ backgroundColor: colors.primary[500] }}
+                            >
+                              <IoCamera className="text-white" />
+                              Scansiona Nuovi Ingredienti
+                            </button>
                           </div>
                         </div>
                       )}
 
                       {activeIndex === 4 && (
-                        <div className="space-y-4">
-                          <div className="text-center">
-                            <h3 className="text-lg font-bold">Ricette Salvate</h3>
-                            <p className="text-sm text-gray-600">I tuoi piatti preferiti</p>
+                        <div className="h-full px-5 py-4" style={{ backgroundColor: colors.background.light }}>
+                          {/* Header */}
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                              <span className="text-lg" style={{ color: colors.text.primary }}>←</span>
+                            </div>
+                            <h1 className="text-xl font-bold" style={{ color: colors.text.primary }}>Ricette Salvate</h1>
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                              <span className="text-lg">🔍</span>
+                            </div>
                           </div>
-                          <div className="space-y-3">
-                            {['Carbonara', 'Risotto ai Funghi', 'Tiramisù'].map((recipe, i) => (
-                              <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+
+                          {/* Quick Stats */}
+                          <div className="bg-white rounded-xl p-4 mb-4 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="text-center flex-1">
+                                <p className="text-2xl font-bold" style={{ color: colors.primary[500] }}>24</p>
+                                <p className="text-xs" style={{ color: colors.text.secondary }}>Salvate</p>
+                              </div>
+                              <div className="w-px h-8 bg-gray-200"></div>
+                              <div className="text-center flex-1">
+                                <p className="text-2xl font-bold" style={{ color: colors.text.primary }}>12</p>
+                                <p className="text-xs" style={{ color: colors.text.secondary }}>Cucinate</p>
+                              </div>
+                              <div className="w-px h-8 bg-gray-200"></div>
+                              <div className="text-center flex-1">
+                                <p className="text-2xl font-bold text-yellow-600">4.8</p>
+                                <p className="text-xs" style={{ color: colors.text.secondary }}>Rating</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Categories */}
+                          <div className="flex gap-2 mb-4">
+                            {['Tutte', 'Primi', 'Secondi', 'Dolci'].map((tab, i) => (
+                              <button 
+                                key={tab}
+                                className={`px-3 py-2 rounded-full text-xs font-medium ${
+                                  i === 0 
+                                    ? 'text-white' 
+                                    : 'bg-white text-gray-600'
+                                }`}
+                                style={i === 0 ? { backgroundColor: colors.primary[500] } : {}}
+                              >
+                                {tab}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Saved Recipes List */}
+                          <div className="space-y-3 flex-1">
+                            {[
+                              { name: 'Spaghetti Carbonara', category: 'Primi', time: '20 min', rating: 4.9, cooked: 3, image: '🍝', difficulty: 'Medio' },
+                              { name: 'Risotto ai Funghi', category: 'Primi', time: '35 min', rating: 4.7, cooked: 2, image: '🍚', difficulty: 'Difficile' },
+                              { name: 'Tiramisù Classico', category: 'Dolci', time: '45 min', rating: 4.8, cooked: 1, image: '🍰', difficulty: 'Medio' },
+                              { name: 'Pollo alla Cacciatora', category: 'Secondi', time: '50 min', rating: 4.6, cooked: 2, image: '🍗', difficulty: 'Medio' },
+                            ].map((recipe, i) => (
+                              <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <IoRestaurant className="text-red-600" />
+                                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: colors.background.light }}>
+                                    {recipe.image}
                                   </div>
                                   <div className="flex-1">
-                                    <h4 className="font-medium">{recipe}</h4>
-                                    <p className="text-xs text-gray-500">Cucinato {i + 1} volte</p>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className="font-bold text-base" style={{ color: colors.text.primary }}>{recipe.name}</h4>
+                                      <IoHeart className="text-red-500 text-sm" />
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-xs flex items-center gap-1" style={{ color: colors.text.secondary }}>
+                                        <IoTime className="text-gray-400" />
+                                        {recipe.time}
+                                      </span>
+                                      <span className="text-xs" style={{ color: colors.text.secondary }}>{recipe.difficulty}</span>
+                                      <span className="text-xs" style={{ color: colors.text.secondary }}>Cucinato {recipe.cooked}x</span>
+                                    </div>
                                   </div>
-                                  <IoHeart className="text-red-500" />
+                                  <div className="text-right">
+                                    <div className="text-yellow-500 font-bold text-sm mb-1">★ {recipe.rating}</div>
+                                    <div className="text-xs" style={{ color: colors.text.secondary }}>{recipe.category}</div>
+                                  </div>
                                 </div>
                               </div>
                             ))}
+                          </div>
+
+                          {/* Bottom Action */}
+                          <div className="mt-4">
+                            <button 
+                              className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
+                              style={{ backgroundColor: colors.primary[500] }}
+                            >
+                              <IoRestaurant className="text-white" />
+                              Scopri Nuove Ricette
+                            </button>
                           </div>
                         </div>
                       )}

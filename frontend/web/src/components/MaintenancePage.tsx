@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock } from 'lucide-react';
-import { IoRestaurant, IoLeaf } from 'react-icons/io5';
-import { MAINTENANCE_CONFIG } from '@/config/maintenance';
+import { colors } from '@/config/theme';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Image from 'next/image';
 
 interface MaintenancePageProps {
     onAuthenticated: () => void;
@@ -13,6 +13,18 @@ export default function MaintenancePage({ onAuthenticated }: MaintenancePageProp
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const { t, isLoading: langLoading } = useLanguage();
+
+    if (langLoading) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <div className="relative">
+                    <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-2 border-t-transparent absolute top-0 left-0" style={{ borderTopColor: colors.primary[500] }}></div>
+                </div>
+            </div>
+        );
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,134 +34,104 @@ export default function MaintenancePage({ onAuthenticated }: MaintenancePageProp
         // Simulate authentication delay
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (password === MAINTENANCE_CONFIG.ADMIN_PASSWORD) {
-            localStorage.setItem(MAINTENANCE_CONFIG.STORAGE_KEY, 'true');
+        if (password === 'mirco') {
+            localStorage.setItem('maintenance_authenticated', 'true');
             onAuthenticated();
         } else {
-            setError(MAINTENANCE_CONFIG.MESSAGES.errorMessage);
+            setError(t.maintenance.incorrectPassword);
         }
 
         setIsLoading(false);
     };
 
     return (
-        <div className={`min-h-screen bg-gradient-to-br ${MAINTENANCE_CONFIG.STYLES.backgroundGradient} relative overflow-hidden`}>
-            {/* Background Pattern - matching site design */}
-            <div className="absolute inset-0 opacity-5">
-                <div className="absolute top-20 left-20 text-6xl animate-float">
-                    <IoLeaf className="text-green-600" />
-                </div>
-                <div className="absolute top-40 right-32 text-4xl animate-float-delayed">
-                    <IoRestaurant className="text-green-600" />
-                </div>
-                <div className="absolute bottom-32 left-16 text-5xl animate-float">
-                    <IoLeaf className="text-green-600" />
-                </div>
-                <div className="absolute bottom-20 right-20 text-3xl animate-float-delayed">
-                    <IoRestaurant className="text-green-600" />
-                </div>
-                <div className="absolute top-60 left-1/3 text-4xl animate-float">
-                    <IoLeaf className="text-green-600" />
-                </div>
-                <div className="absolute top-32 right-1/4 text-5xl animate-float-delayed">
-                    <IoRestaurant className="text-green-600" />
-                </div>
-            </div>
+        <main className="min-h-screen bg-white flex flex-col p-4">
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
 
-            <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-                <div className="max-w-md w-full">
-                    {/* Header Section */}
-                    <div className="text-center mb-12">
-                        <div className="flex items-center justify-center mb-6">
-                            <span className="text-3xl font-bold text-gray-900">
-                                FridgeWise
-                            </span>
+            <div className="relative flex-1 flex items-center justify-center">
+                <div className="max-w-2xl w-full text-center">
+                    {/* Logo and Brand */}
+                    <div className="flex items-center justify-center gap-3 mb-12">
+                        <div className="w-12 h-12 relative">
+                            <Image src="/assets/logo.svg" alt="FridgeWiseAI" fill className="object-contain" />
                         </div>
-
-                        <div className="space-y-4">
-                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-                                {MAINTENANCE_CONFIG.MESSAGES.title}
-                            </h1>
-                            <p className="text-lg text-gray-600 leading-relaxed">
-                                {MAINTENANCE_CONFIG.MESSAGES.subtitle}
-                            </p>
-                        </div>
+                        <span className="text-2xl font-semibold text-gray-900">FridgeWiseAI</span>
                     </div>
 
-                    {/* Login Form - matching site design */}
-                    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20">
-                        <div className="flex items-center justify-center mb-6">
-                            <Lock className="w-6 h-6 text-green-600 mr-3" />
-                            <h2 className="text-xl font-bold text-gray-900">
-                                {MAINTENANCE_CONFIG.MESSAGES.loginTitle}
-                            </h2>
-                        </div>
+                    {/* Main Message */}
+                    <div className="mb-16">
+                        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-gray-900 mb-8">
+                            {t.maintenance.title}
+                            <span className="block" style={{ color: colors.primary[500] }}>{t.maintenance.titleHighlight}</span>
+                        </h1>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition-all duration-300 text-lg bg-white text-gray-900 placeholder-gray-500"
-                                    placeholder={MAINTENANCE_CONFIG.MESSAGES.passwordPlaceholder}
-                                    required
-                                />
-                            </div>
+                        <p className="text-xl md:text-2xl text-gray-600 font-light leading-relaxed max-w-xl mx-auto">
+                            {t.maintenance.subtitle}
+                        </p>
+                    </div>
+
+                    {/* Admin Access */}
+                    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 max-w-md mx-auto">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                            {t.maintenance.adminAccess}
+                        </h3>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-transparent text-center text-gray-900"
+                                style={{ color: '#1f2937' }}
+                                onFocus={(e) => {
+                                    e.currentTarget.style.boxShadow = `0 0 0 2px ${colors.primary[500]}40`;
+                                    e.currentTarget.style.borderColor = colors.primary[500];
+                                }}
+                                onBlur={(e) => {
+                                    e.currentTarget.style.boxShadow = 'none';
+                                    e.currentTarget.style.borderColor = '#e5e7eb';
+                                }}
+                                placeholder={t.maintenance.passwordPlaceholder}
+                                required
+                            />
 
                             {error && (
-                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-center font-medium">
-                                    {error}
-                                </div>
+                                <div className="text-red-500 text-sm">{error}</div>
                             )}
 
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:transform-none text-lg shadow-lg"
+                                className="w-full text-white py-3 rounded-xl font-semibold transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer"
+                                style={{ backgroundColor: colors.primary[500] }}
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-2">
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        {MAINTENANCE_CONFIG.MESSAGES.loadingButton}
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        {t.maintenance.verifying}
                                     </div>
                                 ) : (
-                                    MAINTENANCE_CONFIG.MESSAGES.loginButton
+                                    t.maintenance.login
                                 )}
                             </button>
                         </form>
                     </div>
-
-                    {/* Footer Info - matching site style */}
-                    <div className="text-center mt-8 space-y-3">
-                        <p className="text-green-700 font-medium">
-                            {MAINTENANCE_CONFIG.MESSAGES.footerMessage}
-                        </p>
-                        <p className="text-gray-600">
-                            For support: <a href={`mailto:${MAINTENANCE_CONFIG.MESSAGES.supportEmail}`} className="text-green-600 hover:text-green-700 font-medium transition-colors duration-300">{MAINTENANCE_CONFIG.MESSAGES.supportEmail}</a>
-                        </p>
-                    </div>
                 </div>
             </div>
 
-            {/* Custom CSS for animations - matching Download component */}
-            <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        @keyframes float-delayed {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        .animate-float-delayed {
-          animation: float-delayed 6s ease-in-out infinite 2s;
-        }
-      `}</style>
-        </div>
+            {/* Footer */}
+            <footer className="relative border-t border-gray-100 py-6">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-gray-500">
+                    <span>© 2024 FridgeWiseAI Inc.</span>
+                    <a href="mailto:support@fridgewiseai.com" className="hover:text-gray-700 transition-colors">
+                        {t.maintenance.support}
+                    </a>
+                    <span className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.primary[500] }}></div>
+                        {t.maintenance.completelyFree}
+                    </span>
+                </div>
+            </footer>
+        </main>
     );
 }
