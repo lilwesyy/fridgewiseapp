@@ -203,7 +203,7 @@ router.get('/users', protect, adminMiddleware, async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [users, totalUsers] = await Promise.all([
-      User.find({}, 'name email createdAt preferredLanguage dietaryRestrictions')
+      User.find({}, 'name email createdAt preferredLanguage dietaryRestrictions role isEmailVerified lastLoginAt')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -211,10 +211,28 @@ router.get('/users', protect, adminMiddleware, async (req, res) => {
       User.countDocuments()
     ]);
 
+    // Aggiungi statistiche per ogni utente
+    const usersWithStats = await Promise.all(
+      users.map(async (user) => {
+        const [totalRecipes, totalAnalyses] = await Promise.all([
+          Recipe.countDocuments({ userId: user._id }),
+          Analysis.countDocuments({ userId: user._id })
+        ]);
+
+        return {
+          ...user,
+          isAdmin: user.role === 'admin',
+          joinedAt: user.createdAt,
+          totalRecipes,
+          totalAnalyses
+        };
+      })
+    );
+
     res.json({
       success: true,
       data: {
-        users,
+        users: usersWithStats,
         totalUsers,
         currentPage: page,
         totalPages: Math.ceil(totalUsers / limit),
@@ -278,6 +296,104 @@ router.post('/promote-user', protect, adminMiddleware, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Error promoting user to admin'
+    });
+  }
+});
+
+// PATCH /api/admin/users/:id/admin - Modifica privilegi admin di un utente
+router.patch('/users/:id/admin', protect, adminMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { isAdmin } = req.body;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const user = await User.findById(id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Prevent admin from removing their own admin privileges
+    if (String(user._id) === String(req.user!._id) && !isAdmin) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot remove your own admin privileges'
+      });
+    }
+
+    user.role = isAdmin ? 'admin' : 'user';
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: `User ${isAdmin ? 'promoted to' : 'removed from'} admin successfully`,
+      data: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        isAdmin: user.role === 'admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating user admin status:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error updating user admin status'
+    });
+  }
+});
+
+// PATCH /api/admin/users/:id/verify - Modifica stato di verifica di un utente
+router.patch('/users/:id/verify', protect, adminMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { isVerified } = req.body;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const user = await User.findById(id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    user.isEmailVerified = isVerified;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: `User ${isVerified ? 'verified' : 'unverified'} successfully`,
+      data: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        isVerified: user.isEmailVerified
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating user verification status:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error updating user verification status'
     });
   }
 });
@@ -362,6 +478,189 @@ router.get('/environment', protect, adminMiddleware, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error fetching environment information'
+    });
+  }
+});
+
+// GET /api/admin/security - Ottieni dati di monitoraggio sicurezza (solo admin)
+router.get('/security', protect, adminMiddleware, async (req, res) => {
+  try {
+    // Mock data per ora - in futuro questi dati potrebbero venire da un sistema di logging/monitoring
+    const securityData = {
+      csp: {
+        totalReports: Math.floor(Math.random() * 50),
+        blockedRequests: Math.floor(Math.random() * 25),
+        topViolatedDirectives: [
+          { directive: 'script-src', count: 12 },
+          { directive: 'style-src', count: 8 },
+          { directive: 'img-src', count: 5 },
+          { directive: 'connect-src', count: 3 },
+          { directive: 'font-src', count: 2 }
+        ],
+        recentReports: [
+          {
+            documentUri: 'https://app.example.com/dashboard',
+            violatedDirective: 'script-src',
+            blockedUri: 'https://malicious-site.com/script.js',
+            timestamp: new Date(Date.now() - 300000).toISOString()
+          },
+          {
+            documentUri: 'https://app.example.com/profile',
+            violatedDirective: 'style-src',
+            blockedUri: 'inline',
+            timestamp: new Date(Date.now() - 600000).toISOString()
+          },
+          {
+            documentUri: 'https://app.example.com/recipes',
+            violatedDirective: 'img-src',
+            blockedUri: 'data:',
+            timestamp: new Date(Date.now() - 900000).toISOString()
+          }
+        ]
+      },
+      rateLimiting: {
+        totalBlocked: Math.floor(Math.random() * 100),
+        topBlockedIPs: [
+          {
+            ip: '192.168.1.100',
+            count: 15,
+            lastBlocked: new Date(Date.now() - 120000).toISOString()
+          },
+          {
+            ip: '10.0.0.50',
+            count: 8,
+            lastBlocked: new Date(Date.now() - 240000).toISOString()
+          },
+          {
+            ip: '172.16.0.25',
+            count: 5,
+            lastBlocked: new Date(Date.now() - 360000).toISOString()
+          }
+        ],
+        recentBlocks: [
+          {
+            ip: '192.168.1.100',
+            endpoint: '/api/auth/login',
+            timestamp: new Date(Date.now() - 120000).toISOString(),
+            reason: 'Too many login attempts'
+          },
+          {
+            ip: '10.0.0.50',
+            endpoint: '/api/recipes',
+            timestamp: new Date(Date.now() - 240000).toISOString(),
+            reason: 'Rate limit exceeded'
+          },
+          {
+            ip: '172.16.0.25',
+            endpoint: '/api/ai/analyze',
+            timestamp: new Date(Date.now() - 360000).toISOString(),
+            reason: 'Suspicious activity detected'
+          }
+        ]
+      },
+      authentication: {
+        failedLogins: Math.floor(Math.random() * 30),
+        suspiciousActivity: [
+          {
+            ip: '203.0.113.45',
+            attempts: 25,
+            lastAttempt: new Date(Date.now() - 180000).toISOString()
+          },
+          {
+            ip: '198.51.100.78',
+            attempts: 12,
+            lastAttempt: new Date(Date.now() - 420000).toISOString()
+          },
+          {
+            ip: '192.0.2.123',
+            attempts: 8,
+            lastAttempt: new Date(Date.now() - 720000).toISOString()
+          }
+        ]
+      }
+    };
+
+    res.json({
+      success: true,
+      data: securityData
+    });
+
+  } catch (error) {
+    console.error('Error fetching security data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error fetching security monitoring data'
+    });
+  }
+});
+
+// GET /api/admin/health - Ottieni dati di salute del sistema (solo admin)
+router.get('/health', protect, adminMiddleware, async (req, res) => {
+  try {
+    // Informazioni reali del sistema
+    const memoryUsage = process.memoryUsage();
+    const uptime = process.uptime();
+    
+    // CPU usage simulato basato su carico del sistema
+    const loadAverage = process.platform === 'linux' ? require('os').loadavg()[0] : 0.5;
+    const cpuUsage = Math.min(loadAverage * 20, 100); // Converti load average in percentuale
+    
+    // Memory usage reale
+    const totalMemory = require('os').totalmem();
+    const freeMemory = require('os').freemem();
+    const usedMemory = totalMemory - freeMemory;
+    const memoryPercentage = (usedMemory / totalMemory) * 100;
+    
+    // Disk usage simulato (in un'app reale useresti librerie come 'diskusage')
+    const diskUsage = 35 + (Math.random() * 20); // Tra 35% e 55%
+    
+    // Active connections simulate (in un'app reale potresti tracciare le connessioni WebSocket/HTTP)
+    const baseConnections = 8; // Connessioni base
+    const variableConnections = Math.floor(Math.random() * 12); // 0-11 connessioni variabili
+    const activeConnections = baseConnections + variableConnections;
+
+    const healthData = {
+      systemHealth: {
+        cpuUsage: Math.round(cpuUsage * 10) / 10,
+        memoryUsage: Math.round(memoryPercentage * 10) / 10,
+        diskUsage: Math.round(diskUsage * 10) / 10,
+        activeConnections,
+        uptime: Math.floor(uptime)
+      },
+      serverInfo: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        memoryUsage: {
+          used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
+          total: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
+          rss: Math.round(memoryUsage.rss / 1024 / 1024) // MB
+        },
+        systemMemory: {
+          total: Math.round(totalMemory / 1024 / 1024), // MB
+          used: Math.round(usedMemory / 1024 / 1024), // MB
+          free: Math.round(freeMemory / 1024 / 1024) // MB
+        }
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV || 'development',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        version: process.env.APP_VERSION || '1.0.0',
+        lastDeployment: new Date().toISOString(),
+        pid: process.pid
+      }
+    };
+
+    res.json({
+      success: true,
+      data: healthData
+    });
+
+  } catch (error) {
+    console.error('Error fetching health data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error fetching system health data'
     });
   }
 });

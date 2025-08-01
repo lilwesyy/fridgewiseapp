@@ -1,7 +1,6 @@
 import React, { Suspense, useEffect } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useTranslation } from 'react-i18next';
 import { performanceMonitor } from '../../utils/performanceMonitor';
 
 // Lazy loaded components - using named exports
@@ -13,7 +12,6 @@ const CookingModeScreenLazy = React.lazy(() => import('./CookingModeScreen').the
 // Loading component with proper theming
 const ScreenLoader: React.FC<{ screenName: string }> = ({ screenName }) => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
   
   useEffect(() => {
     performanceMonitor.startMeasurement(screenName);
@@ -29,20 +27,11 @@ const ScreenLoader: React.FC<{ screenName: string }> = ({ screenName }) => {
       alignItems: 'center',
       backgroundColor: colors.background,
     },
-    text: {
-      marginTop: 16,
-      fontSize: 16,
-      color: colors.textSecondary,
-      fontWeight: '500',
-    }
   });
 
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={styles.text}>
-        {t('common.loading')}...
-      </Text>
     </View>
   );
 };

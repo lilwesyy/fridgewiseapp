@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Alert,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,10 @@ import { PrivacyPolicyModal } from '../modals/PrivacyPolicyModal';
 import { TermsOfServiceModal } from '../modals/TermsOfServiceModal';
 import { AdminStatsModal } from '../modals/AdminStatsModal';
 import { RecipeApprovalModal } from '../modals/RecipeApprovalModal';
+import StatsOverviewModal from '../modals/StatsOverviewModal';
+import UserManagementModal from '../modals/UserManagementModal';
+import SecurityMonitoringModal from '../modals/SecurityMonitoringModal';
+import SystemInfoModal from '../modals/SystemInfoModal';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
@@ -36,6 +41,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES, ANIMATION_DELAYS } from '../../constants/animations';
+import { HapticService } from '../../services/hapticService';
 
 interface ProfileScreenProps {
   onLogout: () => void;
@@ -105,6 +111,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showAdminStatsModal, setShowAdminStatsModal] = useState(false);
   const [showRecipeApprovalModal, setShowRecipeApprovalModal] = useState(false);
+  const [showStatsOverviewModal, setShowStatsOverviewModal] = useState(false);
+  const [showUserManagementModal, setShowUserManagementModal] = useState(false);
+  const [showSecurityMonitoringModal, setShowSecurityMonitoringModal] = useState(false);
+  const [showSystemInfoModal, setShowSystemInfoModal] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [notification, setNotification] = useState<{
     visible: boolean;
@@ -119,25 +129,54 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     message: '',
   });
 
-  // Animation values
-  const headerOpacity = useSharedValue(0);
-  const sectionsOpacity = useSharedValue(0);
+  // Refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Animation values - HomeScreen style
+  const fadeIn = useSharedValue(0);
+  const slideIn = useSharedValue(50);
+  const scale = useSharedValue(0.8);
 
   useEffect(() => {
-    const easing = Easing.bezier(EASING_CURVES.IOS_STANDARD.x1, EASING_CURVES.IOS_STANDARD.y1, EASING_CURVES.IOS_STANDARD.x2, EASING_CURVES.IOS_STANDARD.y2);
-    
-    // iOS-style staggered content entrance
-    headerOpacity.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
-    sectionsOpacity.value = withDelay(ANIMATION_DELAYS.STAGGER_1, withTiming(1, { duration: ANIMATION_DURATIONS.STANDARD, easing }));
+    const easing = Easing.bezier(
+      EASING_CURVES.IOS_STANDARD.x1, 
+      EASING_CURVES.IOS_STANDARD.y1, 
+      EASING_CURVES.IOS_STANDARD.x2, 
+      EASING_CURVES.IOS_STANDARD.y2
+    );
+
+    fadeIn.value = withTiming(1, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+    slideIn.value = withTiming(0, { duration: ANIMATION_DURATIONS.CONTENT, easing });
+    scale.value = withSpring(1, SPRING_CONFIGS.GENTLE);
   }, []);
 
-  const headerStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: fadeIn.value,
+    transform: [
+      { translateY: slideIn.value },
+      { scale: scale.value },
+    ],
   }));
 
-  const sectionsStyle = useAnimatedStyle(() => ({
-    opacity: sectionsOpacity.value,
-  }));
+  const handleRefresh = async () => {
+    HapticService.refreshTriggered();
+    setIsRefreshing(true);
+    try {
+      // Refresh user profile data
+      // Since updateProfile refreshes the user data, we can call it with current data
+      // Or implement a separate refresh function if available
+      await updateProfile({
+        name: user?.name || '',
+        email: user?.email || '',
+        preferredLanguage: user?.preferredLanguage || 'en',
+        dietaryRestrictions: user?.dietaryRestrictions || [],
+      });
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const safeT = (key: string, fallback?: string) => {
     try {
@@ -275,9 +314,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView
+        style={[styles.scrollView, animatedStyle]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
         {/* Profile Header */}
-        <Animated.View style={[styles.profileHeader, headerStyle]}>
+        <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <TouchableOpacity activeOpacity={0.7}
               style={styles.avatarWrapper}
@@ -315,9 +365,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Text style={styles.savingText}>{safeT('profile.saving', 'Saving...')}</Text>
             </View>
           )}
-        </Animated.View>
+        </View>
 
-        <Animated.View style={sectionsStyle}>
+        <View>
           {/* Account & Profile */}
           <Section>
             <SectionHeader 
@@ -392,9 +442,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 icon={<AdminIcon color={colors.textSecondary} />} 
               />
               <SettingRow 
-                title={safeT('admin.statsTitle', 'App Statistics')}
-                subtitle={safeT('admin.statsDesc', 'View app usage statistics and analytics')}
-                onPress={() => setShowAdminStatsModal(true)}
+                title={safeT('admin.statsOverview', 'Statistics Overview')}
+                subtitle={safeT('admin.statsOverviewDesc', 'View app usage statistics and performance metrics')}
+                onPress={() => setShowStatsOverviewModal(true)}
+              >
+                <ChevronIcon color={colors.textSecondary} />
+              </SettingRow>
+              <SettingRow 
+                title={safeT('admin.userManagement', 'User Management')}
+                subtitle={safeT('admin.userManagementDesc', 'Manage users, roles, and permissions')}
+                onPress={() => setShowUserManagementModal(true)}
+              >
+                <ChevronIcon color={colors.textSecondary} />
+              </SettingRow>
+              <SettingRow 
+                title={safeT('admin.securityMonitoring', 'Security Monitoring')}
+                subtitle={safeT('admin.securityMonitoringDesc', 'Monitor security events and system health')}
+                onPress={() => setShowSecurityMonitoringModal(true)}
+              >
+                <ChevronIcon color={colors.textSecondary} />
+              </SettingRow>
+              <SettingRow 
+                title={safeT('admin.systemInfo', 'System Information')}
+                subtitle={safeT('admin.systemInfoDesc', 'View server and database information')}
+                onPress={() => setShowSystemInfoModal(true)}
               >
                 <ChevronIcon color={colors.textSecondary} />
               </SettingRow>
@@ -402,6 +473,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 title={safeT('admin.recipeApproval', 'Recipe Approvals')}
                 subtitle={safeT('admin.recipeApprovalDesc', 'Review and approve pending recipes')}
                 onPress={() => setShowRecipeApprovalModal(true)}
+              >
+                <ChevronIcon color={colors.textSecondary} />
+              </SettingRow>
+              <SettingRow 
+                title={safeT('admin.statsTitle', 'Legacy Admin Panel')}
+                subtitle={safeT('admin.statsDesc', 'Access the original admin statistics panel')}
+                onPress={() => setShowAdminStatsModal(true)}
               >
                 <ChevronIcon color={colors.textSecondary} />
               </SettingRow>
@@ -424,8 +502,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               FridgeWiseAI v{process.env.EXPO_PUBLIC_APP_VERSION || '1.0.0'}
             </Text>
           </View>
-        </Animated.View>
-      </ScrollView>
+        </View>
+      </Animated.ScrollView>
 
       <SupportModal
         visible={showSupportModal}
@@ -474,6 +552,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <RecipeApprovalModal
         visible={showRecipeApprovalModal}
         onClose={() => setShowRecipeApprovalModal(false)}
+      />
+      
+      <StatsOverviewModal
+        visible={showStatsOverviewModal}
+        onClose={() => setShowStatsOverviewModal(false)}
+      />
+      
+      <UserManagementModal
+        visible={showUserManagementModal}
+        onClose={() => setShowUserManagementModal(false)}
+      />
+      
+      <SecurityMonitoringModal
+        visible={showSecurityMonitoringModal}
+        onClose={() => setShowSecurityMonitoringModal(false)}
+      />
+      
+      <SystemInfoModal
+        visible={showSystemInfoModal}
+        onClose={() => setShowSystemInfoModal(false)}
       />
       
       <NotificationModal

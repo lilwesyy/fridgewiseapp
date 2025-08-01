@@ -209,14 +209,6 @@ const AppContent: React.FC = () => {
         backgroundColor: colors.background 
       }}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ 
-          marginTop: 16, 
-          fontSize: 16, 
-          color: colors.primary, 
-          fontWeight: '500' 
-        }}>
-          {backendStatus.isCheckingHealth ? 'Checking connection...' : 'Loading...'}
-        </Text>
       </SafeAreaView>
     );
   }
