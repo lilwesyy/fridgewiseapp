@@ -279,6 +279,44 @@ export const forgotPassword = async (req: Request, res: Response<APIResponse<any
   }
 };
 
+export const verifyResetToken = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      res.status(400).json({
+        success: false,
+        error: 'Please provide reset token'
+      });
+      return;
+    }
+
+    // Find user with valid reset token
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpiry: { $gt: new Date() }
+    });
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid or expired reset token'
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Reset token is valid'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Token verification failed'
+    });
+  }
+};
+
 export const resetPassword = async (req: Request, res: Response<APIResponse<any>>): Promise<void> => {
   try {
     const { token, newPassword } = req.body;

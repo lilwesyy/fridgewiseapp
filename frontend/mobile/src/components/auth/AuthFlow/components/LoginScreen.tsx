@@ -158,17 +158,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               validation={validation.password}
             />
 
+            {/* Forgot Password - positioned above login button on the right */}
+            <View style={{ alignItems: 'flex-end', marginBottom: 8 }}>
+              <TouchableOpacity
+                onPress={() => onAuthModeChange('forgot-password')}
+              >
+                <Text style={styles.linkButtonText}>
+                  {safeT('auth.forgotPassword')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
               <Text style={styles.primaryButtonText}>{safeT('auth.signIn')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.linkButton}
-              onPress={() => onAuthModeChange('forgot-password')}
-            >
-              <Text style={styles.linkButtonText}>
-                {safeT('auth.forgotPassword')}
-              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity

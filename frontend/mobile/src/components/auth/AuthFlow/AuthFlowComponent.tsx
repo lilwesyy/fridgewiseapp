@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAuth } from '../../../contexts/AuthContext';
-import { WelcomeScreen, LoginScreen, RegisterScreen, AuthHeader } from './components';
+import { WelcomeScreen, LoginScreen, RegisterScreen, ForgotPasswordScreen, AuthHeader } from './components';
 import { OTPInput } from '../../ui/OTPInput';
 import { AnimatedContainer } from '../../ui';
 import { getAuthStyles } from './styles';
@@ -99,6 +99,14 @@ export const AuthFlowComponent: React.FC<AuthFlowComponentProps> = ({ onNotifica
           onAuthModeChange={handleAuthModeChange}
           onNotification={onNotification}
           onEmailVerificationRequired={handleEmailVerificationRequired}
+        />
+      );
+
+    case 'forgot-password':
+      return (
+        <ForgotPasswordScreen
+          onAuthModeChange={handleAuthModeChange}
+          onNotification={onNotification}
         />
       );
 

@@ -33,6 +33,7 @@ interface AuthContextType {
   deleteAvatar: () => Promise<User>;
   refreshProfile: (currentToken?: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
+  verifyResetToken: (token: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
   sendEmailVerification: (email: string) => Promise<void>;
@@ -367,6 +368,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const verifyResetToken = async (token: string) => {
+    try {
+      const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/verify-reset-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Token verification failed');
+      }
+    } catch (error) {
+      console.error('Verify reset token error:', error);
+      throw error;
+    }
+  };
+
   const resetPassword = async (token: string, newPassword: string) => {
     try {
       const response = await expoSecurityService.secureFetch(`${API_URL}/api/auth/reset-password`, {
@@ -478,6 +500,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     deleteAvatar,
     refreshProfile,
     forgotPassword,
+    verifyResetToken,
     resetPassword,
     deleteAccount,
     sendEmailVerification,
