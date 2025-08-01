@@ -63,7 +63,7 @@ const AppContent: React.FC = () => {
         await i18nInstance.isInitialized;
         setI18nInitialized(true);
       } catch (error) {
-        console.error('i18n initialization error:', error);
+        console.log('i18n initialization error:', error);
         setI18nInitialized(true); // Continue anyway
       }
     };
@@ -102,7 +102,7 @@ const AppContent: React.FC = () => {
         setOnboardingCompleted(hasCompletedOnboarding);
         setShowOnboarding(!hasCompletedOnboarding);
       } catch (error) {
-        console.error('Error checking onboarding status:', error);
+        console.log('Error checking onboarding status:', error);
         setShowOnboarding(true);
         setOnboardingCompleted(false);
       }
@@ -160,7 +160,7 @@ const AppContent: React.FC = () => {
       setOnboardingCompleted(true);
       setShouldStartWithRegister(true);
     } catch (error) {
-      console.error('Error saving onboarding completion:', error);
+      console.log('Error saving onboarding completion:', error);
       setShowOnboarding(false);
       setOnboardingCompleted(true);
       setShouldStartWithRegister(true);
@@ -173,7 +173,7 @@ const AppContent: React.FC = () => {
       setShowOnboarding(false);
       setOnboardingCompleted(true);
     } catch (error) {
-      console.error('Error saving onboarding skip:', error);
+      console.log('Error saving onboarding skip:', error);
       setShowOnboarding(false);
       setOnboardingCompleted(true);
     }
@@ -275,6 +275,7 @@ const AppWithProviders: React.FC = () => {
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
+          <AppContent />
           <ThemeSync />
         </AuthProvider>
       </ThemeProvider>
@@ -293,7 +294,7 @@ const ThemeSync: React.FC = () => {
     }
   }, [user?.themeMode, setThemeMode]);
   
-  return <AppContent />;
+  return null;
 };
 
 export default function App() {

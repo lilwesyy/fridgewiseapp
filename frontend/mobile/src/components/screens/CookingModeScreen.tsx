@@ -95,7 +95,7 @@ type CookingPhase = 'preparation' | 'cooking' | 'completed';
 export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   // Ensure props are valid
   if (!props || typeof props !== 'object') {
-    console.error('CookingModeScreen: Invalid props received');
+    console.log('CookingModeScreen: Invalid props received');
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Error: Invalid props</Text>
@@ -107,7 +107,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
   // Safety check for recipe before any hooks
   if (!recipe || typeof recipe !== 'object') {
-    console.error('CookingModeScreen: Recipe is null or undefined');
+    console.log('CookingModeScreen: Recipe is null or undefined');
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Error: Recipe not found</Text>
@@ -567,7 +567,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         message: safeT('cookingMode.photoUpload.success.message', 'Your dish photo has been saved successfully!'),
       });
     } catch (error) {
-      console.error('Error saving recipe with photo:', error);
+      console.log('Error saving recipe with photo:', error);
       // Still try to save without photo
       setDishPhoto(null);
       await saveDishToCollection();
@@ -584,7 +584,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   };
 
   const handlePhotoUploadError = async (error: any) => {
-    console.error('Photo upload error:', error);
+    console.log('Photo upload error:', error);
 
     // Track the error for analytics
     if (__DEV__) {
@@ -602,7 +602,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
     try {
       await saveDishToCollection();
     } catch (error) {
-      console.error('Error saving dish without photo:', error);
+      console.log('Error saving dish without photo:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -636,7 +636,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
       return false;
     } catch (error) {
-      console.error('Error checking user rating:', error);
+      console.log('Error checking user rating:', error);
       return false;
     }
   };
@@ -673,7 +673,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
 
       return false;
     } catch (error) {
-      console.error('Error checking if recipe is already saved:', error);
+      console.log('Error checking if recipe is already saved:', error);
       return false;
     }
   };
@@ -717,7 +717,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         throw new Error(errorData.error || 'Failed to submit rating');
       }
     } catch (error) {
-      console.error('Error submitting rating:', error);
+      console.log('Error submitting rating:', error);
       throw error; // Re-throw to let RatingModal handle the error
     } finally {
       setIsSubmittingRating(false);
@@ -796,7 +796,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       // Show photo upload modal if under limit or if we couldn't check
       setShowPhotoModal(true);
     } catch (error) {
-      console.error('Error checking recipe photo count:', error);
+      console.log('Error checking recipe photo count:', error);
       // If we can't check, still allow photo upload (backend will validate)
       setShowPhotoModal(true);
     }
@@ -853,7 +853,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         };
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('❌ Backend response error:', errorData);
+        console.log('❌ Backend response error:', errorData);
 
         // Check for photo limit error
         if (errorData.code === 'PHOTO_LIMIT_EXCEEDED' || errorData.error?.includes('Maximum 3 photos')) {
@@ -867,7 +867,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         throw new Error(`Dish photo upload failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('❌ Error uploading dish photo:', error);
+      console.log('❌ Error uploading dish photo:', error);
       throw error;
     }
   };
@@ -910,7 +910,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         throw new Error(`Failed to complete recipe: ${errorData}`);
       }
     } catch (error) {
-      console.error('Error completing recipe:', error);
+      console.log('Error completing recipe:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -960,7 +960,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         throw new Error(`Failed to save public recipe: ${errorData}`);
       }
     } catch (error) {
-      console.error('Error saving public recipe:', error);
+      console.log('Error saving public recipe:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -996,7 +996,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
           // Brief delay to show success message
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (uploadError) {
-          console.error('Photo upload failed:', uploadError);
+          console.log('Photo upload failed:', uploadError);
 
           // Check if it's a photo limit error
           if (uploadError instanceof Error && (uploadError.message.includes('PHOTO_LIMIT_EXCEEDED') || uploadError.message.includes('Maximum 3 photos'))) {
@@ -1060,7 +1060,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         throw new Error(`Failed to add recipe to your dishes: ${errorData}`);
       }
     } catch (error) {
-      console.error('Error saving recipe to collection:', error);
+      console.log('Error saving recipe to collection:', error);
       setNotification({
         visible: true,
         type: 'error',

@@ -194,7 +194,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, userThem
         setThemeMode('auto');
       }
     } catch (error) {
-      console.error('Error loading theme preference:', error);
+      console.log('Error loading theme preference:', error);
       setThemeMode('auto'); // Fallback to auto
     } finally {
       setIsLoading(false);
@@ -205,7 +205,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, userThem
     try {
       await AsyncStorage.setItem('theme_mode', mode);
     } catch (error) {
-      console.error('Error saving theme mode:', error);
+      console.log('Error saving theme mode:', error);
     }
   };
 

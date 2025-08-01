@@ -158,14 +158,14 @@ export class EnvironmentValidator {
       
       if (!value) {
         errors.push(`❌ Missing required environment variable: ${envVar.name}`);
-        console.error(`❌ ${envVar.name}: Missing (${envVar.description})`);
+        console.log(`❌ ${envVar.name}: Missing (${envVar.description})`);
         continue;
       }
       
       // Validate value if validator provided
       if (envVar.validator && !envVar.validator(value)) {
         errors.push(`❌ Invalid value for ${envVar.name}: ${envVar.description}`);
-        console.error(`❌ ${envVar.name}: Invalid value (${envVar.description})`);
+        console.log(`❌ ${envVar.name}: Invalid value (${envVar.description})`);
         continue;
       }
       
@@ -239,11 +239,11 @@ export class EnvironmentValidator {
     const result = this.validate();
     
     if (!result.success) {
-      console.error('💥 Environment validation failed! Server cannot start safely.\n');
-      console.error('📋 Required actions:');
-      result.errors.forEach(error => console.error(`   ${error}`));
-      console.error('\n💡 Create a .env file in the backend directory with the required variables.');
-      console.error('📖 See README.md for environment variable documentation.\n');
+      console.log('💥 Environment validation failed! Server cannot start safely.\n');
+      console.log('📋 Required actions:');
+      result.errors.forEach(error => console.log(`   ${error}`));
+      console.log('\n💡 Create a .env file in the backend directory with the required variables.');
+      console.log('📖 See README.md for environment variable documentation.\n');
       process.exit(1);
     }
     

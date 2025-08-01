@@ -229,7 +229,7 @@ const AppContent: React.FC = () => {
         setOnboardingCompleted(hasCompletedOnboarding);
         setShowOnboarding(!hasCompletedOnboarding);
       } catch (error) {
-        console.error('Error checking onboarding status:', error);
+        console.log('Error checking onboarding status:', error);
         // Default to showing onboarding if we can't check
         setShowOnboarding(true);
         setOnboardingCompleted(false);
@@ -275,7 +275,7 @@ const AppContent: React.FC = () => {
             await resetOnboarding();
           }
         } catch (error) {
-          console.error('Error checking onboarding status after logout:', error);
+          console.log('Error checking onboarding status after logout:', error);
           // Default to resetting onboarding completely
           await resetOnboarding();
         }
@@ -321,7 +321,7 @@ const AppContent: React.FC = () => {
       setOnboardingCompleted(true);
       setAuthMode('register');
     } catch (error) {
-      console.error('Error saving onboarding completion:', error);
+      console.log('Error saving onboarding completion:', error);
       // Still proceed to hide onboarding
       setShowOnboarding(false);
       setOnboardingCompleted(true);
@@ -339,7 +339,7 @@ const AppContent: React.FC = () => {
       setOnboardingCompleted(true);
       setAuthMode('welcome');
     } catch (error) {
-      console.error('Error saving onboarding skip:', error);
+      console.log('Error saving onboarding skip:', error);
       // Still proceed to hide onboarding
       setShowOnboarding(false);
       setOnboardingCompleted(true);
@@ -374,7 +374,7 @@ const AppContent: React.FC = () => {
         try {
           await sendEmailVerification(error.email || loginForm.email);
         } catch (sendError) {
-          console.error('Failed to send verification code:', sendError);
+          console.log('Failed to send verification code:', sendError);
         }
       } else {
         // Check for specific error types and set field-specific errors
@@ -605,7 +605,7 @@ const AppContent: React.FC = () => {
       // Vai alla schermata di verifica codice
       setAuthMode('verify-code');
     } catch (error: any) {
-      console.error('Error in handleForgotPassword:', error);
+      console.log('Error in handleForgotPassword:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -788,7 +788,7 @@ const AppContent: React.FC = () => {
       setShowOnboarding(true);
       setOnboardingCompleted(false);
     } catch (error) {
-      console.error('Error resetting onboarding:', error);
+      console.log('Error resetting onboarding:', error);
     }
   };
 

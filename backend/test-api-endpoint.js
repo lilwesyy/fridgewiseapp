@@ -49,4 +49,4 @@ async function testAPIEndpoint() {
   console.log('- Il frontend dovrebbe fallback su /api/recipe/admin/pending se cooked-pending non esiste');
 }
 
-testAPIEndpoint().catch(console.error);
+testAPIEndpoint().catch(console.log);

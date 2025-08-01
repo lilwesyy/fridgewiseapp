@@ -91,7 +91,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
         message: title ? `${title} - ${t('recipes.dishPhoto')}` : t('recipes.dishPhoto'),
       });
     } catch (error) {
-      console.error('Error sharing image:', error);
+      console.log('Error sharing image:', error);
       Alert.alert(t('common.error'), t('common.shareError'));
     }
   };

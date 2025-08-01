@@ -33,7 +33,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.log('ErrorBoundary caught an error:', error, errorInfo);
     
     // Log error to crash reporting service (Sentry, Crashlytics, etc.)
     // Example: crashReportingService.recordError(error, errorInfo);

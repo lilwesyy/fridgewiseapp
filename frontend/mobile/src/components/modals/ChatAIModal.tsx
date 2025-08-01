@@ -203,7 +203,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
         }]);
       }
     } catch (error) {
-      console.error('AI Chat error:', error);
+      console.log('AI Chat error:', error);
 
       const rateLimitNotification = handleRateLimitError(
         error,

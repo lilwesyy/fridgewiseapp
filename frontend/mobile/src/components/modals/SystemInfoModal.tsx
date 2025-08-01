@@ -125,7 +125,7 @@ export default function SystemInfoModal({ visible, onClose }: SystemInfoModalPro
         Alert.alert('Error', 'Unable to load system health data');
       }
     } catch (error) {
-      console.error('Error fetching system health data:', error);
+      console.log('Error fetching system health data:', error);
       Alert.alert('Error', 'Error loading system health data');
     } finally {
       setLoading(false);

@@ -293,7 +293,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         throw new Error('Failed to refresh recipe data');
       }
     } catch (error) {
-      console.error('Error refreshing recipe:', error);
+      console.log('Error refreshing recipe:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -389,7 +389,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
         if (!saveResponse.ok) {
           const errorText = await saveResponse.text();
-          console.error('🎯 Save response error:', errorText);
+          console.log('🎯 Save response error:', errorText);
           throw new Error('Failed to save recipe to database');
         }
 
@@ -434,7 +434,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         onGoBack();
       }
     } catch (error) {
-      console.error('Error starting cooking:', error);
+      console.log('Error starting cooking:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -498,7 +498,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error deleting recipe:', error);
+      console.log('Error deleting recipe:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -605,7 +605,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         setForceUpdateCounter(prev => prev + 1);
         setCurrentPhotoIndex(0); // Reset to first photo
       } else {
-        console.error('❌ Failed to fetch updated recipe data');
+        console.log('❌ Failed to fetch updated recipe data');
 
         // Fallback: add the new photo to local state manually
         const newPhoto = {
@@ -638,7 +638,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         message: t('recipes.addPhoto') + ' ' + t('common.success').toLowerCase(),
       });
     } catch (error) {
-      console.error('Error uploading photo:', error);
+      console.log('Error uploading photo:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -671,7 +671,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         message: `${t('recipes.dishPhoto')} - ${recipe.title}`,
       });
     } catch (error) {
-      console.error('Error sharing photo:', error);
+      console.log('Error sharing photo:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -749,7 +749,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         throw new Error('Failed to delete photo');
       }
     } catch (error) {
-      console.error('Error deleting photo:', error);
+      console.log('Error deleting photo:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -787,7 +787,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching users who cooked recipe:', error);
+      console.log('Error fetching users who cooked recipe:', error);
     } finally {
       setLoadingCookedByUsers(false);
     }

@@ -8,7 +8,7 @@ config();
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  console.error('❌ MONGODB_URI environment variable is required');
+  console.log('❌ MONGODB_URI environment variable is required');
   process.exit(1);
 }
 
@@ -71,7 +71,7 @@ async function migrateRecipeStatus() {
         console.log(`✅ Migrated: ${recipe.title} (${recipe._id})`);
       } catch (error) {
         errorCount++;
-        console.error(`❌ Failed to migrate recipe ${recipe._id}:`, error);
+        console.log(`❌ Failed to migrate recipe ${recipe._id}:`, error);
       }
     }
 
@@ -87,7 +87,7 @@ async function migrateRecipeStatus() {
     }
 
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.log('❌ Migration failed:', error);
     process.exit(1);
   } finally {
     await mongoose.disconnect();
@@ -137,7 +137,7 @@ async function showStatistics() {
     console.log(`   Need migration: ${publicRecipes - approvedRecipes}`);
 
   } catch (error) {
-    console.error('❌ Statistics query failed:', error);
+    console.log('❌ Statistics query failed:', error);
   } finally {
     await mongoose.disconnect();
   }
@@ -168,4 +168,4 @@ async function main() {
   }
 }
 
-main().catch(console.error);
+main().catch(console.log);

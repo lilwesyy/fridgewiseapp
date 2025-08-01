@@ -53,7 +53,7 @@ class ImageCacheService {
         cacheDir: this.CACHE_DIR 
       });
     } catch (error) {
-      console.error('Failed to initialize image cache:', error);
+      console.log('Failed to initialize image cache:', error);
     }
   }
 

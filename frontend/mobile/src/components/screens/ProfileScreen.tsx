@@ -172,7 +172,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         dietaryRestrictions: user?.dietaryRestrictions || [],
       });
     } catch (error) {
-      console.error('Error refreshing profile:', error);
+      console.log('Error refreshing profile:', error);
     } finally {
       setIsRefreshing(false);
     }

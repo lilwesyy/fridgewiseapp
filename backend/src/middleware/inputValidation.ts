@@ -280,7 +280,7 @@ export const sanitizeRequest = (req: Request, res: Response, next: NextFunction)
 
     next();
   } catch (error) {
-    console.error('Error sanitizing request:', error);
+    console.log('Error sanitizing request:', error);
     res.status(400).json({
       success: false,
       error: 'Invalid request data'

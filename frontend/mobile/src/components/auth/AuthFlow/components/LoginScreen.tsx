@@ -64,7 +64,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         try {
           await sendEmailVerification(error.email || loginForm.email);
         } catch (sendError) {
-          console.error('Failed to send verification code:', sendError);
+          console.log('Failed to send verification code:', sendError);
         }
       } else {
         if (error.message && error.message.toLowerCase().includes('invalid credentials')) {

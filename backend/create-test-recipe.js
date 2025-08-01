@@ -63,7 +63,7 @@ async function createTestRecipe() {
     console.log(`📝 Recipe ID: ${testRecipe._id}`);
     
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.log('❌ Error:', error);
   } finally {
     await mongoose.disconnect();
   }

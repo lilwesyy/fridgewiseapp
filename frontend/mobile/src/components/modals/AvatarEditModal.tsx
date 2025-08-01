@@ -135,7 +135,7 @@ export const AvatarEditModal: React.FC<AvatarEditModalProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error picking image:', error);
+      console.log('Error picking image:', error);
       Alert.alert(
         t('common.error'),
         t('profile.avatar.pickError')

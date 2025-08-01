@@ -316,7 +316,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
+      console.log('Error taking photo:', error);
       Alert.alert(t('common.error'), t('camera.cameraError'));
     }
   };
@@ -346,7 +346,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error selecting from gallery:', error);
+      console.log('Error selecting from gallery:', error);
       Alert.alert(t('common.error'), t('camera.galleryError'));
     }
   };

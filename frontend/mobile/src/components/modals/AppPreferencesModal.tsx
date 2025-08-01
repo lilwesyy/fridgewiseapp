@@ -205,7 +205,7 @@ export const AppPreferencesModal: React.FC<AppPreferencesModalProps> = ({ visibl
         message: safeT('profile.cacheCleared', `Cache cancellata con successo! Liberati ${sizeInMB}MB di spazio.`),
       });
     } catch (error) {
-      console.error('Failed to clear cache:', error);
+      console.log('Failed to clear cache:', error);
       setNotification({
         visible: true,
         type: 'error',

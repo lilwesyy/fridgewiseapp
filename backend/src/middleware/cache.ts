@@ -46,7 +46,7 @@ export const cache = (options: CacheOptions = {}) => {
         };
 
         redisService.set(cacheKey, JSON.stringify(responseToCache), ttl)
-          .catch(err => console.error('Cache set error:', err));
+          .catch(err => console.log('Cache set error:', err));
 
         // Call original json method
         return originalJson.call(this, data);
@@ -54,7 +54,7 @@ export const cache = (options: CacheOptions = {}) => {
 
       next();
     } catch (error) {
-      console.error('Cache middleware error:', error);
+      console.log('Cache middleware error:', error);
       next();
     }
   };
@@ -65,7 +65,7 @@ export const invalidateCache = async (pattern: string): Promise<number> => {
   try {
     return await redisService.deletePattern(pattern);
   } catch (error) {
-    console.error('Cache invalidation error:', error);
+    console.log('Cache invalidation error:', error);
     return 0;
   }
 };

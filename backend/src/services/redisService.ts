@@ -10,7 +10,7 @@ class RedisService {
     });
 
     this.client.on('error', (err) => {
-      console.error('Redis Client Error:', err);
+      console.log('Redis Client Error:', err);
       this.isConnected = false;
     });
 
@@ -29,7 +29,7 @@ class RedisService {
     try {
       await this.client.connect();
     } catch (error) {
-      console.error('Failed to connect to Redis:', error);
+      console.log('Failed to connect to Redis:', error);
       throw error;
     }
   }
@@ -38,7 +38,7 @@ class RedisService {
     try {
       await this.client.disconnect();
     } catch (error) {
-      console.error('Failed to disconnect from Redis:', error);
+      console.log('Failed to disconnect from Redis:', error);
     }
   }
 
@@ -49,7 +49,7 @@ class RedisService {
     try {
       return await this.client.get(key);
     } catch (error) {
-      console.error('Redis GET error:', error);
+      console.log('Redis GET error:', error);
       return null;
     }
   }
@@ -65,7 +65,7 @@ class RedisService {
       }
       return true;
     } catch (error) {
-      console.error('Redis SET error:', error);
+      console.log('Redis SET error:', error);
       return false;
     }
   }
@@ -77,7 +77,7 @@ class RedisService {
       await this.client.del(key);
       return true;
     } catch (error) {
-      console.error('Redis DEL error:', error);
+      console.log('Redis DEL error:', error);
       return false;
     }
   }
@@ -89,7 +89,7 @@ class RedisService {
       const result = await this.client.exists(key);
       return result === 1;
     } catch (error) {
-      console.error('Redis EXISTS error:', error);
+      console.log('Redis EXISTS error:', error);
       return false;
     }
   }
@@ -102,7 +102,7 @@ class RedisService {
     try {
       return JSON.parse(value) as T;
     } catch (error) {
-      console.error('JSON parse error:', error);
+      console.log('JSON parse error:', error);
       return null;
     }
   }
@@ -112,7 +112,7 @@ class RedisService {
       const jsonString = JSON.stringify(value);
       return await this.set(key, jsonString, ttlSeconds);
     } catch (error) {
-      console.error('JSON stringify error:', error);
+      console.log('JSON stringify error:', error);
       return false;
     }
   }
@@ -140,7 +140,7 @@ class RedisService {
       
       return deletedCount;
     } catch (error) {
-      console.error('Redis DELETE PATTERN error:', error);
+      console.log('Redis DELETE PATTERN error:', error);
       return 0;
     }
   }
@@ -189,7 +189,7 @@ class RedisService {
         return await fetcher();
       }
     } catch (error) {
-      console.error('Redis getOrSet error:', error);
+      console.log('Redis getOrSet error:', error);
       return await fetcher();
     }
   }
@@ -229,7 +229,7 @@ class RedisService {
           : 0
       };
     } catch (error) {
-      console.error('Redis memory usage error:', error);
+      console.log('Redis memory usage error:', error);
       return null;
     }
   }

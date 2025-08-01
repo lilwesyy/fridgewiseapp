@@ -104,7 +104,7 @@ export const shareRecipe = async (
 
     return result.action === Share.sharedAction;
   } catch (error) {
-    console.error('Error sharing recipe:', error);
+    console.log('Error sharing recipe:', error);
     Alert.alert(
       t('common.error'),
       t('share.shareError'),
@@ -144,7 +144,7 @@ export const shareRecipeLink = async (recipe: Recipe, t: (key: string) => string
 
     return result.action === Share.sharedAction;
   } catch (error) {
-    console.error('Error sharing recipe link:', error);
+    console.log('Error sharing recipe link:', error);
     return false;
   }
 };

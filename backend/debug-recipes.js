@@ -92,7 +92,7 @@ async function debugRecipes() {
     }
     
   } catch (error) {
-    console.error('❌ Errore:', error.message);
+    console.log('❌ Errore:', error.message);
   } finally {
     await mongoose.disconnect();
     console.log('\n🔌 Disconnesso dal database');

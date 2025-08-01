@@ -130,7 +130,7 @@ export default function SecurityMonitoringModal({ visible, onClose }: SecurityMo
         Alert.alert(t('common.error'), t('admin.errorLoadingSecurityData'));
       }
     } catch (error) {
-      console.error('Error fetching security data:', error);
+      console.log('Error fetching security data:', error);
       Alert.alert(t('common.error'), t('admin.errorLoadingSecurityData'));
     } finally {
       setLoading(false);

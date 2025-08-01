@@ -86,7 +86,7 @@ export const getUserStatistics = async (req: AuthenticatedRequest, res: Response
 
     res.json(statistics);
   } catch (error) {
-    console.error('Error fetching user statistics:', error);
+    console.log('Error fetching user statistics:', error);
     res.status(500).json({ error: 'Failed to fetch statistics' });
   }
 };
@@ -170,7 +170,7 @@ export const getDetailedStatistics = async (req: AuthenticatedRequest, res: Resp
 
     res.json(detailedStatistics);
   } catch (error) {
-    console.error('Error fetching detailed statistics:', error);
+    console.log('Error fetching detailed statistics:', error);
     res.status(500).json({ error: 'Failed to fetch detailed statistics' });
   }
 };
@@ -201,7 +201,7 @@ export const getRecentRecipes = async (req: AuthenticatedRequest, res: Response)
 
     res.json(recentRecipes);
   } catch (error) {
-    console.error('Error fetching recent recipes:', error);
+    console.log('Error fetching recent recipes:', error);
     res.status(500).json({ error: 'Failed to fetch recent recipes' });
   }
 };

@@ -45,7 +45,7 @@ async function testRecognition() {
         }
         
     } catch (error) {
-        console.error('❌ Test failed:', error.message);
+        console.log('❌ Test failed:', error.message);
     }
 }
 

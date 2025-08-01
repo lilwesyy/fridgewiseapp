@@ -62,7 +62,7 @@ export const rateRecipe = async (req: AuthRequest, res: Response<APIResponse<any
       data: existingRating
     });
   } catch (error: any) {
-    console.error('Error rating recipe:', error);
+    console.log('Error rating recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to rate recipe'
@@ -86,7 +86,7 @@ export const getUserRating = async (req: AuthRequest, res: Response<APIResponse<
       data: rating
     });
   } catch (error: any) {
-    console.error('Error getting user rating:', error);
+    console.log('Error getting user rating:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get rating'
@@ -125,7 +125,7 @@ export const getRecipeRatings = async (req: Request, res: Response<APIResponse<a
       }
     });
   } catch (error: any) {
-    console.error('Error getting recipe ratings:', error);
+    console.log('Error getting recipe ratings:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get ratings'
@@ -154,6 +154,6 @@ async function updateRecipeAverageRating(recipeId: string): Promise<void> {
       totalRatings: ratings.length
     });
   } catch (error) {
-    console.error('Error updating recipe average rating:', error);
+    console.log('Error updating recipe average rating:', error);
   }
 }

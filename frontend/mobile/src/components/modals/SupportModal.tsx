@@ -140,7 +140,7 @@ User Information:
         });
       }
     } catch (error) {
-      console.error('Error opening email client:', error);
+      console.log('Error opening email client:', error);
       setNotification({
         visible: true,
         type: 'error',

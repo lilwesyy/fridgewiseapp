@@ -53,7 +53,7 @@ class ApiService {
         return config;
       },
       onRequestError: (error) => {
-        console.error('🔴 Request Interceptor Error:', error);
+        console.log('🔴 Request Interceptor Error:', error);
         throw error;
       }
     });
@@ -65,7 +65,7 @@ class ApiService {
         return data;
       },
       onResponseError: (error) => {
-        console.error('🔴 Response Interceptor Error:', error);
+        console.log('🔴 Response Interceptor Error:', error);
         throw error;
       }
     });
@@ -99,7 +99,7 @@ class ApiService {
     try {
       return await secureStorage.getToken();
     } catch (error) {
-      console.error('Error getting auth token:', error);
+      console.log('Error getting auth token:', error);
       return null;
     }
   }
@@ -112,7 +112,7 @@ class ApiService {
       await secureStorage.removeToken();
       await secureStorage.removeUser();
     } catch (error) {
-      console.error('Error clearing auth data:', error);
+      console.log('Error clearing auth data:', error);
     }
 
     // Call the logout callback if set
@@ -188,13 +188,13 @@ class ApiService {
           data = {};
         } else if (responseText.trim().startsWith('<')) {
           // Response is HTML (likely an error page)
-          console.error('🔴 Server returned HTML instead of JSON:', responseText.substring(0, 200));
+          console.log('🔴 Server returned HTML instead of JSON:', responseText.substring(0, 200));
           throw new Error('Server returned HTML instead of JSON. This usually indicates a server error or authentication issue.');
         } else {
           data = JSON.parse(responseText);
         }
       } catch (parseError: any) {
-        console.error('🔴 JSON parsing failed:', parseError.message);
+        console.log('🔴 JSON parsing failed:', parseError.message);
         throw new Error(`Failed to parse server response: ${parseError.message}`);
       }
 
@@ -231,7 +231,7 @@ class ApiService {
           try {
             interceptor.onResponseError(error);
           } catch (interceptorError) {
-            console.error('Response interceptor error:', interceptorError);
+            console.log('Response interceptor error:', interceptorError);
           }
         }
       }
@@ -304,13 +304,13 @@ class ApiService {
           data = {};
         } else if (responseText.trim().startsWith('<')) {
           // Response is HTML (likely an error page)
-          console.error('🔴 Server returned HTML instead of JSON:', responseText.substring(0, 200));
+          console.log('🔴 Server returned HTML instead of JSON:', responseText.substring(0, 200));
           throw new Error('Server returned HTML instead of JSON. This usually indicates a server error or authentication issue.');
         } else {
           data = JSON.parse(responseText);
         }
       } catch (parseError: any) {
-        console.error('🔴 JSON parsing failed:', parseError.message);
+        console.log('🔴 JSON parsing failed:', parseError.message);
         throw new Error(`Failed to parse server response: ${parseError.message}`);
       }
 
@@ -326,7 +326,7 @@ class ApiService {
         data: data.data || data,
       };
     } catch (error: any) {
-      console.error('File upload failed:', error);
+      console.log('File upload failed:', error);
       return {
         success: false,
         error: error.message || 'Network error occurred',

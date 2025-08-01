@@ -42,7 +42,7 @@ const makeAdmin = async () => {
     }
 
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.log('❌ Error:', error.message);
   } finally {
     await mongoose.disconnect();
     console.log('👋 Disconnected from MongoDB');

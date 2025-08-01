@@ -14,7 +14,7 @@ export const getDailyUsage = async (req: AuthRequest, res: Response<APIResponse<
       data: usage
     });
   } catch (error: any) {
-    console.error('Failed to get daily usage:', error);
+    console.log('Failed to get daily usage:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get usage information'

@@ -91,12 +91,12 @@ export class GeminiService {
       
       return generatedRecipe;
     } catch (error) {
-      console.error('Error generating recipe with Gemini:', error);
+      console.log('Error generating recipe with Gemini:', error);
       
       // If it's a parsing error, log more details
       if (error instanceof Error && error.message.includes('JSON')) {
-        console.error('🚨 JSON parsing failed. This may be due to Gemini returning non-JSON response.');
-        console.error('🔄 Consider checking the prompt or adjusting the parsing logic.');
+        console.log('🚨 JSON parsing failed. This may be due to Gemini returning non-JSON response.');
+        console.log('🔄 Consider checking the prompt or adjusting the parsing logic.');
       }
       
       console.log('🔄 Falling back to mock recipe due to error');
@@ -271,7 +271,7 @@ Importante:
       }
       
       if (!jsonMatch) {
-        console.error('❌ No JSON found in Gemini response. Full response:', response);
+        console.log('❌ No JSON found in Gemini response. Full response:', response);
         throw new Error('No JSON found in response');
       }
       
@@ -280,7 +280,7 @@ Importante:
 
       // Validate required fields
       if (!parsed.title || !parsed.description || !parsed.ingredients || !parsed.instructions) {
-        console.error('❌ Missing required fields in recipe response:', {
+        console.log('❌ Missing required fields in recipe response:', {
           hasTitle: !!parsed.title,
           hasDescription: !!parsed.description,
           hasIngredients: !!parsed.ingredients,
@@ -323,7 +323,7 @@ Importante:
 
       return recipe;
     } catch (error) {
-      console.error('Error parsing recipe response:', error);
+      console.log('Error parsing recipe response:', error);
       
       // Return a basic fallback recipe
       return this.createFallbackRecipe(language);
@@ -448,7 +448,7 @@ Importante:
 
       return text.trim();
     } catch (error) {
-      console.error('Error generating AI chat response:', error);
+      console.log('Error generating AI chat response:', error);
       
       // Handle specific error types
       if (error instanceof Error && error.message.includes('503')) {

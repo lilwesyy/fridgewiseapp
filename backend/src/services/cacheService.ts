@@ -221,7 +221,7 @@ export class CacheService {
       
       console.log('✅ Cache warming completed successfully');
     } catch (error) {
-      console.error('❌ Cache warming failed:', error);
+      console.log('❌ Cache warming failed:', error);
       // Don't throw error - warming is optional
     }
   }

@@ -53,7 +53,7 @@ export const useDailyUsage = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
-      console.error('Failed to fetch daily usage:', errorMessage);
+      console.log('Failed to fetch daily usage:', errorMessage);
     } finally {
       setIsLoading(false);
     }

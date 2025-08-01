@@ -25,7 +25,7 @@ class ComponentPreloader {
         return module.default;
       })
       .catch(error => {
-        console.error(`❌ Failed to preload ${componentName}:`, error);
+        console.log(`❌ Failed to preload ${componentName}:`, error);
         this.preloadPromises.delete(componentName);
         throw error;
       });

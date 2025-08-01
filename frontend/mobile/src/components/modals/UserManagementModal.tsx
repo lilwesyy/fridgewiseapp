@@ -119,7 +119,7 @@ export default function UserManagementModal({ visible, onClose }: UserManagement
         });
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.log('Error fetching users:', error);
       setNotification({
         visible: true,
         type: 'error',

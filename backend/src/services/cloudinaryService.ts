@@ -31,7 +31,7 @@ export class CloudinaryService {
       const result = await cloudinary.uploader.upload(filePath, defaultOptions);
       return result;
     } catch (error) {
-      console.error('Cloudinary upload error:', error);
+      console.log('Cloudinary upload error:', error);
       throw new Error('Failed to upload image to Cloudinary');
     }
   }
@@ -69,7 +69,7 @@ export class CloudinaryService {
         ).end(buffer);
       });
     } catch (error) {
-      console.error('Cloudinary buffer upload error:', error);
+      console.log('Cloudinary buffer upload error:', error);
       throw new Error('Failed to upload image buffer to Cloudinary');
     }
   }
@@ -79,7 +79,7 @@ export class CloudinaryService {
       const result = await cloudinary.uploader.destroy(publicId);
       return result;
     } catch (error) {
-      console.error('Cloudinary delete error:', error);
+      console.log('Cloudinary delete error:', error);
       throw new Error('Failed to delete image from Cloudinary');
     }
   }

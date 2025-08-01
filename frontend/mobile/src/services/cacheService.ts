@@ -35,7 +35,7 @@ class CacheService {
         JSON.stringify(cacheItem)
       );
     } catch (error) {
-      console.error('Cache set error:', error);
+      console.log('Cache set error:', error);
     }
   }
 
@@ -58,7 +58,7 @@ class CacheService {
 
       return cacheItem.data;
     } catch (error) {
-      console.error('Cache get error:', error);
+      console.log('Cache get error:', error);
       return null;
     }
   }
@@ -74,7 +74,7 @@ class CacheService {
       const cacheItem: CacheItem<T> = JSON.parse(cached);
       return cacheItem.data;
     } catch (error) {
-      console.error('Cache getStale error:', error);
+      console.log('Cache getStale error:', error);
       return null;
     }
   }
@@ -92,7 +92,7 @@ class CacheService {
 
       return now <= cacheItem.expires;
     } catch (error) {
-      console.error('Cache has error:', error);
+      console.log('Cache has error:', error);
       return false;
     }
   }
@@ -104,7 +104,7 @@ class CacheService {
     try {
       await AsyncStorage.removeItem(this.prefix + key);
     } catch (error) {
-      console.error('Cache delete error:', error);
+      console.log('Cache delete error:', error);
     }
   }
 
@@ -117,7 +117,7 @@ class CacheService {
       const cacheKeys = keys.filter(key => key.startsWith(this.prefix));
       await AsyncStorage.multiRemove(cacheKeys);
     } catch (error) {
-      console.error('Cache clear error:', error);
+      console.log('Cache clear error:', error);
     }
   }
 
@@ -140,7 +140,7 @@ class CacheService {
         }
       }
     } catch (error) {
-      console.error('Cache clearExpired error:', error);
+      console.log('Cache clearExpired error:', error);
     }
   }
 
@@ -182,7 +182,7 @@ class CacheService {
         totalSize,
       };
     } catch (error) {
-      console.error('Cache getStats error:', error);
+      console.log('Cache getStats error:', error);
       return {
         totalItems: 0,
         expiredItems: 0,
@@ -225,7 +225,7 @@ export class ApiCacheService {
       await this.cache.set(cacheKey, fresh, options);
       return fresh;
     } catch (error) {
-      console.error('getCacheFirst error:', error);
+      console.log('getCacheFirst error:', error);
       // Try to get stale data as last resort
       return await this.cache.getStale<T>(cacheKey);
     }
@@ -246,7 +246,7 @@ export class ApiCacheService {
       await this.cache.set(cacheKey, fresh, options);
       return fresh;
     } catch (error) {
-      console.error('API call failed, trying cache:', error);
+      console.log('API call failed, trying cache:', error);
       // Fallback to cache (even if stale)
       return await this.cache.getStale<T>(cacheKey);
     }
@@ -261,7 +261,7 @@ export class ApiCacheService {
       const fresh = await apiCall();
       await this.cache.set(cacheKey, fresh, options);
     } catch (error) {
-      console.error('Background cache update failed:', error);
+      console.log('Background cache update failed:', error);
     }
   }
 }

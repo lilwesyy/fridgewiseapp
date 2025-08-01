@@ -32,7 +32,7 @@ export const uploadAvatar = async (req: Request, res: Response<APIResponse<any>>
       try {
         await cloudinaryService.deleteImage(currentUser.avatar.publicId);
       } catch (error) {
-        console.error('Error deleting old avatar:', error);
+        console.log('Error deleting old avatar:', error);
         // Continue with upload even if deletion fails
       }
     }
@@ -99,7 +99,7 @@ export const uploadAvatar = async (req: Request, res: Response<APIResponse<any>>
       data: updatedUser
     });
   } catch (error: any) {
-    console.error('Avatar upload error:', error);
+    console.log('Avatar upload error:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to upload avatar'
@@ -150,7 +150,7 @@ export const deleteAvatar = async (req: Request, res: Response<APIResponse<any>>
       data: updatedUser
     });
   } catch (error: any) {
-    console.error('Avatar deletion error:', error);
+    console.log('Avatar deletion error:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete avatar'
@@ -197,7 +197,7 @@ const compressImageForMobile = async (buffer: Buffer): Promise<Buffer> => {
 
     return compressedBuffer;
   } catch (error) {
-    console.error('Image compression error:', error);
+    console.log('Image compression error:', error);
     throw new Error('Failed to compress image');
   }
 };
@@ -312,7 +312,7 @@ export const uploadDishPhoto = async (req: Request, res: Response<APIResponse<Di
       } catch (error) {
         retryCount++;
         if (retryCount >= maxRetries) {
-          console.error('Image compression failed after retries:', error);
+          console.log('Image compression failed after retries:', error);
           res.status(500).json({
             success: false,
             error: 'Failed to process image. Please try again.'
@@ -342,7 +342,7 @@ export const uploadDishPhoto = async (req: Request, res: Response<APIResponse<Di
       } catch (error) {
         retryCount++;
         if (retryCount >= maxRetries) {
-          console.error('Cloudinary upload failed after retries:', error);
+          console.log('Cloudinary upload failed after retries:', error);
           res.status(500).json({
             success: false,
             error: 'Failed to upload image. Please check your connection and try again.'
@@ -395,7 +395,7 @@ export const uploadDishPhoto = async (req: Request, res: Response<APIResponse<Di
             try {
               await cloudinaryService.deleteImage(uploadResult.public_id);
             } catch (deleteError) {
-              console.error('Failed to cleanup uploaded image:', deleteError);
+              console.log('Failed to cleanup uploaded image:', deleteError);
             }
             
             res.status(404).json({
@@ -408,7 +408,7 @@ export const uploadDishPhoto = async (req: Request, res: Response<APIResponse<Di
             try {
               await cloudinaryService.deleteImage(uploadResult.public_id);
             } catch (deleteError) {
-              console.error('Failed to cleanup uploaded image:', deleteError);
+              console.log('Failed to cleanup uploaded image:', deleteError);
             }
             
             res.status(400).json({
@@ -424,13 +424,13 @@ export const uploadDishPhoto = async (req: Request, res: Response<APIResponse<Di
         
         console.log(`Added dish photo to recipe ${recipeId}: ${uploadResult.secure_url}`);
       } catch (error) {
-        console.error('Failed to update recipe with dish photo:', error);
+        console.log('Failed to update recipe with dish photo:', error);
         
         // Delete uploaded image since we can't use it
         try {
           await cloudinaryService.deleteImage(uploadResult.public_id);
         } catch (deleteError) {
-          console.error('Failed to cleanup uploaded image:', deleteError);
+          console.log('Failed to cleanup uploaded image:', deleteError);
         }
         
         res.status(400).json({
@@ -459,7 +459,7 @@ export const uploadDishPhoto = async (req: Request, res: Response<APIResponse<Di
       message: 'Dish photo uploaded successfully'
     });
   } catch (error: any) {
-    console.error('Dish photo upload error:', error);
+    console.log('Dish photo upload error:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to upload dish photo'

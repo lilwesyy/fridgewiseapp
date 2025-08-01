@@ -66,7 +66,7 @@ export class MealDbRecognizeService {
       return processedIngredients;
 
     } catch (error) {
-      console.error('❌ Analysis failed:', error);
+      console.log('❌ Analysis failed:', error);
       return [];
     }
   }
@@ -100,7 +100,7 @@ export class MealDbRecognizeService {
       return [...new Set(allTags)].filter(tag => tag && tag.trim().length > 0);
 
     } catch (error) {
-      console.error('❌ RecognizeAnything API error:', error);
+      console.log('❌ RecognizeAnything API error:', error);
       throw error;
     }
   }
@@ -184,7 +184,7 @@ export class MealDbRecognizeService {
       console.log(`✅ Cached ${ingredients.length} MealDB ingredients`);
 
     } catch (error) {
-      console.error('❌ Failed to update MealDB cache:', error);
+      console.log('❌ Failed to update MealDB cache:', error);
       // Se TheMealDB non è disponibile, il sistema non può funzionare
       throw new Error('TheMealDB API unavailable');
     }

@@ -122,7 +122,7 @@ async function optimizeDatabase() {
     console.log('\n✅ Database optimization completed successfully!');
     
   } catch (error) {
-    console.error('❌ Error optimizing database:', error);
+    console.log('❌ Error optimizing database:', error);
     process.exit(1);
   } finally {
     await client.close();

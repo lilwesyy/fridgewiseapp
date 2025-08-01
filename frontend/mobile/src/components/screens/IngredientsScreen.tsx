@@ -218,7 +218,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
         setShowSuggestions(false);
       }
     } catch (error) {
-      console.error('Search error:', error);
+      console.log('Search error:', error);
       setSearchResults([]);
       setShowSuggestions(false);
     } finally {
@@ -362,7 +362,7 @@ export const IngredientsScreen: React.FC<IngredientsScreenProps> = ({
       // Refresh usage data after successful generation
       refreshUsage();
     } catch (error) {
-      console.error('Recipe generation error:', error);
+      console.log('Recipe generation error:', error);
 
       const rateLimitNotification = handleRateLimitError(
         error,

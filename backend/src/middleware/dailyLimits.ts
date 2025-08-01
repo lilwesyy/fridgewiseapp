@@ -67,7 +67,7 @@ export const checkDailyLimit = (limitType: keyof typeof DAILY_LIMITS) => {
 
       next();
     } catch (error) {
-      console.error('Daily limit check error:', error);
+      console.log('Daily limit check error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to check daily limits'
@@ -99,7 +99,7 @@ export const incrementDailyUsage = (limitType: keyof typeof DAILY_LIMITS) => {
 
       next();
     } catch (error) {
-      console.error('Failed to increment daily usage:', error);
+      console.log('Failed to increment daily usage:', error);
       // Don't fail the request if usage tracking fails
       next();
     }
@@ -152,7 +152,7 @@ export const getUserDailyUsage = async (userId: string, userRole?: string) => {
       date: usage.date
     };
   } catch (error) {
-    console.error('Error getting daily usage:', error);
+    console.log('Error getting daily usage:', error);
     throw error;
   }
 };

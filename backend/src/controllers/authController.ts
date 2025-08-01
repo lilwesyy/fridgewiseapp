@@ -257,7 +257,7 @@ export const forgotPassword = async (req: Request, res: Response<APIResponse<any
       await emailService.sendPasswordResetCode(email, resetCode, userLocale);
       console.log('Password reset code sent to email:', email, 'in locale:', userLocale);
     } catch (emailError) {
-      console.error('Failed to send reset email:', emailError);
+      console.log('Failed to send reset email:', emailError);
       // Return the actual error to help debug
       res.status(500).json({
         success: false,
@@ -405,7 +405,7 @@ export const deleteAccount = async (req: Request, res: Response<APIResponse<any>
           try {
             await cloudinaryService.deleteImage(photo.publicId);
           } catch (error) {
-            console.error(`Failed to delete recipe image ${photo.publicId}:`, error);
+            console.log(`Failed to delete recipe image ${photo.publicId}:`, error);
             // Continue with deletion even if image cleanup fails
           }
         }
@@ -417,7 +417,7 @@ export const deleteAccount = async (req: Request, res: Response<APIResponse<any>
       try {
         await cloudinaryService.deleteImage(userWithPassword.avatar.publicId);
       } catch (error) {
-        console.error(`Failed to delete user avatar ${userWithPassword.avatar.publicId}:`, error);
+        console.log(`Failed to delete user avatar ${userWithPassword.avatar.publicId}:`, error);
         // Continue with deletion even if avatar cleanup fails
       }
     }
@@ -432,7 +432,7 @@ export const deleteAccount = async (req: Request, res: Response<APIResponse<any>
       message: 'Account deleted successfully'
     });
   } catch (error: any) {
-    console.error('Delete account error:', error);
+    console.log('Delete account error:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Account deletion failed'
@@ -486,7 +486,7 @@ export const sendEmailVerification = async (req: Request, res: Response<APIRespo
       await emailService.sendEmailVerificationCode(email, verificationCode, userLocale);
       console.log('Email verification code sent to:', email, 'in locale:', userLocale);
     } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
+      console.log('Failed to send verification email:', emailError);
       // Don't fail the request if email fails, just log it
     }
 

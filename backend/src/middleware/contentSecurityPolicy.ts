@@ -262,7 +262,7 @@ export class ContentSecurityPolicyMiddleware {
 
       next();
     } catch (error) {
-      console.error('CSP middleware error:', error);
+      console.log('CSP middleware error:', error);
       next();
     }
   };

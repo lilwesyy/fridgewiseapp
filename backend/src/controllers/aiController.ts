@@ -200,7 +200,7 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
           }
         });
       } catch (error) {
-        console.error('Error parsing recipe modifications:', error);
+        console.log('Error parsing recipe modifications:', error);
         // If parsing fails, return the response as normal text
         res.status(200).json({
           success: true,
@@ -226,7 +226,7 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
     }
 
   } catch (error) {
-    console.error('AI Chat Error:', error);
+    console.log('AI Chat Error:', error);
     res.status(500).json({
       error: 'Failed to process AI chat request',
       details: error instanceof Error ? error.message : 'Unknown error'

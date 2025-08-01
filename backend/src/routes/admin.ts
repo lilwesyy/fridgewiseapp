@@ -17,7 +17,7 @@ const adminMiddleware = async (req: AuthRequest, res: any, next: any) => {
     }
     next();
   } catch (error) {
-    console.error('Admin middleware error:', error);
+    console.log('Admin middleware error:', error);
     res.status(500).json({ 
       success: false, 
       error: 'Error verifying admin privileges' 
@@ -187,7 +187,7 @@ router.get('/stats', protect, adminMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching admin stats:', error);
+    console.log('Error fetching admin stats:', error);
     res.status(500).json({
       success: false,
       error: 'Error fetching statistics'
@@ -241,7 +241,7 @@ router.get('/users', protect, adminMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.log('Error fetching users:', error);
     res.status(500).json({
       success: false,
       error: 'Error fetching users'
@@ -292,7 +292,7 @@ router.post('/promote-user', protect, adminMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error promoting user:', error);
+    console.log('Error promoting user:', error);
     return res.status(500).json({
       success: false,
       error: 'Error promoting user to admin'
@@ -345,7 +345,7 @@ router.patch('/users/:id/admin', protect, adminMiddleware, async (req: AuthReque
     });
 
   } catch (error) {
-    console.error('Error updating user admin status:', error);
+    console.log('Error updating user admin status:', error);
     return res.status(500).json({
       success: false,
       error: 'Error updating user admin status'
@@ -390,7 +390,7 @@ router.patch('/users/:id/verify', protect, adminMiddleware, async (req: AuthRequ
     });
 
   } catch (error) {
-    console.error('Error updating user verification status:', error);
+    console.log('Error updating user verification status:', error);
     return res.status(500).json({
       success: false,
       error: 'Error updating user verification status'
@@ -440,7 +440,7 @@ router.delete('/users/:id', protect, adminMiddleware, async (req: AuthRequest, r
     });
 
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.log('Error deleting user:', error);
     return res.status(500).json({
       success: false,
       error: 'Error deleting user'
@@ -474,7 +474,7 @@ router.get('/environment', protect, adminMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching environment info:', error);
+    console.log('Error fetching environment info:', error);
     res.status(500).json({
       success: false,
       error: 'Error fetching environment information'
@@ -586,7 +586,7 @@ router.get('/security', protect, adminMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching security data:', error);
+    console.log('Error fetching security data:', error);
     res.status(500).json({
       success: false,
       error: 'Error fetching security monitoring data'
@@ -657,7 +657,7 @@ router.get('/health', protect, adminMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching health data:', error);
+    console.log('Error fetching health data:', error);
     res.status(500).json({
       success: false,
       error: 'Error fetching system health data'

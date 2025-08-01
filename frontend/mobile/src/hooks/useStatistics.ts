@@ -75,7 +75,7 @@ export const useStatistics = () => {
       const data = await response.json();
       setStatistics(data);
     } catch (err) {
-      // console.error('Error fetching statistics:', err);
+      // console.log('Error fetching statistics:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch statistics');
     } finally {
       setIsLoading(false);
@@ -102,7 +102,7 @@ export const useStatistics = () => {
       const data = await response.json();
       setDetailedStatistics(data);
     } catch (err) {
-      console.error('Error fetching detailed statistics:', err);
+      console.log('Error fetching detailed statistics:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch detailed statistics');
     }
   };
@@ -130,7 +130,7 @@ export const useStatistics = () => {
       const data = await response.json();
       setRecentRecipes(data);
     } catch (err) {
-      console.error('Error fetching recent recipes:', err);
+      console.log('Error fetching recent recipes:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch recent recipes');
     } finally {
       setIsLoadingRecipes(false);

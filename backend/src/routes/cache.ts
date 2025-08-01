@@ -46,7 +46,7 @@ router.get('/stats', protect, async (req: AuthRequest, res: Response<APIResponse
       }
     });
   } catch (error: any) {
-    console.error('Error getting cache stats:', error);
+    console.log('Error getting cache stats:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get cache statistics'
@@ -103,7 +103,7 @@ router.delete('/clear/:pattern', protect, async (req: AuthRequest, res: Response
       }
     });
   } catch (error: any) {
-    console.error('Error clearing cache:', error);
+    console.log('Error clearing cache:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to clear cache'

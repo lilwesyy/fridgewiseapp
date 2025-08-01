@@ -141,7 +141,7 @@ async function rebuildIndexes() {
     console.log('🚀 New database is now optimized and ready to use.');
     
   } catch (error) {
-    console.error('❌ Error rebuilding indexes:', error);
+    console.log('❌ Error rebuilding indexes:', error);
     process.exit(1);
   } finally {
     await client.close();

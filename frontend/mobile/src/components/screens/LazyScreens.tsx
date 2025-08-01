@@ -102,7 +102,7 @@ export class LazyScreenErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Lazy screen loading error:', error, errorInfo);
+    console.log('Lazy screen loading error:', error, errorInfo);
   }
 
   render() {

@@ -29,7 +29,7 @@ export const getQueryPerformanceStats = async (req: AuthRequest, res: Response<A
       }
     });
   } catch (error: any) {
-    console.error('Failed to get query performance stats:', error);
+    console.log('Failed to get query performance stats:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get query performance statistics'
@@ -86,7 +86,7 @@ export const getRecentQueries = async (req: AuthRequest, res: Response<APIRespon
       }
     });
   } catch (error: any) {
-    console.error('Failed to get recent queries:', error);
+    console.log('Failed to get recent queries:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get recent queries'
@@ -159,7 +159,7 @@ export const getSlowQueries = async (req: AuthRequest, res: Response<APIResponse
       }
     });
   } catch (error: any) {
-    console.error('Failed to get slow queries:', error);
+    console.log('Failed to get slow queries:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get slow queries'
@@ -202,7 +202,7 @@ export const updateMonitoringSettings = async (req: AuthRequest, res: Response<A
       }
     });
   } catch (error: any) {
-    console.error('Failed to update monitoring settings:', error);
+    console.log('Failed to update monitoring settings:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to update monitoring settings'
@@ -232,7 +232,7 @@ export const clearQueryMetrics = async (req: AuthRequest, res: Response<APIRespo
       }
     });
   } catch (error: any) {
-    console.error('Failed to clear query metrics:', error);
+    console.log('Failed to clear query metrics:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to clear query metrics'

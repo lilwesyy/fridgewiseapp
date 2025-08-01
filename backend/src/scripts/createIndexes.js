@@ -10,7 +10,7 @@ const connectDB = async () => {
     });
     console.log('✅ Connected to MongoDB');
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
+    console.log('❌ MongoDB connection error:', error);
     process.exit(1);
   }
 };
@@ -205,7 +205,7 @@ const createIndexes = async () => {
     console.log('📈 Database performance should be significantly improved.');
     
   } catch (error) {
-    console.error('❌ Error creating indexes:', error);
+    console.log('❌ Error creating indexes:', error);
     throw error;
   }
 };
@@ -218,7 +218,7 @@ const main = async () => {
     console.log('\n✨ Index creation completed successfully!');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Script failed:', error);
+    console.log('❌ Script failed:', error);
     process.exit(1);
   }
 };

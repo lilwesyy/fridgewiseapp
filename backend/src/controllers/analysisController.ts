@@ -107,7 +107,7 @@ export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<a
         });
       }
     } catch (error: any) {
-      console.error('❌ Image analysis failed:', error);
+      console.log('❌ Image analysis failed:', error);
       
       // Clean up temporary file if it exists
       if (fs.existsSync(tempFilePath)) {
@@ -120,7 +120,7 @@ export const analyzeImage = async (req: AuthRequest, res: Response<APIResponse<a
       });
     }
   } catch (error: any) {
-    console.error('Error in analyzeImage:', error);
+    console.log('Error in analyzeImage:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Server error'

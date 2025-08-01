@@ -123,7 +123,7 @@ export class RecognizeService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Recognition API error:', response.status, errorText);
+        console.log('❌ Recognition API error:', response.status, errorText);
         
         // Fall back to mock data if API fails
         console.log('🔄 Falling back to mock data due to API error');
@@ -136,7 +136,7 @@ export class RecognizeService {
       // Verifica che la risposta abbia il formato atteso
       if (!result || (!result.tags && !result.english) || 
           (!Array.isArray(result.tags) && !Array.isArray(result.english))) {
-        console.error('❌ Invalid response format from recognition API:', result);
+        console.log('❌ Invalid response format from recognition API:', result);
         console.log('🔄 Falling back to mock data due to invalid response');
         return this.getMockIngredients();
       }
@@ -151,7 +151,7 @@ export class RecognizeService {
       
       return processedIngredients;
     } catch (error) {
-      console.error('❌ Error analyzing image:', error);
+      console.log('❌ Error analyzing image:', error);
       console.log('🔄 Falling back to mock data due to error');
       return this.getMockIngredients();
     }
@@ -351,7 +351,7 @@ export class RecognizeService {
       console.log('🩺 Legacy health check response:', response.status);
       return response.status < 500;
     } catch (error) {
-      console.error('Legacy API health check failed:', error);
+      console.log('Legacy API health check failed:', error);
       return false;
     }
   }

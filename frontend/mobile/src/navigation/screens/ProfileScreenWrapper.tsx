@@ -10,7 +10,7 @@ export const ProfileScreenWrapper: React.FC = () => {
       await logout();
       // Navigation will be handled automatically by auth state change
     } catch (error) {
-      console.error('Logout error:', error);
+      console.log('Logout error:', error);
     }
   };
 

@@ -90,7 +90,7 @@ router.post('/csp-report', (req: Request, res: Response) => {
     // Always respond with 204 No Content for CSP reports
     res.status(204).end();
   } catch (error) {
-    console.error('Error processing CSP report:', error);
+    console.log('Error processing CSP report:', error);
     res.status(204).end(); // Still respond with 204 even on error
   }
 });

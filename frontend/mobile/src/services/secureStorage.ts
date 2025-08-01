@@ -25,7 +25,7 @@ class SecureTokenStorage {
     try {
       await SecureStore.setItemAsync(SecureTokenStorage.TOKEN_KEY, JSON.stringify(tokenData));
     } catch (error) {
-      console.error('Error storing token securely:', error);
+      console.log('Error storing token securely:', error);
       throw new Error('Failed to store authentication token');
     }
   }
@@ -49,7 +49,7 @@ class SecureTokenStorage {
 
       return tokenData.token;
     } catch (error) {
-      console.error('Error retrieving token from secure storage:', error);
+      console.log('Error retrieving token from secure storage:', error);
       return null;
     }
   }
@@ -73,7 +73,7 @@ class SecureTokenStorage {
 
       return tokenData;
     } catch (error) {
-      console.error('Error retrieving token data from secure storage:', error);
+      console.log('Error retrieving token data from secure storage:', error);
       return null;
     }
   }
@@ -89,7 +89,7 @@ class SecureTokenStorage {
       const fiveMinutes = 5 * 60 * 1000;
       return (tokenData.expiresAt - Date.now()) <= fiveMinutes;
     } catch (error) {
-      console.error('Error checking token expiry:', error);
+      console.log('Error checking token expiry:', error);
       return true;
     }
   }
@@ -101,7 +101,7 @@ class SecureTokenStorage {
     try {
       await SecureStore.deleteItemAsync(SecureTokenStorage.TOKEN_KEY);
     } catch (error) {
-      console.error('Error removing token from secure storage:', error);
+      console.log('Error removing token from secure storage:', error);
     }
   }
 
@@ -112,7 +112,7 @@ class SecureTokenStorage {
     try {
       await SecureStore.setItemAsync(SecureTokenStorage.USER_KEY, JSON.stringify(user));
     } catch (error) {
-      console.error('Error storing user data securely:', error);
+      console.log('Error storing user data securely:', error);
       throw new Error('Failed to store user data');
     }
   }
@@ -125,7 +125,7 @@ class SecureTokenStorage {
       const userData = await SecureStore.getItemAsync(SecureTokenStorage.USER_KEY);
       return userData ? JSON.parse(userData) : null;
     } catch (error) {
-      console.error('Error retrieving user data from secure storage:', error);
+      console.log('Error retrieving user data from secure storage:', error);
       return null;
     }
   }
@@ -137,7 +137,7 @@ class SecureTokenStorage {
     try {
       await SecureStore.deleteItemAsync(SecureTokenStorage.USER_KEY);
     } catch (error) {
-      console.error('Error removing user data from secure storage:', error);
+      console.log('Error removing user data from secure storage:', error);
     }
   }
 
@@ -149,7 +149,7 @@ class SecureTokenStorage {
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       await AsyncStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.error('Error storing app preference:', error);
+      console.log('Error storing app preference:', error);
     }
   }
 
@@ -162,7 +162,7 @@ class SecureTokenStorage {
       const value = await AsyncStorage.getItem(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error('Error retrieving app preference:', error);
+      console.log('Error retrieving app preference:', error);
       return null;
     }
   }
@@ -175,7 +175,7 @@ class SecureTokenStorage {
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       await AsyncStorage.removeItem(key);
     } catch (error) {
-      console.error('Error removing app preference:', error);
+      console.log('Error removing app preference:', error);
     }
   }
 
@@ -191,7 +191,7 @@ class SecureTokenStorage {
         this.removeAppPreference(SecureTokenStorage.PREFERENCES_KEY)
       ]);
     } catch (error) {
-      console.error('Error clearing all secure data:', error);
+      console.log('Error clearing all secure data:', error);
     }
   }
 }

@@ -93,7 +93,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
       await onSubmitRating(rating, comment.trim() || undefined);
       onClose();
     } catch (error) {
-      console.error('Error submitting rating:', error);
+      console.log('Error submitting rating:', error);
       Alert.alert(
         t('common.error'),
         t('rating.submitError'),

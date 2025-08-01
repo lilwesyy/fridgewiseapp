@@ -156,7 +156,7 @@ export class EnhancedRecognizeService {
       throw lastError;
 
     } catch (error) {
-      console.error('❌ Gemini Vision error:', error);
+      console.log('❌ Gemini Vision error:', error);
       throw error;
     }
   }
@@ -257,7 +257,7 @@ Focus on actual food ingredients that could be used in cooking.`;
       return processed;
 
     } catch (error) {
-      console.error('❌ Gemini 1.5 fallback failed:', error);
+      console.log('❌ Gemini 1.5 fallback failed:', error);
       throw error;
     }
   }

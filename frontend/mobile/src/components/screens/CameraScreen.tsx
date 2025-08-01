@@ -307,7 +307,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         throw new Error('No photo data received');
       }
     } catch (error) {
-      console.error('❌ Error taking picture:', error);
+      console.log('❌ Error taking picture:', error);
       setCameraError('Failed to take picture');
       setNotification({
         visible: true,
@@ -430,7 +430,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
 
           formData.append('image', blob, 'photo.jpg');
         } catch (blobError) {
-          console.error('❌ Failed to create blob:', blobError);
+          console.log('❌ Failed to create blob:', blobError);
           throw new Error('Failed to process image for upload');
         }
       } else {
@@ -494,7 +494,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         onImageAnalyzed(filteredIngredients);
       }
     } catch (error) {
-      console.error('❌ Analysis error:', error);
+      console.log('❌ Analysis error:', error);
       HapticService.error();
       setCameraError('Analysis failed');
 
@@ -546,13 +546,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
       console.log('🔄 Toggling camera facing');
       setFacing(current => (current === 'back' ? 'front' : 'back'));
     } catch (error) {
-      console.error('❌ Error toggling camera:', error);
+      console.log('❌ Error toggling camera:', error);
       setCameraError('Failed to switch camera');
     }
   };
 
   const handleCameraError = (error: any) => {
-    console.error('❌ Camera error occurred:', error);
+    console.log('❌ Camera error occurred:', error);
     setCameraError('Camera error occurred');
 
     setNotification({
@@ -587,7 +587,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
         console.log('🚫 Gallery selection cancelled or no image');
       }
     } catch (error) {
-      console.error('❌ Error picking image:', error);
+      console.log('❌ Error picking image:', error);
       setCameraError('Gallery access failed');
       setNotification({
         visible: true,
@@ -688,7 +688,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
               // Non serviamo più questo callback perché settiamo isCameraReady quando i permessi sono granted
             }}
             onMountError={(error) => {
-              console.error('📸 Camera mount error:', error);
+              console.log('📸 Camera mount error:', error);
               handleCameraError(error);
             }}
           />

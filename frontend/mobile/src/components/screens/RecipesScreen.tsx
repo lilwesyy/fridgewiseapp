@@ -505,7 +505,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         throw new Error(data.error || 'Failed to fetch recipes');
       }
     } catch (error) {
-      console.error('Error fetching recipes:', error);
+      console.log('Error fetching recipes:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -544,7 +544,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
       setPublicRecipes(recipes);
       setFilteredPublicRecipes(recipes);
     } catch (error) {
-      console.error('Error fetching public recipes:', error);
+      console.log('Error fetching public recipes:', error);
 
       // Always show empty state for network errors, but log them
       console.log('Network error - showing empty state:', error instanceof Error ? error.message : String(error));
@@ -663,7 +663,7 @@ export const RecipesScreen: React.FC<RecipesScreenProps> = ({ onSelectRecipe, on
         }
       }
     } catch (error) {
-      console.error('Error deleting recipe:', error);
+      console.log('Error deleting recipe:', error);
       setNotification({
         visible: true,
         type: 'error',

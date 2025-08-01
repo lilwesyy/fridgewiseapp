@@ -76,7 +76,7 @@ class EmailService {
       await this.transporter.verify();
       return true;
     } catch (error) {
-      console.error('Email service connection failed:', error);
+      console.log('Email service connection failed:', error);
       return false;
     }
   }

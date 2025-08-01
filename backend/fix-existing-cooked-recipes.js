@@ -83,7 +83,7 @@ async function fixExistingCookedRecipes() {
     console.log(`🔍 Ricette in pending_approval dopo il fix: ${pendingRecipesAfterFix}`);
     
   } catch (error) {
-    console.error('❌ Errore:', error.message);
+    console.log('❌ Errore:', error.message);
   } finally {
     await mongoose.disconnect();
     console.log('\n🔌 Disconnesso dal database');

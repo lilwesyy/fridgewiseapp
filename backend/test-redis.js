@@ -6,7 +6,7 @@ async function testRedis() {
   });
 
   client.on('error', (err) => {
-    console.error('Redis Client Error:', err);
+    console.log('Redis Client Error:', err);
   });
 
   try {
@@ -36,7 +36,7 @@ async function testRedis() {
     await client.disconnect();
     console.log('✅ Redis test completed successfully');
   } catch (error) {
-    console.error('❌ Redis test failed:', error);
+    console.log('❌ Redis test failed:', error);
     process.exit(1);
   }
 }

@@ -198,7 +198,7 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
         throw new Error(data.error || 'Failed to fetch saved recipes');
       }
     } catch (error) {
-      console.error('Error fetching saved recipes:', error);
+      console.log('Error fetching saved recipes:', error);
       setErrorNotificationMessage(t('saved.fetchError'));
       setShowErrorNotification(true);
       setTimeout(() => setShowErrorNotification(false), 2000);
@@ -247,7 +247,7 @@ export const SavedScreen: React.FC<SavedScreenProps> = ({ onSelectRecipe }) => {
         throw new Error(data.error || 'Failed to remove recipe');
       }
     } catch (error) {
-      console.error('Error removing saved recipe:', error);
+      console.log('Error removing saved recipe:', error);
       setErrorNotificationMessage(t('saved.removeError'));
       setShowErrorNotification(true);
       setTimeout(() => setShowErrorNotification(false), 2000);

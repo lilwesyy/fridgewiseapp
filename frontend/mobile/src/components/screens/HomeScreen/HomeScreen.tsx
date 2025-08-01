@@ -49,7 +49,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     try {
       await refreshStatistics();
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.log('Error refreshing data:', error);
     } finally {
       setIsRefreshing(false);
     }

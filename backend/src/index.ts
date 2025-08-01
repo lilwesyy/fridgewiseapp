@@ -179,7 +179,7 @@ async function startServer() {
       console.log(`🌐 Network access: http://192.168.1.38:${PORT}/health`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.log('Failed to start server:', error);
     process.exit(1);
   }
 }

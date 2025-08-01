@@ -75,7 +75,7 @@ export const getPublicCollections = async (req: Request, res: Response): Promise
       }
     });
   } catch (error) {
-    console.error('Error fetching public collections:', error);
+    console.log('Error fetching public collections:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching public collections'
@@ -140,7 +140,7 @@ export const getCollectionDetails = async (req: AuthRequest, res: Response): Pro
       }
     });
   } catch (error) {
-    console.error('Error fetching collection details:', error);
+    console.log('Error fetching collection details:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching collection details'
@@ -203,7 +203,7 @@ export const toggleFollowCollection = async (req: AuthRequest, res: Response): P
       }
     });
   } catch (error) {
-    console.error('Error toggling follow collection:', error);
+    console.log('Error toggling follow collection:', error);
     res.status(500).json({
       success: false,
       message: 'Error updating follow status'
@@ -242,7 +242,7 @@ export const createCollection = async (req: AuthRequest, res: Response): Promise
       data: collection
     });
   } catch (error) {
-    console.error('Error creating collection:', error);
+    console.log('Error creating collection:', error);
     res.status(500).json({
       success: false,
       message: 'Error creating collection'
@@ -271,7 +271,7 @@ export const getUserCollections = async (req: AuthRequest, res: Response): Promi
       data: collections
     });
   } catch (error) {
-    console.error('Error fetching user collections:', error);
+    console.log('Error fetching user collections:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching user collections'
@@ -331,7 +331,7 @@ export const addRecipeToCollection = async (req: AuthRequest, res: Response): Pr
       message: 'Recipe added to collection successfully'
     });
   } catch (error) {
-    console.error('Error adding recipe to collection:', error);
+    console.log('Error adding recipe to collection:', error);
     res.status(500).json({
       success: false,
       message: 'Error adding recipe to collection'

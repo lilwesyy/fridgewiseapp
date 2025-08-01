@@ -189,7 +189,7 @@ export const generateRecipe = async (req: AuthRequest, res: Response<APIResponse
     try {
       await DailyUsage.incrementRecipeGeneration(user.id);
     } catch (usageError) {
-      console.error('Failed to increment daily usage:', usageError);
+      console.log('Failed to increment daily usage:', usageError);
       // Don't fail the request if usage tracking fails
     }
 
@@ -198,7 +198,7 @@ export const generateRecipe = async (req: AuthRequest, res: Response<APIResponse
       data: recipe
     });
   } catch (error: any) {
-    console.error('Recipe generation failed:', error);
+    console.log('Recipe generation failed:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Recipe generation failed'
@@ -265,7 +265,7 @@ export const createRecipe = async (req: AuthRequest, res: Response<APIResponse<a
       data: newRecipe
     });
   } catch (error: any) {
-    console.error('Error creating recipe:', error);
+    console.log('Error creating recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to create recipe'
@@ -410,7 +410,7 @@ export const saveRecipe = async (req: AuthRequest, res: Response<APIResponse<any
       data: newRecipe
     });
   } catch (error: any) {
-    console.error('Error saving recipe:', error);
+    console.log('Error saving recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to save recipe'
@@ -654,7 +654,7 @@ export const unsaveRecipe = async (req: AuthRequest, res: Response<APIResponse<a
       data: recipe
     });
   } catch (error: any) {
-    console.error('Error removing recipe from saved:', error);
+    console.log('Error removing recipe from saved:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to remove recipe from saved'
@@ -721,7 +721,7 @@ export const savePublicRecipe = async (req: AuthRequest, res: Response<APIRespon
       data: savedPublicRecipe
     });
   } catch (error: any) {
-    console.error('Error saving public recipe:', error);
+    console.log('Error saving public recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to save public recipe'
@@ -825,7 +825,7 @@ export const deleteRecipe = async (req: AuthRequest, res: Response<APIResponse<a
       });
     }
   } catch (error: any) {
-    console.error('Error deleting recipe:', error);
+    console.log('Error deleting recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete recipe'
@@ -906,7 +906,7 @@ export const completeRecipe = async (req: AuthRequest, res: Response<APIResponse
       data: recipe
     });
   } catch (error: any) {
-    console.error('Error completing recipe:', error);
+    console.log('Error completing recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to complete recipe'
@@ -980,7 +980,7 @@ export const getCookedRecipes = async (req: AuthRequest, res: Response<APIRespon
       }
     });
   } catch (error: any) {
-    console.error('Error getting cooked recipes:', error);
+    console.log('Error getting cooked recipes:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get cooked recipes'
@@ -1041,7 +1041,7 @@ export const deleteRecipePhoto = async (req: AuthRequest, res: Response<APIRespo
         await cloudinaryService.deleteImage(photoToDelete.publicId);
         console.log(`✅ Photo deleted from Cloudinary: ${photoToDelete.publicId}`);
       } catch (cloudinaryError) {
-        console.error('Failed to delete from Cloudinary:', cloudinaryError);
+        console.log('Failed to delete from Cloudinary:', cloudinaryError);
         // Continue with database deletion even if Cloudinary fails
       }
     }
@@ -1056,7 +1056,7 @@ export const deleteRecipePhoto = async (req: AuthRequest, res: Response<APIRespo
       data: recipe
     });
   } catch (error: any) {
-    console.error('Error deleting recipe photo:', error);
+    console.log('Error deleting recipe photo:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete photo'
@@ -1188,7 +1188,7 @@ export const getPublicRecipes = async (req: Request, res: Response<APIResponse<a
       data: responseData
     });
   } catch (error: any) {
-    console.error('Error fetching public recipes:', error);
+    console.log('Error fetching public recipes:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch public recipes'
@@ -1336,7 +1336,7 @@ export const getUsersWhoCookedRecipe = async (req: Request, res: Response<APIRes
       }
     });
   } catch (error: any) {
-    console.error('Error fetching users who cooked recipe:', error);
+    console.log('Error fetching users who cooked recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch users who cooked this recipe'
@@ -1390,7 +1390,7 @@ export const getPendingRecipes = async (req: AuthRequest, res: Response<APIRespo
       }
     });
   } catch (error: any) {
-    console.error('Error fetching pending recipes:', error);
+    console.log('Error fetching pending recipes:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch pending recipes'
@@ -1450,7 +1450,7 @@ export const approveRecipe = async (req: AuthRequest, res: Response<APIResponse<
         console.log(`✅ Push notification sent to ${recipeAuthor.name} for approved recipe: ${recipe.title}`);
       }
     } catch (pushError) {
-      console.error('❌ Failed to send push notification for approved recipe:', pushError);
+      console.log('❌ Failed to send push notification for approved recipe:', pushError);
       // Don't fail the request if push notification fails
     }
 
@@ -1460,7 +1460,7 @@ export const approveRecipe = async (req: AuthRequest, res: Response<APIResponse<
       data: recipe
     });
   } catch (error: any) {
-    console.error('Error approving recipe:', error);
+    console.log('Error approving recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to approve recipe'
@@ -1527,7 +1527,7 @@ export const rejectRecipe = async (req: AuthRequest, res: Response<APIResponse<a
         console.log(`📱 Push notification sent to ${recipeAuthor.name} for rejected recipe: ${recipe.title}`);
       }
     } catch (pushError) {
-      console.error('❌ Failed to send push notification for rejected recipe:', pushError);
+      console.log('❌ Failed to send push notification for rejected recipe:', pushError);
       // Don't fail the request if push notification fails
     }
 
@@ -1537,7 +1537,7 @@ export const rejectRecipe = async (req: AuthRequest, res: Response<APIResponse<a
       data: recipe
     });
   } catch (error: any) {
-    console.error('Error rejecting recipe:', error);
+    console.log('Error rejecting recipe:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to reject recipe'

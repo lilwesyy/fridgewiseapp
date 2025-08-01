@@ -43,7 +43,7 @@ class ExpoSecurityService {
       const urlObj = new URL(url);
       return urlObj.hostname;
     } catch (error) {
-      console.error('Invalid API URL:', url);
+      console.log('Invalid API URL:', url);
       return null;
     }
   }
@@ -68,7 +68,7 @@ class ExpoSecurityService {
       return response;
 
     } catch (error: any) {
-      console.error('🚨 Secure fetch failed:', error);
+      console.log('🚨 Secure fetch failed:', error);
       
       // For development mode, allow the request but log the issue
       if (this.developmentMode) {
@@ -207,7 +207,7 @@ class ExpoSecurityService {
       console.log('✅ Security configuration test passed for:', hostname);
       return response.ok;
     } catch (error) {
-      console.error('❌ Security configuration test failed:', error);
+      console.log('❌ Security configuration test failed:', error);
       return false;
     }
   }

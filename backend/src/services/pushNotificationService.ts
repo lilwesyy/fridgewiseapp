@@ -40,7 +40,7 @@ export class PushNotificationService {
       this.provider = new apn.Provider(options);
       console.log('✅ Push Notification Service initialized successfully');
     } catch (error) {
-      console.error('❌ Failed to initialize Push Notification Service:', error);
+      console.log('❌ Failed to initialize Push Notification Service:', error);
       if (process.env.NODE_ENV === 'development') {
         console.log('💡 Push notifications will be disabled. Configure APN certificates to enable.');
       }
@@ -92,11 +92,11 @@ export class PushNotificationService {
         });
         return true;
       } else {
-        console.error('❌ Failed to send push notification:', result.failed);
+        console.log('❌ Failed to send push notification:', result.failed);
         return false;
       }
     } catch (error) {
-      console.error('❌ Error sending push notification:', error);
+      console.log('❌ Error sending push notification:', error);
       return false;
     }
   }
@@ -148,11 +148,11 @@ export class PushNotificationService {
         });
         return true;
       } else {
-        console.error('❌ Failed to send rejection notification:', result.failed);
+        console.log('❌ Failed to send rejection notification:', result.failed);
         return false;
       }
     } catch (error) {
-      console.error('❌ Error sending rejection notification:', error);
+      console.log('❌ Error sending rejection notification:', error);
       return false;
     }
   }

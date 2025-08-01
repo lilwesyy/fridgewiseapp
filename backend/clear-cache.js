@@ -18,7 +18,7 @@ async function clearCache() {
     await client.disconnect();
     console.log('✅ Cache cleared successfully');
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.log('❌ Error:', error);
   }
 }
 

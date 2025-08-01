@@ -242,7 +242,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
         const data = await response.json();
         setStats(data.data);
       } else {
-        console.error('Failed to fetch stats');
+        console.log('Failed to fetch stats');
         // Fallback con dati di esempio
         setStats({
           totalUsers: 147,
@@ -283,7 +283,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
         });
       }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.log('Error fetching stats:', error);
       // Fallback con dati di esempio in caso di errore
       setStats({
         totalUsers: 147,
@@ -371,7 +371,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
         setUsers(data.data.users);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.log('Error fetching users:', error);
     } finally {
       setIsLoadingUsers(false);
     }
@@ -436,7 +436,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
 
       setSecurityStats(securityStats);
     } catch (error) {
-      console.error('Error fetching security stats:', error);
+      console.log('Error fetching security stats:', error);
       // Set fallback data on error
       setSecurityStats({
         csp: {
@@ -472,7 +472,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
         setCSPStats(data.data);
       }
     } catch (error) {
-      console.error('Error fetching CSP details:', error);
+      console.log('Error fetching CSP details:', error);
     } finally {
       setIsLoadingCSP(false);
     }
@@ -514,7 +514,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
         });
       }
     } catch (error) {
-      console.error('Error promoting user:', error);
+      console.log('Error promoting user:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -553,7 +553,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
           });
         }
       } catch (error) {
-        console.error('Error deleting user:', error);
+        console.log('Error deleting user:', error);
         setNotification({
           visible: true,
           type: 'error',

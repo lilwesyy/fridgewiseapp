@@ -144,7 +144,7 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
         }
       }
     } catch (error: any) {
-      console.error('Error fetching pending recipes:', error);
+      console.log('Error fetching pending recipes:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -186,7 +186,7 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
         });
       }
     } catch (error: any) {
-      console.error('Error approving recipe:', error);
+      console.log('Error approving recipe:', error);
       setNotification({
         visible: true,
         type: 'error',
@@ -239,7 +239,7 @@ export const RecipeApprovalModal: React.FC<RecipeApprovalModalProps> = ({ visibl
         });
       }
     } catch (error: any) {
-      console.error('Error rejecting recipe:', error);
+      console.log('Error rejecting recipe:', error);
       setNotification({
         visible: true,
         type: 'error',

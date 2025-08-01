@@ -85,7 +85,7 @@ async function sendViolation(violation) {
       console.log(`❌ Failed to send violation: ${response.status}`);
     }
   } catch (error) {
-    console.error(`❌ Error sending violation:`, error.message);
+    console.log(`❌ Error sending violation:`, error.message);
   }
 }
 
@@ -98,7 +98,7 @@ async function testCSPEndpoint() {
     const data = await response.json();
     console.log('📋 CSP Report endpoint info:', data);
   } catch (error) {
-    console.error('❌ Failed to get CSP endpoint info:', error.message);
+    console.log('❌ Failed to get CSP endpoint info:', error.message);
     return;
   }
 
@@ -119,4 +119,4 @@ async function testCSPEndpoint() {
 }
 
 // Run the test
-testCSPEndpoint().catch(console.error);
+testCSPEndpoint().catch(console.log);

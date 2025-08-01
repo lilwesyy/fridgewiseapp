@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await logout();
       }
     } catch (error) {
-      console.error('Error checking token expiration:', error);
+      console.log('Error checking token expiration:', error);
     }
   };
 
@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         refreshProfile(storedToken);
       }
     } catch (error) {
-      console.error('Error loading stored auth:', error);
+      console.log('Error loading stored auth:', error);
     } finally {
       setIsLoading(false);
     }
@@ -238,7 +238,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(null);
       setUser(null);
     } catch (error) {
-      console.error('Logout error:', error);
+      console.log('Logout error:', error);
     }
   };
 
@@ -256,7 +256,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await secureStorage.setUser(updatedUser);
       setUser(updatedUser);
     } catch (error: any) {
-      console.error('Profile update error:', error);
+      console.log('Profile update error:', error);
       throw error;
     }
   };
@@ -316,7 +316,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       return updatedUser;
     } catch (error: any) {
-      console.error('Avatar upload error:', error);
+      console.log('Avatar upload error:', error);
       throw error;
     }
   };
@@ -337,7 +337,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       return updatedUser;
     } catch (error: any) {
-      console.error('Avatar deletion error:', error);
+      console.log('Avatar deletion error:', error);
       throw error;
     }
   };
@@ -363,7 +363,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return data.data; // Return the token for testing
     } catch (error) {
-      console.error('🚨 Forgot password error:', error);
+      console.log('🚨 Forgot password error:', error);
       throw error;
     }
   };
@@ -384,7 +384,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(data.error || 'Token verification failed');
       }
     } catch (error) {
-      console.error('Verify reset token error:', error);
+      console.log('Verify reset token error:', error);
       throw error;
     }
   };
@@ -405,7 +405,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(data.error || 'Password reset failed');
       }
     } catch (error) {
-      console.error('Reset password error:', error);
+      console.log('Reset password error:', error);
       throw error;
     }
   };

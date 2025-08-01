@@ -83,7 +83,7 @@ async function fixCacheIssues(): Promise<void> {
     console.log('✅ Cache warmed with fresh data');
     
   } catch (error: any) {
-    console.error('❌ Failed to fix cache issues:', error.message);
+    console.log('❌ Failed to fix cache issues:', error.message);
   }
 }
 
@@ -122,7 +122,7 @@ async function main() {
     }
     
   } catch (error: any) {
-    console.error('💥 Cache monitor failed:', error.message);
+    console.log('💥 Cache monitor failed:', error.message);
     process.exit(1);
   } finally {
     process.exit(0);

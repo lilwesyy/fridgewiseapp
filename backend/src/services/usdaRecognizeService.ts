@@ -80,7 +80,7 @@ export class USDARecognizeService {
       return processedIngredients;
 
     } catch (error) {
-      console.error('❌ Analysis failed:', error);
+      console.log('❌ Analysis failed:', error);
       return [];
     }
   }
@@ -114,7 +114,7 @@ export class USDARecognizeService {
       return [...new Set(allTags)].filter(tag => tag && tag.trim().length > 0);
 
     } catch (error) {
-      console.error('❌ RecognizeAnything API error:', error);
+      console.log('❌ RecognizeAnything API error:', error);
       throw error;
     }
   }
@@ -183,9 +183,9 @@ export class USDARecognizeService {
 
       if (!response.ok) {
         if (response.status === 403) {
-          console.error('❌ USDA API key invalid or expired');
+          console.log('❌ USDA API key invalid or expired');
         }
-        console.error(`❌ USDA API error ${response.status}: ${await response.text()}`);
+        console.log(`❌ USDA API error ${response.status}: ${await response.text()}`);
         return null;
       }
 
@@ -332,7 +332,7 @@ export class USDARecognizeService {
       };
 
     } catch (error) {
-      console.error(`❌ Error searching for ${item}:`, error);
+      console.log(`❌ Error searching for ${item}:`, error);
       return null;
     }
   }
@@ -552,7 +552,7 @@ export class USDARecognizeService {
       });
 
       if (!response.ok) {
-        console.error(`❌ USDA API error ${response.status}`);
+        console.log(`❌ USDA API error ${response.status}`);
         return [];
       }
 
@@ -584,7 +584,7 @@ export class USDARecognizeService {
         .slice(0, limit);
 
     } catch (error) {
-      console.error('❌ Error searching ingredients:', error);
+      console.log('❌ Error searching ingredients:', error);
       return [];
     }
   }

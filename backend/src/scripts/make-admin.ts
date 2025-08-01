@@ -30,7 +30,7 @@ const makeAdmin = async () => {
     process.exit(0);
     
   } catch (error) {
-    console.error('❌ Error making user admin:', error);
+    console.log('❌ Error making user admin:', error);
     process.exit(1);
   }
 };

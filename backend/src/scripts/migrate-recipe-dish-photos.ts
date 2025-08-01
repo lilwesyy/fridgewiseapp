@@ -75,7 +75,7 @@ async function migrateRecipeDishPhotos() {
     }
 
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.log('Migration failed:', error);
     throw error;
   } finally {
     // Close database connection
@@ -92,7 +92,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch((error) => {
-      console.error('Migration script failed:', error);
+      console.log('Migration script failed:', error);
       process.exit(1);
     });
 }

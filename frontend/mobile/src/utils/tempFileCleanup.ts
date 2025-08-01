@@ -39,7 +39,7 @@ class TempFileCleanupService {
         registeredFiles: this.tempFiles.size 
       });
     } catch (error) {
-      console.error('Failed to initialize temp file cleanup:', error);
+      console.log('Failed to initialize temp file cleanup:', error);
       this.initialized = false; // Reset on error
     }
   }
@@ -221,7 +221,7 @@ class TempFileCleanupService {
 
     this.cleanupTimer = setInterval(() => {
       this.performCleanupInternal().catch(error => {
-        console.error('Periodic cleanup failed:', error);
+        console.log('Periodic cleanup failed:', error);
       });
     }, this.CLEANUP_INTERVAL);
   }
