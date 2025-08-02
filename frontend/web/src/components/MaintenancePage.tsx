@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { colors } from '@/config/theme';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Image from 'next/image';
+import LogoImage from '@/components/LogoImage';
 
 interface MaintenancePageProps {
     onAuthenticated: () => void;
@@ -52,9 +52,7 @@ export default function MaintenancePage({ onAuthenticated }: MaintenancePageProp
                 <div className="max-w-2xl w-full text-center">
                     {/* Logo and Brand */}
                     <div className="flex items-center justify-center gap-3 mb-12">
-                        <div className="w-12 h-12 relative">
-                            <Image src="/assets/logo.svg" alt="FridgeWiseAI" fill className="object-contain" />
-                        </div>
+                        <LogoImage className="w-12 h-12" priority />
                         <span className="text-2xl font-semibold text-gray-900">FridgeWiseAI</span>
                     </div>
 

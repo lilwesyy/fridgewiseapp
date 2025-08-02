@@ -42,14 +42,14 @@ export async function generateMetadata(): Promise<Metadata> {
     referrer: "origin-when-cross-origin",
     icons: {
       icon: [
-        { url: "/assets/icon.png", sizes: "any", type: "image/png" },
-        { url: "/assets/icon.png", sizes: "32x32", type: "image/png" },
         { url: "/assets/logo.svg", type: "image/svg+xml" },
+        { url: "/assets/icon.png", sizes: "32x32", type: "image/png" },
+        { url: "/assets/icon.png", sizes: "16x16", type: "image/png" },
       ],
       apple: [
         { url: "/assets/icon.png", sizes: "180x180", type: "image/png" },
       ],
-      shortcut: "/assets/icon.png",
+      shortcut: "/assets/logo.svg",
     },
     manifest: "/manifest.json",
     openGraph: {
@@ -130,9 +130,9 @@ export default async function RootLayout({
   return (
     <html lang={language === 'it' ? 'it' : 'en'} className="scroll-smooth">
       <head>
-        <link rel="icon" href="/assets/icon.png" type="image/png" />
-        <link rel="icon" href="/assets/icon.png" sizes="32x32" type="image/png" />
         <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+        <link rel="icon" href="/assets/icon.png" sizes="16x16" type="image/png" />
+        <link rel="icon" href="/assets/icon.png" sizes="32x32" type="image/png" />
         <link rel="apple-touch-icon" href="/assets/icon.png" />
       </head>
       <body className={`${inter.className} antialiased`}>

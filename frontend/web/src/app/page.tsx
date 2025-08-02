@@ -5,7 +5,7 @@ import PrivacyPolicyModal from '@/components/modals/PrivacyPolicyModal';
 import TermsOfServiceModal from '@/components/modals/TermsOfServiceModal';
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Image from 'next/image';
+import LogoImage from '@/components/LogoImage';
 
 export default function Home() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -27,15 +27,16 @@ export default function Home() {
     <main className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 relative">
-                <Image src="/assets/logo.svg" alt="FridgeWiseAI" fill className="object-contain" />
-              </div>
-              <span className="text-xl font-semibold text-gray-900">FridgeWiseAI</span>
+            {/* Logo - Responsive sizing */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <LogoImage className="w-7 h-7 sm:w-8 sm:h-8" priority />
+              <span className="text-lg sm:text-xl font-semibold text-gray-900">FridgeWiseAI</span>
             </div>
-            <div className="flex items-center gap-4">
+            
+            {/* Desktop Actions */}
+            <div className="hidden sm:flex items-center gap-4">
               <button 
                 onClick={() => {
                   localStorage.removeItem('maintenance_authenticated');
@@ -47,6 +48,28 @@ export default function Home() {
               </button>
               <button 
                 className="text-white px-6 py-2 rounded-full font-medium text-sm transition-colors hover:opacity-90 cursor-pointer"
+                style={{ backgroundColor: colors.primary[500] }}
+              >
+                {t.download}
+              </button>
+            </div>
+
+            {/* Mobile Actions - Simplified */}
+            <div className="flex sm:hidden items-center gap-2">
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('maintenance_authenticated');
+                  window.location.reload();
+                }}
+                className="text-gray-600 hover:text-gray-900 p-2 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+                title={t.logout}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+              <button 
+                className="text-white px-3 py-2 rounded-full font-medium text-xs transition-colors hover:opacity-90 cursor-pointer"
                 style={{ backgroundColor: colors.primary[500] }}
               >
                 {t.download}
@@ -333,9 +356,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center gap-3 mb-8 md:mb-0">
-              <div className="w-8 h-8 relative">
-                <Image src="/assets/logo.svg" alt="FridgeWiseAI" fill className="object-contain" />
-              </div>
+              <LogoImage className="w-8 h-8" />
               <span className="text-xl font-semibold text-gray-900">FridgeWiseAI</span>
             </div>
             
