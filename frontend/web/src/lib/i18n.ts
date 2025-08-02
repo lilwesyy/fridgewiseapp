@@ -354,7 +354,7 @@ export const translations: Record<Language, Translations> = {
       privacy: 'Privacy',
       terms: 'Termini',
       support: 'Supporto',
-      copyright: '© 2024 FridgeWise Inc.',
+      copyright: '© 2025 FridgeWiseAI',
       completelyFree: 'Completamente gratuita',
     },
 
@@ -655,7 +655,7 @@ export const translations: Record<Language, Translations> = {
       privacy: 'Privacy',
       terms: 'Terms',
       support: 'Support',
-      copyright: '© 2024 FridgeWise Inc.',
+      copyright: '© 2025 FridgeWiseAI',
       completelyFree: 'Completely free',
     },
 

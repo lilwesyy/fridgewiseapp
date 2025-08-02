@@ -120,7 +120,7 @@ export default function MaintenancePage({ onAuthenticated }: MaintenancePageProp
             {/* Footer */}
             <footer className="relative border-t border-gray-100 py-6">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-gray-500">
-                    <span>© 2024 FridgeWiseAI Inc.</span>
+                    <span>© 2025 FridgeWiseAI</span>
                     <a href="mailto:support@fridgewiseai.com" className="hover:text-gray-700 transition-colors">
                         {t.maintenance.support}
                     </a>
