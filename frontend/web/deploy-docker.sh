@@ -30,7 +30,9 @@ ssh $SERVER_USER@$SERVER_HOST << EOF
     # Load Docker image
     docker load < fridgewiseai-landing.tar.gz
     
-    # Stop and remove old container
+    # Stop and remove old containers (both old and new names)
+    docker stop fridgewise-landing 2>/dev/null || true
+    docker rm fridgewise-landing 2>/dev/null || true
     docker stop fridgewiseai-landing 2>/dev/null || true
     docker rm fridgewiseai-landing 2>/dev/null || true
     
