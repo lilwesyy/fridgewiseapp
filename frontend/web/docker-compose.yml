@@ -5,14 +5,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: fridgewiseai-landing:latest
     container_name: fridgewiseai-landing
     ports:
-      - "3001:3001"
+      - "3001:3000"  # Host:Container - mappa porta 3001 dell'host alla 3000 del container
     environment:
       - NODE_ENV=production
+      - PORT=3000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3

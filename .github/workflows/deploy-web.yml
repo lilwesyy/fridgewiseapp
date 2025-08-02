@@ -4,31 +4,20 @@ on:
   push:
     branches: [ main, master ]
     paths:
-      - 'frontend/web/src/**'
-      - 'frontend/web/public/**'
-      - 'frontend/web/package*.json'
-      - 'frontend/web/next.config.ts'
-      - 'frontend/web/tailwind.config.js'
-      - 'frontend/web/Dockerfile'
-      - 'frontend/web/docker-compose.yml'
-      - 'frontend/web/nginx.conf'
-      - 'frontend/web/vercel.json'
+      - 'frontend/web/**'
+      - '.github/workflows/deploy-web.yml'
   pull_request:
     branches: [ main, master ]
     paths:
-      - 'frontend/web/src/**'
-      - 'frontend/web/public/**'
-      - 'frontend/web/package*.json'
-      - 'frontend/web/next.config.ts'
-      - 'frontend/web/tailwind.config.js'
-      - 'frontend/web/Dockerfile'
-      - 'frontend/web/docker-compose.yml'
-      - 'frontend/web/nginx.conf'
-      - 'frontend/web/vercel.json'
+      - 'frontend/web/**'
+      - '.github/workflows/deploy-web.yml'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: fridgewise-landing
+  IMAGE_NAME: fridgewiseai-landing
+  CONTAINER_NAME: fridgewiseai-landing
+  CONTAINER_PORT: 3000
+  HOST_PORT: 3001
 
 jobs:
   build-and-deploy:
@@ -86,19 +75,45 @@ jobs:
           # Pull latest image
           docker pull ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
           
-          # Stop and remove old container
-          docker stop fridgewise-landing || true
-          docker rm fridgewise-landing || true
+          # Stop and remove old container if exists
+          docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null || true
+          docker rm ${{ env.CONTAINER_NAME }} 2>/dev/null || true
           
-          # Run new container
+          # Run new container with health check
           docker run -d \
-            --name fridgewise-landing \
+            --name ${{ env.CONTAINER_NAME }} \
             --restart unless-stopped \
-            -p 3001:3001 \
+            -p ${{ env.HOST_PORT }}:${{ env.CONTAINER_PORT }} \
             -e NODE_ENV=production \
+            -e PORT=${{ env.CONTAINER_PORT }} \
+            --health-cmd="curl -f http://localhost:${{ env.CONTAINER_PORT }}/ || exit 1" \
+            --health-interval=30s \
+            --health-timeout=10s \
+            --health-retries=3 \
+            --health-start-period=40s \
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
           
-          # Clean up old images
+          # Wait for container to be healthy
+          echo "⏳ Waiting for container to be healthy..."
+          timeout=120
+          while [ $timeout -gt 0 ]; do
+            if [ "$(docker inspect --format='{{.State.Health.Status}}' ${{ env.CONTAINER_NAME }} 2>/dev/null)" = "healthy" ]; then
+              echo "✅ Container is healthy!"
+              break
+            fi
+            sleep 5
+            timeout=$((timeout-5))
+          done
+          
+          if [ $timeout -le 0 ]; then
+            echo "❌ Container failed to become healthy within 2 minutes"
+            docker logs ${{ env.CONTAINER_NAME }} --tail 50
+            exit 1
+          fi
+          
+          # Clean up old images (keep last 3)
           docker image prune -f
+          docker images ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }} --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | tail -n +2 | head -n -3 | awk '{print $1}' | xargs -r docker rmi || true
           
           echo "✅ FridgeWise Landing Page deployed successfully!"
+          echo "🌐 Application available at: http://$(hostname -I | awk '{print $1}'):${{ env.HOST_PORT }}"

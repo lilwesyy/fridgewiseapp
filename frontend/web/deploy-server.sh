@@ -4,7 +4,7 @@
 SERVER_USER="mirco"
 SERVER_HOST="fridgewiseai.com"
 SERVER_PATH="/var/www/fridgewise"
-PM2_APP_NAME="fridgewise-landing"
+PM2_APP_NAME="fridgewiseai-landing"
 
 echo "🚀 Deploying FridgeWise to your server..."
 
@@ -20,7 +20,7 @@ fi
 
 # Create deployment package
 echo "📦 Creating deployment package..."
-tar -czf fridgewise-landing.tar.gz \
+tar -czf fridgewiseai-landing.tar.gz \
     .next \
     public \
     package.json \
@@ -29,7 +29,7 @@ tar -czf fridgewise-landing.tar.gz \
 
 # Upload to server
 echo "📤 Uploading to server..."
-scp fridgewise-landing.tar.gz $SERVER_USER@$SERVER_HOST:/tmp/
+scp fridgewiseai-landing.tar.gz $SERVER_USER@$SERVER_HOST:/tmp/
 
 # Deploy on server
 echo "🔧 Deploying on server..."
@@ -43,7 +43,7 @@ ssh $SERVER_USER@$SERVER_HOST << 'EOF'
     
     # Create new directory
     sudo mkdir -p /var/www/fridgewise
-    sudo tar -xzf fridgewise-landing.tar.gz -C /var/www/fridgewise
+    sudo tar -xzf fridgewiseai-landing.tar.gz -C /var/www/fridgewise
     
     # Set permissions
     sudo chown -R www-data:www-data /var/www/fridgewise
@@ -53,18 +53,18 @@ ssh $SERVER_USER@$SERVER_HOST << 'EOF'
     sudo -u www-data npm ci --production
     
     # Restart with PM2
-    pm2 delete fridgewise-landing 2>/dev/null || true
-    pm2 start npm --name "fridgewise-landing" -- start
+    pm2 delete fridgewiseai-landing 2>/dev/null || true
+    pm2 start npm --name "fridgewiseai-landing" -- start
     pm2 save
     
     # Clean up
-    rm /tmp/fridgewise-landing.tar.gz
+    rm /tmp/fridgewiseai-landing.tar.gz
     
     echo "✅ Deployment complete!"
 EOF
 
 # Clean up local files
-rm fridgewise-landing.tar.gz
+rm fridgewiseai-landing.tar.gz
 
 echo "🎉 FridgeWise landing page deployed successfully!"
 echo "🔗 Check your site at: https://your-domain.com"
