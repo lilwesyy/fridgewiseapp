@@ -54,5 +54,5 @@ EOF
 # Clean up local files
 rm fridgewiseai-landing.tar.gz
 
-echo "🎉 FridgeWise landing page deployed with Docker!"
+echo "🎉 FridgeWiseAI landing page deployed with Docker!"
 echo "🔗 Check your site at: https://fridgewiseai.com"
