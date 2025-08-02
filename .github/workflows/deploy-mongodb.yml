@@ -22,24 +22,24 @@ jobs:
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.7.0
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
     - name: Add server to known hosts
       run: |
         mkdir -p ~/.ssh
-        ssh-keyscan -H fridgewiseai.com >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
     - name: Deploy MongoDB to server
       run: |
         # Copy files to server
-        scp -r frontend/mobile/docker-compose.yml mirco@fridgewiseai.com:~/fridgewiseai-mobile/
-        scp -r frontend/mobile/mongo-init/ mirco@fridgewiseai.com:~/fridgewiseai-mobile/
-        scp -r frontend/mobile/scripts/ mirco@fridgewiseai.com:~/fridgewiseai-mobile/
-        scp frontend/mobile/Dockerfile.mongo mirco@fridgewiseai.com:~/fridgewiseai-mobile/
-        scp frontend/mobile/.env.production mirco@fridgewiseai.com:~/fridgewiseai-mobile/.env
+        scp -r frontend/mobile/docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/fridgewiseai-mobile/
+        scp -r frontend/mobile/mongo-init/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/fridgewiseai-mobile/
+        scp -r frontend/mobile/scripts/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/fridgewiseai-mobile/
+        scp frontend/mobile/Dockerfile.mongo ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/fridgewiseai-mobile/
+        scp frontend/mobile/.env.production ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/fridgewiseai-mobile/.env
         
         # Deploy on server
-        ssh mirco@fridgewiseai.com << 'EOF'
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd ~/fridgewiseai-mobile
           
           # Stop existing containers if running
@@ -72,7 +72,7 @@ jobs:
 
     - name: Verify deployment
       run: |
-        ssh mirco@fridgewiseai.com << 'EOF'
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd ~/fridgewiseai-mobile
           
           echo "=== Container Status ==="
@@ -90,7 +90,7 @@ jobs:
 
     - name: Setup automated backups
       run: |
-        ssh mirco@fridgewiseai.com << 'EOF'
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           # Create backup cron job
           (crontab -l 2>/dev/null; echo "0 2 * * * cd ~/fridgewiseai-mobile && docker exec fridgewiseai-mongo /usr/local/bin/backup-mongo.sh") | crontab -
           
