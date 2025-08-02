@@ -1,0 +1,23 @@
+# Custom MongoDB Dockerfile with initialization
+FROM mongo:7.0
+
+# Install additional tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy initialization scripts
+COPY mongo-init/ /docker-entrypoint-initdb.d/
+
+# Create backup directory
+RUN mkdir -p /backup
+
+# Copy backup script
+COPY scripts/backup-mongo.sh /usr/local/bin/backup-mongo.sh
+RUN chmod +x /usr/local/bin/backup-mongo.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD mongosh --eval "db.adminCommand('ping')" || exit 1
+
+EXPOSE 27017

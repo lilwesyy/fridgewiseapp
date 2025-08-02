@@ -1,0 +1,98 @@
+name: Deploy MongoDB to Server
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/mobile/docker-compose.yml'
+      - 'frontend/mobile/mongo-init/**'
+      - 'frontend/mobile/scripts/**'
+      - 'frontend/mobile/Dockerfile.mongo'
+      - '.github/workflows/deploy-mongodb.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add server to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H fridgewiseai.com >> ~/.ssh/known_hosts
+
+    - name: Deploy MongoDB to server
+      run: |
+        # Copy files to server
+        scp -r frontend/mobile/docker-compose.yml mirco@fridgewiseai.com:~/fridgewiseai-mobile/
+        scp -r frontend/mobile/mongo-init/ mirco@fridgewiseai.com:~/fridgewiseai-mobile/
+        scp -r frontend/mobile/scripts/ mirco@fridgewiseai.com:~/fridgewiseai-mobile/
+        scp frontend/mobile/Dockerfile.mongo mirco@fridgewiseai.com:~/fridgewiseai-mobile/
+        scp frontend/mobile/.env.production mirco@fridgewiseai.com:~/fridgewiseai-mobile/.env
+        
+        # Deploy on server
+        ssh mirco@fridgewiseai.com << 'EOF'
+          cd ~/fridgewiseai-mobile
+          
+          # Stop existing containers if running
+          docker-compose down || true
+          
+          # Pull latest images
+          docker-compose pull
+          
+          # Build custom MongoDB image if needed
+          if [ -f Dockerfile.mongo ]; then
+            docker build -f Dockerfile.mongo -t fridgewiseai-mongo:latest .
+          fi
+          
+          # Start services
+          docker-compose up -d
+          
+          # Wait for MongoDB to be ready
+          echo "Waiting for MongoDB to be ready..."
+          sleep 30
+          
+          # Check health status
+          docker-compose ps
+          docker-compose logs --tail=20
+          
+          # Test MongoDB connection
+          docker exec fridgewiseai-mongo mongosh --eval "db.adminCommand('ping')" || echo "MongoDB connection test failed"
+          
+          echo "MongoDB deployment completed!"
+        EOF
+
+    - name: Verify deployment
+      run: |
+        ssh mirco@fridgewiseai.com << 'EOF'
+          cd ~/fridgewiseai-mobile
+          
+          echo "=== Container Status ==="
+          docker-compose ps
+          
+          echo "=== Health Checks ==="
+          docker inspect fridgewiseai-mongo --format='{{json .State.Health}}' | jq '.' || echo "No health check configured"
+          
+          echo "=== Recent Logs ==="
+          docker-compose logs --tail=10 mongo
+          
+          echo "=== Database Test ==="
+          docker exec fridgewiseai-mongo mongosh fridgewiseai --eval "db.stats()" || echo "Database test failed"
+        EOF
+
+    - name: Setup automated backups
+      run: |
+        ssh mirco@fridgewiseai.com << 'EOF'
+          # Create backup cron job
+          (crontab -l 2>/dev/null; echo "0 2 * * * cd ~/fridgewiseai-mobile && docker exec fridgewiseai-mongo /usr/local/bin/backup-mongo.sh") | crontab -
+          
+          echo "Automated backup scheduled for 2 AM daily"
+        EOF
