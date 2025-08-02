@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 async function testAPIEndpoint() {
-  const API_URL = 'http://localhost:3001'; // Cambia se il server è su un'altra porta
+  const API_URL = 'http://localhost:5001'; // Cambia se il server è su un'altra porta
   
   console.log('🧪 TESTING API ENDPOINTS');
   console.log('========================');

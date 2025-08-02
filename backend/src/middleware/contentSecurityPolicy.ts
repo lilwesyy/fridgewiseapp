@@ -53,7 +53,7 @@ export class ContentSecurityPolicyMiddleware {
     } else {
       // Development domains
       domains.push(
-        'localhost:3001',
+        'localhost:5001',
         'localhost:19006',
         '192.168.1.38:*',
         '*.ngrok.io',

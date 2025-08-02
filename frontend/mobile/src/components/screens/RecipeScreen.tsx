@@ -242,7 +242,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     transform: [{ translateY: buttonsTranslateY.value }],
   }));
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
   // Sync internal recipe state when initial recipe changes
   React.useEffect(() => {
@@ -778,7 +778,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
     try {
       setLoadingCookedByUsers(true);
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.17:3001'}/api/recipe/${recipe._id}/cooked-by?limit=8`);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/recipe/${recipe._id}/cooked-by?limit=8`);
 
       if (response.ok) {
         const data = await response.json();
@@ -1303,7 +1303,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
                 <View key={userCooking.user._id} style={[styles.cookedByUserCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
                     {userCooking.user.avatar?.url ? (
-                    <Image
+                      <Image
                         source={{ uri: userCooking.user.avatar.url }}
                         style={styles.userAvatarImage}
                         contentFit="cover"
@@ -1370,11 +1370,11 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
               style={[styles.deleteButton, { backgroundColor: recipe.isPublicRecipe ? colors.warning : colors.error }]}
               onPress={() => setShowDeleteModal(true)}
             >
-              <Ionicons 
-                name={recipe.isPublicRecipe ? "bookmark-outline" : "trash-outline"} 
-                size={20} 
-                color="white" 
-                style={styles.deleteIcon} 
+              <Ionicons
+                name={recipe.isPublicRecipe ? "bookmark-outline" : "trash-outline"}
+                size={20}
+                color="white"
+                style={styles.deleteIcon}
               />
               <Text style={styles.deleteButtonText}>
                 {recipe.isPublicRecipe ? t('saved.removeFromSaved') : t('recipe.deleteRecipe')}

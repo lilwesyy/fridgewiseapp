@@ -32,7 +32,7 @@ import databaseMonitoringRoutes from './routes/databaseMonitoring';
 import { securityRoutes } from './routes/security';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5001;
 
 // Security middleware
 app.use(helmet({
@@ -45,7 +45,7 @@ app.use(cspMiddleware);
 app.use(securityHeaders);
 app.use(cors({
   origin: process.env.NODE_ENV === 'development' ? true : process.env.CORS_ORIGIN?.split(',') || [
-    'http://localhost:3001', 
+    'http://localhost:5001', 
     'http://localhost:19006',
     'http://192.168.1.38:19006',
     'https://*.ngrok.io',

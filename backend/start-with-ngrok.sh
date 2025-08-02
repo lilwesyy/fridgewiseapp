@@ -18,7 +18,7 @@ sleep 3
 
 # Avvia ngrok
 echo -e "${YELLOW}🌐 Starting ngrok tunnel...${NC}"
-ngrok http --url=vastly-selected-guppy.ngrok-free.app 3001 --log=stdout &
+ngrok http --url=vastly-selected-guppy.ngrok-free.app 5001 --log=stdout &
 NGROK_PID=$!
 
 # Aspetta un po' per ngrok

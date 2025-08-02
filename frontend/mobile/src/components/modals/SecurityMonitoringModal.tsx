@@ -115,7 +115,7 @@ export default function SecurityMonitoringModal({ visible, onClose }: SecurityMo
     try {
       setLoading(true);
       
-      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL;
       const response = await fetch(`${baseUrl}/api/admin/security`, {
         headers: {
           'Authorization': `Bearer ${token}`,

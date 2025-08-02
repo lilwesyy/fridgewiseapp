@@ -7,7 +7,7 @@
 
 const fetch = require('node-fetch');
 
-const API_URL = process.env.API_URL || 'http://localhost:3001';
+const API_URL = process.env.API_URL || 'http://localhost:5001';
 
 // Simula violazioni CSP di esempio
 const sampleViolations = [

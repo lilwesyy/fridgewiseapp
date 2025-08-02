@@ -109,7 +109,7 @@ export default function SystemInfoModal({ visible, onClose }: SystemInfoModalPro
     try {
       setLoading(true);
 
-      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL;
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

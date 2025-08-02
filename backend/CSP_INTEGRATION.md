@@ -189,15 +189,15 @@ if (violationsToday > ALERT_THRESHOLD) {
 
 ```bash
 # Test endpoint CSP
-curl -X GET http://localhost:3001/api/security/csp-report
+curl -X GET http://localhost:5001/api/security/csp-report
 
 # Test con violazione di esempio
-curl -X POST http://localhost:3001/api/security/csp-report \
+curl -X POST http://localhost:5001/api/security/csp-report \
   -H "Content-Type: application/json" \
   -d '{"document-uri":"https://test.com","violated-directive":"script-src"}'
 
 # Verifica statistiche (richiede token admin)
-curl -X GET http://localhost:3001/api/security/csp-stats \
+curl -X GET http://localhost:5001/api/security/csp-stats \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
 ```
 

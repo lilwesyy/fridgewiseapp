@@ -15,7 +15,7 @@ class ExpoSecurityService {
 
   private setupSecurityConfig() {
     // Extract hostname from API URL
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
     const hostname = this.extractHostname(apiUrl);
     
     // Configure security based on environment
