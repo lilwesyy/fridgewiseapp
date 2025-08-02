@@ -1,17 +1,18 @@
 // MongoDB Initialization Script for FridgeWiseAI
 // This script creates the application database and user
 
-// Switch to the fridgewiseai database
-db = db.getSiblingDB('fridgewiseai');
+// Switch to the fridgewiseai database  
+const dbName = process.env.MONGO_DATABASE || 'fridgewiseai';
+db = db.getSiblingDB(dbName);
 
 // Create application user with read/write permissions
 db.createUser({
-  user: 'fridgewiseai_app',
-  pwd: 'FridgeWiseAI_App_User_2025_P@ssw0rd!',
+  user: process.env.MONGO_APP_USER || 'fridgewiseai_app',
+  pwd: process.env.MONGO_APP_PASSWORD || 'FridgeWiseAI_App_User_2025_Password',
   roles: [
     {
       role: 'readWrite',
-      db: 'fridgewiseai'
+      db: dbName
     }
   ]
 });

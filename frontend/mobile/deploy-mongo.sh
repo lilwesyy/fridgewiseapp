@@ -33,8 +33,6 @@ ssh $SERVER_USER@$SERVER_HOST << EOF
     # Stop and remove old containers
     docker stop fridgewiseai-mongo 2>/dev/null || true
     docker rm fridgewiseai-mongo 2>/dev/null || true
-    docker stop fridgewiseai-mongo-express 2>/dev/null || true
-    docker rm fridgewiseai-mongo-express 2>/dev/null || true
     
     # Create network if it doesn't exist
     docker network create fridgewiseai_network 2>/dev/null || true
@@ -49,7 +47,7 @@ ssh $SERVER_USER@$SERVER_HOST << EOF
         --restart unless-stopped \
         -p 27017:27017 \
         -e MONGO_INITDB_ROOT_USERNAME=fridgewiseai \
-        -e MONGO_INITDB_ROOT_PASSWORD="FridgeWiseAI_2025_Secure_MongoDB_Root_P@ssw0rd!" \
+        -e MONGO_INITDB_ROOT_PASSWORD="FridgeWiseAI_2025_Secure_MongoDB_Root_Password" \
         -e MONGO_INITDB_DATABASE=fridgewiseai \
         -v mongo_data:/data/db \
         $IMAGE_NAME
@@ -58,27 +56,13 @@ ssh $SERVER_USER@$SERVER_HOST << EOF
     echo "⏳ Waiting for MongoDB to start..."
     sleep 30
     
-    # Run Mongo Express container
-    docker run -d \
-        --name fridgewiseai-mongo-express \
-        --network fridgewiseai_network \
-        --restart unless-stopped \
-        -p 8081:8081 \
-        -e ME_CONFIG_MONGODB_ADMINUSERNAME=fridgewiseai \
-        -e ME_CONFIG_MONGODB_ADMINPASSWORD="FridgeWiseAI_2025_Secure_MongoDB_Root_P@ssw0rd!" \
-        -e ME_CONFIG_MONGODB_URL="mongodb://fridgewiseai:FridgeWiseAI_2025_Secure_MongoDB_Root_P@ssw0rd!@fridgewiseai-mongo:27017/" \
-        -e ME_CONFIG_BASICAUTH_USERNAME=admin \
-        -e ME_CONFIG_BASICAUTH_PASSWORD="FridgeWiseAI_MongoExpress_Admin_2025!" \
-        -e ME_CONFIG_MONGODB_SERVER=fridgewiseai-mongo \
-        mongo-express:1.0.2
-    
     # Clean up
     rm fridgewiseai-mongo.tar.gz
     docker image prune -f
     
-    echo "✅ MongoDB containers deployed successfully!"
+    echo "✅ MongoDB container deployed successfully!"
     echo "📊 Container status:"
-    docker ps | grep fridgewiseai
+    docker ps | grep fridgewiseai-mongo
     
     echo "🔍 Testing MongoDB connection..."
     docker exec fridgewiseai-mongo mongosh --eval "db.adminCommand('ping')" || echo "❌ MongoDB connection test failed"
@@ -89,5 +73,3 @@ rm fridgewiseai-mongo.tar.gz
 
 echo "🎉 FridgeWiseAI MongoDB deployed with Docker!"
 echo "🔗 MongoDB: fridgewiseai.com:27017"
-echo "🌐 Mongo Express: http://fridgewiseai.com:8081"
-echo "👤 Mongo Express login: admin / FridgeWiseAI_MongoExpress_Admin_2025!"
