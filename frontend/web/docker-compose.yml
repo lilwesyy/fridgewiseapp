@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  fridgewise-landing:
+  fridgewiseai-landing:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fridgewise-landing
+    container_name: fridgewiseai-landing
     ports:
       - "3001:3001"
     environment:
@@ -21,7 +21,7 @@ services:
   # Nginx reverse proxy (opzionale)
   nginx:
     image: nginx:alpine
-    container_name: fridgewise-nginx
+    container_name: fridgewiseai-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -29,5 +29,5 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - fridgewise-landing
+      - fridgewiseai-landing
     restart: unless-stopped
