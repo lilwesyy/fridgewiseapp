@@ -37,7 +37,7 @@ npm run rebuild-indexes  # Rebuild database indexes
 ```
 
 ## Development Services
-- **Backend API**: http://localhost:3000
+- **Backend API**: http://localhost:3001
 - **MongoDB**: mongodb://localhost:27017/fridgewiseai
 - **Recognize API**: http://localhost:8000 (GPU) or http://localhost:8001 (CPU)
 

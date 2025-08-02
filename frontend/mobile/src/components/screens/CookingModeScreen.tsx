@@ -188,7 +188,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [isHelpModalClosing, setIsHelpModalClosing] = useState(false);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
   const { user } = useAuth();
 
   // Timer completion alert with enhanced haptic and vibration feedback

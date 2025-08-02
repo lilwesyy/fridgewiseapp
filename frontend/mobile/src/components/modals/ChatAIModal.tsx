@@ -99,7 +99,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
   const modalTranslateY = useSharedValue(1000);
   const backgroundOpacity = useSharedValue(0);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
 
   // Animation effect
   useEffect(() => {

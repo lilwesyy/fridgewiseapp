@@ -37,7 +37,7 @@ const OPTIONAL_ENV_VARS: OptionalEnvVar[] = [
   {
     name: 'PORT',
     description: 'Server port',
-    defaultValue: '3000',
+    defaultValue: '3001',
     validator: (value: string) => {
       const port = parseInt(value);
       return !isNaN(port) && port > 0 && port < 65536;
@@ -46,7 +46,7 @@ const OPTIONAL_ENV_VARS: OptionalEnvVar[] = [
   {
     name: 'CORS_ORIGIN',
     description: 'CORS allowed origins (comma-separated)',
-    defaultValue: 'http://localhost:3000,http://localhost:19006'
+    defaultValue: 'http://localhost:3001,http://localhost:19006'
   },
   {
     name: 'REDIS_URL',

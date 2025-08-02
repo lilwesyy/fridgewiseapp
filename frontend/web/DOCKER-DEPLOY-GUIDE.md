@@ -41,7 +41,7 @@ docker run hello-world
 sudo ufw allow 22    # SSH
 sudo ufw allow 80    # HTTP
 sudo ufw allow 443   # HTTPS
-sudo ufw allow 3000  # Next.js (temporaneo per test)
+sudo ufw allow 3001  # Next.js (temporaneo per test)
 sudo ufw enable
 ```
 
@@ -113,10 +113,10 @@ docker ps
 
 # Dovresti vedere qualcosa come:
 # CONTAINER ID   IMAGE               COMMAND       CREATED         STATUS         PORTS                    NAMES
-# abc123def456   fridgewise-landing  "node server.js"   2 minutes ago   Up 2 minutes   0.0.0.0:3000->3000/tcp   fridgewise-landing
+# abc123def456   fridgewise-landing  "node server.js"   2 minutes ago   Up 2 minutes   0.0.0.0:3001->3001/tcp   fridgewise-landing
 
 # Testa l'applicazione
-curl http://localhost:3000
+curl http://localhost:3001
 ```
 
 ## 🔄 4. Attivazione Deploy Automatico
@@ -165,7 +165,7 @@ server {
     server_name your-domain.com www.your-domain.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';

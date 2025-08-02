@@ -27,7 +27,7 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -46,7 +46,7 @@ server {
     # Health check endpoint
     location /health {
         access_log off;
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
     }
 }
 EOF
@@ -69,7 +69,7 @@ fi
 # Configura firewall
 echo "🔥 Configurazione firewall..."
 sudo ufw allow 'Nginx Full'
-sudo ufw delete allow 3000 2>/dev/null || true
+sudo ufw delete allow 3001 2>/dev/null || true
 
 echo ""
 echo "🔐 Configurazione SSL..."

@@ -242,7 +242,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
     transform: [{ translateY: buttonsTranslateY.value }],
   }));
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
 
   // Sync internal recipe state when initial recipe changes
   React.useEffect(() => {
@@ -778,7 +778,7 @@ export const RecipeScreen: React.FC<RecipeScreenProps> = ({
 
     try {
       setLoadingCookedByUsers(true);
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.17:3000'}/api/recipe/${recipe._id}/cooked-by?limit=8`);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.17:3001'}/api/recipe/${recipe._id}/cooked-by?limit=8`);
 
       if (response.ok) {
         const data = await response.json();

@@ -146,7 +146,7 @@ npm run migrate-recipe-status stats
 tail -f logs/app.log | grep -i recipe
 
 # Test API endpoints
-curl -H "Authorization: Bearer <token>" http://localhost:3000/api/recipe/admin/pending
+curl -H "Authorization: Bearer <token>" http://localhost:3001/api/recipe/admin/pending
 ```
 
 ## Future Enhancements

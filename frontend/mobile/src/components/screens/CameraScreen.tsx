@@ -76,7 +76,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ onImageAnalyzed, onG
   const loadingOpacity = useSharedValue(0);
   const spinnerRotation = useSharedValue(0);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
 
   useEffect(() => {
     if (permission?.granted) {

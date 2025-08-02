@@ -114,15 +114,15 @@ fridgewiseaiapp/
 
 1. Create a test user:
    ```bash
-   curl -X POST http://localhost:3000/api/auth/register \
+   curl -X POST http://localhost:3001/api/auth/register \
      -H "Content-Type: application/json" \
      -d '{"email":"test@example.com","password":"password123","name":"Test User"}'
    ```
 
 2. Access the applications:
    - **Mobile**: Use Expo Go app and scan QR code
-   - **Web**: Open http://localhost:3000
-   - **API**: http://localhost:3000/health
+   - **Web**: Open http://localhost:3001
+   - **API**: http://localhost:3001/health
 
 ### API Endpoints
 
@@ -141,7 +141,7 @@ fridgewiseaiapp/
 
 1. **Permission Issues**: Make sure Docker has proper permissions
 2. **GPU Issues**: Use CPU-only version: `docker-compose --profile cpu up`
-3. **Port Conflicts**: Check if ports 3000, 8000, 27017 are free
+3. **Port Conflicts**: Check if ports 3001, 8000, 27017 are free
 4. **Camera Issues**: Ensure proper permissions on mobile device
 
 ## License

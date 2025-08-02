@@ -49,7 +49,7 @@ export const useStatistics = () => {
   const [error, setError] = useState<string | null>(null);
   const { token } = useAuth();
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
 
   const fetchStatistics = async () => {
     if (!token) {

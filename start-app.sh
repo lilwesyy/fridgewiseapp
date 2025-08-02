@@ -29,7 +29,7 @@ start_backend() {
     
     # Controlla se il server è già in esecuzione
     if check_process "node.*dist/index" "Backend"; then
-        echo -e "${BLUE}Backend already running on port 3000${NC}"
+        echo -e "${BLUE}Backend already running on port 3001${NC}"
     else
         echo -e "${BLUE}Building and starting backend server...${NC}"
         npm run build
@@ -106,12 +106,12 @@ create_logs_dir() {
 show_status() {
     echo -e "${BLUE}📊 Current Status:${NC}"
     echo "===================="
-    check_process "node.*dist/index" "Backend (port 3000)"
+    check_process "node.*dist/index" "Backend (port 3001)"
     check_process "expo.*start" "Expo (port 8081)"
     check_docker
     echo ""
     echo -e "${YELLOW}📝 Logs location: ./logs/${NC}"
-    echo -e "${YELLOW}🌐 Backend: http://localhost:3000${NC}"
+    echo -e "${YELLOW}🌐 Backend: http://localhost:3001${NC}"
     echo -e "${YELLOW}📱 Frontend: http://localhost:8081${NC}"
     echo ""
 }

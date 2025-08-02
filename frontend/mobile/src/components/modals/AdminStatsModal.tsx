@@ -232,7 +232,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/admin/stats`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001'}/api/admin/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -360,7 +360,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
   const fetchUsers = async () => {
     try {
       setIsLoadingUsers(true);
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/admin/users`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001'}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -381,10 +381,10 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
     try {
       // Fetch both policy info and CSP stats
       const [policyResponse, cspResponse] = await Promise.all([
-        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/security/policy-info`, {
+        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001'}/api/security/policy-info`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
-        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/security/csp-stats`, {
+        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001'}/api/security/csp-stats`, {
           headers: { 'Authorization': `Bearer ${token}` },
         })
       ]);
@@ -463,7 +463,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
   const fetchCSPDetails = async () => {
     try {
       setIsLoadingCSP(true);
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/security/csp-stats`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001'}/api/security/csp-stats`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -486,7 +486,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
 
   const promoteUser = async (email: string) => {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/admin/promote-user`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001'}/api/admin/promote-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -527,7 +527,7 @@ export const AdminStatsModal: React.FC<AdminStatsModalProps> = ({ visible, onClo
   const deleteUser = async (userId: string) => {
     const handleDelete = async () => {
       try {
-        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/admin/users/${userId}`, {
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001'}/api/admin/users/${userId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,

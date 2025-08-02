@@ -33,7 +33,7 @@ class ApiService {
   private cacheService: ApiCacheService;
 
   constructor() {
-    this.baseURL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+    this.baseURL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
     this.cacheService = new ApiCacheService(this);
     this.setupNetworkMonitoring();
     this.setupDefaultInterceptors();

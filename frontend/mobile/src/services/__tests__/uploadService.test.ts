@@ -271,11 +271,11 @@ describe('UploadService', () => {
 
   describe('URL Construction', () => {
     it('should construct proper API URL', () => {
-      const baseUrl = 'http://192.168.1.38:3000';
+      const baseUrl = 'http://192.168.1.38:3001';
       const endpoint = '/api/upload/dish-photo';
       const fullUrl = `${baseUrl}${endpoint}`;
       
-      expect(fullUrl).toBe('http://192.168.1.38:3000/api/upload/dish-photo');
+      expect(fullUrl).toBe('http://192.168.1.38:3001/api/upload/dish-photo');
     });
   });
 

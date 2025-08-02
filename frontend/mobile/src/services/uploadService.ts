@@ -51,7 +51,7 @@ class UploadService {
   };
 
   constructor() {
-    this.API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+    this.API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
   }
 
   /**

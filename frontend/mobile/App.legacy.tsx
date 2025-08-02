@@ -218,7 +218,7 @@ const AppContent: React.FC = () => {
     isCheckingHealth: true,
   });
 
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001';
 
   // Check onboarding status on app startup
   useEffect(() => {
@@ -1652,7 +1652,7 @@ const AppContent: React.FC = () => {
 
               // Request body prepared
 
-              const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3000'}/api/recipe/${updatedRecipe._id}`, {
+              const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.38:3001'}/api/recipe/${updatedRecipe._id}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',

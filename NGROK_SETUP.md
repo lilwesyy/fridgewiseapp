@@ -26,7 +26,7 @@ npm run dev:ngrok
 ```
 
 Questo script:
-- Avvia il backend su porta 3000
+- Avvia il backend su porta 3001
 - Crea un tunnel ngrok pubblico
 - Mostra l'URL pubblico del backend
 

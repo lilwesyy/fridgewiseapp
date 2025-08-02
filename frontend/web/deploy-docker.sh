@@ -38,7 +38,7 @@ ssh $SERVER_USER@$SERVER_HOST << EOF
     docker run -d \
         --name fridgewise-landing \
         --restart unless-stopped \
-        -p 3000:3000 \
+        -p 3001:3001 \
         -e NODE_ENV=production \
         $IMAGE_NAME
     

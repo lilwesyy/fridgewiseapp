@@ -37,7 +37,7 @@ fi
 
 # Avvia ngrok
 echo -e "${BLUE}🌐 Avvio ngrok per esporre il backend...${NC}"
-ngrok http --url=vastly-selected-guppy.ngrok-free.app 3000 --log=stdout &
+ngrok http --url=vastly-selected-guppy.ngrok-free.app 3001 --log=stdout &
 NGROK_PID=$!
 
 # Aspetta che ngrok si avvii
