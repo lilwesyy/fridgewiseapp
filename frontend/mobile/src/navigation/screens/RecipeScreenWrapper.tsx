@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { RecipeScreen } from '../../components/screens';
+import { RecipeScreen } from '../../components/screens/RecipeScreen';
 import type { RootStackScreenProps } from '../types';
 
 export const RecipeScreenWrapper: React.FC = () => {
