@@ -100,13 +100,13 @@ export const RecipeFooter: React.FC<RecipeFooterProps> = ({
         </View>
       ) : recipe.isSaved === true ? (
         <View style={styles.dualButtonContainer}>
-          <TouchableOpacity style={styles.startCookingButton} onPress={onStartCooking}>
+          <TouchableOpacity style={styles.startCookingButton} onPress={onStartCooking} activeOpacity={0.7}>
             <Text style={styles.startCookingButtonText}>
               {getCookingButtonText()}
             </Text>
           </TouchableOpacity>
           {!isPublic && !recipe.isPublicRecipe && onChatAI && (
-            <TouchableOpacity style={styles.aiEditButton} onPress={onChatAI}>
+            <TouchableOpacity style={styles.aiEditButton} onPress={onChatAI} activeOpacity={0.7}>
               <Ionicons name="chatbubble-outline" size={20} color={colors.primary} style={styles.aiEditIcon} />
               <Text style={styles.aiEditButtonText}>{t('common.edit') || 'Modifica'}</Text>
             </TouchableOpacity>
@@ -114,13 +114,13 @@ export const RecipeFooter: React.FC<RecipeFooterProps> = ({
         </View>
       ) : (
         <View style={styles.dualButtonContainer}>
-          <TouchableOpacity style={styles.startCookingButton} onPress={onStartCooking}>
+          <TouchableOpacity style={styles.startCookingButton} onPress={onStartCooking} activeOpacity={0.7}>
             <Text style={styles.startCookingButtonText}>
               {getCookingButtonText()}
             </Text>
           </TouchableOpacity>
           {!isPublic && !recipe.isPublicRecipe && onChatAI && (
-            <TouchableOpacity style={styles.aiEditButton} onPress={onChatAI}>
+            <TouchableOpacity style={styles.aiEditButton} onPress={onChatAI} activeOpacity={0.7}>
               <Ionicons name="chatbubble-outline" size={20} color={colors.primary} style={styles.aiEditIcon} />
               <Text style={styles.aiEditButtonText}>{t('common.edit') || 'Modifica'}</Text>
             </TouchableOpacity>
@@ -133,11 +133,15 @@ export const RecipeFooter: React.FC<RecipeFooterProps> = ({
 
 const getStyles = (colors: any, insets: { bottom: number }) => StyleSheet.create({
   footer: {
-    paddingTop: 16,
-    paddingHorizontal: 20,
-    backgroundColor: '#F2F2F7', // Match system background
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(60, 60, 67, 0.29)', // iOS separator
+    paddingTop: 20,
+    paddingHorizontal: 24,
+    backgroundColor: '#FFFFFF', // White like other screens
+    borderTopWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
     paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 16 : 20), // Exact match with tab bar
   },
   dualButtonContainer: {

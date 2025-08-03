@@ -80,7 +80,7 @@ export const RecipeDeleteSection: React.FC<RecipeDeleteSectionProps> = ({
       <TouchableOpacity
         style={[styles.deleteButton, { backgroundColor: getDeleteButtonColor() }]}
         onPress={onDelete}
-        activeOpacity={0.8}
+        activeOpacity={0.7}
       >
         <Ionicons
           name={getDeleteIcon()}
@@ -100,15 +100,16 @@ const getStyles = (colors: any) => StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginTop: 8,
+    marginBottom: 16,
     padding: 20,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 16,
+    elevation: 6,
   },
   deleteButton: {
     borderRadius: 12,

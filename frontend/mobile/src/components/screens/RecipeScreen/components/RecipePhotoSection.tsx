@@ -118,7 +118,7 @@ export const RecipePhotoSection: React.FC<RecipePhotoSectionProps> = ({
                 <View style={styles.photoSlideWrapper}>
                   <TouchableOpacity
                     onPress={() => isPublic ? onViewPhoto(photo.url, index) : null}
-                    activeOpacity={isPublic ? 0.8 : 1}
+                    activeOpacity={isPublic ? 0.7 : 1}
                     style={{ flex: 1 }}
                   >
                     <Image
@@ -136,7 +136,7 @@ export const RecipePhotoSection: React.FC<RecipePhotoSectionProps> = ({
                   <TouchableOpacity
                     style={styles.photoViewOverlay}
                     onPress={() => onViewPhoto(photo.url, index)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
                   >
                     <Ionicons name="expand-outline" size={18} color="white" />
                   </TouchableOpacity>
@@ -149,7 +149,7 @@ export const RecipePhotoSection: React.FC<RecipePhotoSectionProps> = ({
                         e.stopPropagation();
                         onDeletePhotoConfirmation(index);
                       }}
-                      activeOpacity={0.8}
+                      activeOpacity={0.7}
                     >
                       <Ionicons name="trash-outline" size={16} color="white" />
                     </TouchableOpacity>
@@ -165,7 +165,7 @@ export const RecipePhotoSection: React.FC<RecipePhotoSectionProps> = ({
                   style={styles.addPhotoSlide}
                   onPress={onAddPhoto}
                   disabled={isUploadingPhoto}
-                  activeOpacity={0.8}
+                  activeOpacity={0.7}
                 >
                   <View style={styles.addPhotoSlideContent}>
                     {isUploadingPhoto ? (

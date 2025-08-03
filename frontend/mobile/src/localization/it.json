@@ -960,7 +960,9 @@
   "chatAI": {
     "placeholder": "Scrivi una richiesta o modifica...",
     "intro": "Modifica la ricetta tramite chat AI. Puoi chiedere di cambiare ingredienti, porzioni, stile di cucina, ecc.",
-    "modificationsApplied": "Le modifiche sono state applicate con successo alla tua ricetta!"
+    "modificationsApplied": "Le modifiche sono state applicate con successo alla tua ricetta!",
+    "aiGeneratedContent": "Contenuto Generato da AI",
+    "aiDisclaimer": "Le risposte sono generate dall'AI e potrebbero non essere sempre accurate. Verifica sempre le istruzioni di cottura e la sicurezza degli ingredienti."
   },
   "support": {
     "title": "Aiuto e Supporto",

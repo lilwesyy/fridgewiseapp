@@ -80,7 +80,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
 
   return (
     <Animated.View style={[styles.header, headerAnimatedStyle]}>
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+      <TouchableOpacity style={styles.backButton} onPress={handleBackPress} activeOpacity={0.7}>
         <Text style={styles.backButtonText}>←</Text>
       </TouchableOpacity>
       
@@ -94,7 +94,7 @@ export const RecipeHeader: React.FC<RecipeHeaderProps> = ({
       </View>
       
       <View style={styles.headerButtons}>
-        <TouchableOpacity style={styles.shareButton} onPress={onShare}>
+        <TouchableOpacity style={styles.shareButton} onPress={onShare} activeOpacity={0.7}>
           <Ionicons name="share-outline" size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -107,12 +107,16 @@ const getStyles = (colors: any, insets: { top: number }) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: insets.top + 16,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: '#F2F2F7', // Match system background
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(60, 60, 67, 0.29)', // iOS separator
+    paddingTop: insets.top + 24,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    backgroundColor: '#FFFFFF', // White like SavedScreen
+    borderBottomWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
   },
   backButton: {
     padding: 10,
@@ -128,10 +132,10 @@ const getStyles = (colors: any, insets: { top: number }) => StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#1D1D1F',
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
   recipeCounter: {
     fontSize: 12,
