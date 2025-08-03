@@ -22,6 +22,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { shareRecipeQuick, shareRecipeFull } from '../../utils/shareUtils';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../../constants/animations';
+import { APP_TYPOGRAPHY } from '../../constants/typography';
+import { INTERACTION_CONFIG, BORDER_RADIUS, SHADOWS, SPACING } from '../../constants/interactions';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -63,17 +65,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
         easing: Easing.bezier(EASING_CURVES.IOS_EASE_OUT.x1, EASING_CURVES.IOS_EASE_OUT.y1, EASING_CURVES.IOS_EASE_OUT.x2, EASING_CURVES.IOS_EASE_OUT.y2) 
       });
       slideY.value = withSpring(0, SPRING_CONFIGS.MODAL);
-    } else {
-      // iOS sheet dismissal - faster opacity, slower slide for natural feel
-      opacity.value = withTiming(0, { 
-        duration: ANIMATION_DURATIONS.MODAL,
-        easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
-      });
-      slideY.value = withSpring(screenHeight, {
-        damping: 35,
-        stiffness: 400,
-        mass: 1
-      });
     }
   }, [visible]);
 
@@ -88,19 +79,34 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
   const handleQuickShare = async () => {
     if (recipe) {
       await shareRecipeQuick(recipe, t);
-      runOnJS(onClose)();
+      handleClose();
     }
   };
 
   const handleFullShare = async () => {
     if (recipe) {
       await shareRecipeFull(recipe, t);
-      runOnJS(onClose)();
+      handleClose();
     }
   };
 
+  const handleClose = () => {
+    // Start closing animation
+    opacity.value = withTiming(0, { 
+      duration: ANIMATION_DURATIONS.MODAL * 0.8,
+      easing: Easing.bezier(EASING_CURVES.IOS_EASE_IN.x1, EASING_CURVES.IOS_EASE_IN.y1, EASING_CURVES.IOS_EASE_IN.x2, EASING_CURVES.IOS_EASE_IN.y2)
+    });
+    slideY.value = withSpring(screenHeight, {
+      damping: 25,
+      stiffness: 300,
+      mass: 0.8
+    }, () => {
+      runOnJS(onClose)();
+    });
+  };
+
   const handleBackdropPress = () => {
-    onClose();
+    handleClose();
   };
 
   if (!visible || !recipe) return null;
@@ -124,7 +130,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
               </View>
 
               <View style={styles.options}>
-                <TouchableOpacity activeOpacity={0.7} style={styles.option} onPress={handleQuickShare}>
+                <TouchableOpacity activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY} style={styles.option} onPress={handleQuickShare}>
                   <View style={styles.optionIcon}>
                     <Ionicons name="flash" size={24} color={colors.success} />
                   </View>
@@ -137,7 +143,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
                   <Text style={styles.optionArrow}>→</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity activeOpacity={0.7} style={styles.option} onPress={handleFullShare}>
+                <TouchableOpacity activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY} style={styles.option} onPress={handleFullShare}>
                   <View style={styles.optionIcon}>
                     <Ionicons name="document-text" size={24} color="rgb(59, 130, 246)" />
                   </View>
@@ -151,7 +157,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, recipe, onClose
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity activeOpacity={0.7} style={styles.cancelButton} onPress={onClose}>
+              <TouchableOpacity activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY} style={styles.cancelButton} onPress={handleClose}>
                 <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </Animated.View>
@@ -170,9 +176,9 @@ const getStyles = (colors: any, insets?: { bottom: number }) => StyleSheet.creat
   },
   modal: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: Math.max(insets?.bottom || 0, 16), // Dynamic safe area with minimum padding
+    borderTopLeftRadius: BORDER_RADIUS.LARGE,
+    borderTopRightRadius: BORDER_RADIUS.LARGE,
+    paddingBottom: Math.max(insets?.bottom || 0, SPACING.MD),
     minHeight: 300,
   },
   handle: {
@@ -181,34 +187,33 @@ const getStyles = (colors: any, insets?: { bottom: number }) => StyleSheet.creat
     backgroundColor: colors.border,
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 20,
+    marginTop: SPACING.SM,
+    marginBottom: SPACING.LG,
   },
   header: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
+    paddingHorizontal: SPACING.LG,
+    marginBottom: SPACING.LG,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    ...APP_TYPOGRAPHY.MODAL_TITLE,
     color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
+    ...APP_TYPOGRAPHY.MODAL_SUBTITLE,
     color: colors.textSecondary,
   },
   options: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
+    paddingHorizontal: SPACING.LG,
+    marginBottom: SPACING.LG,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: BORDER_RADIUS.STANDARD,
+    padding: SPACING.MD,
+    marginBottom: SPACING.SM,
   },
   optionIcon: {
     width: 48,
@@ -217,21 +222,20 @@ const getStyles = (colors: any, insets?: { bottom: number }) => StyleSheet.creat
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: SPACING.MD,
   },
   optionContent: {
     flex: 1,
   },
   optionTitle: {
-    fontSize: 16,
+    ...APP_TYPOGRAPHY.LIST_TITLE,
     fontWeight: '600',
     color: colors.text,
     marginBottom: 4,
   },
   optionDescription: {
-    fontSize: 14,
+    ...APP_TYPOGRAPHY.LIST_SUBTITLE,
     color: colors.textSecondary,
-    lineHeight: 20,
   },
   optionArrow: {
     fontSize: 18,
@@ -239,15 +243,14 @@ const getStyles = (colors: any, insets?: { bottom: number }) => StyleSheet.creat
     fontWeight: 'bold',
   },
   cancelButton: {
-    marginHorizontal: 24,
-    paddingVertical: 16,
+    marginHorizontal: SPACING.LG,
+    paddingVertical: SPACING.MD,
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.STANDARD,
     alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...APP_TYPOGRAPHY.BUTTON_SECONDARY,
     color: colors.textSecondary,
   },
 });

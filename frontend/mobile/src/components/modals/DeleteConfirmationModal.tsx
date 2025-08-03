@@ -11,6 +11,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing, withRepeat } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASING_CURVES } from '../../constants/animations';
+import { APP_TYPOGRAPHY } from '../../constants/typography';
+import { INTERACTION_CONFIG, BORDER_RADIUS, SHADOWS, SPACING } from '../../constants/interactions';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -123,10 +125,10 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
                 <Text style={styles.message}>{message || t('recipe.deleteMessage')}</Text>
               </View>
               <View style={styles.actionsRow}>
-                <TouchableOpacity activeOpacity={0.7} style={[styles.cancelButton, { marginRight: 6 }]} onPress={onCancel}>
+                <TouchableOpacity activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY} style={[styles.cancelButton, { marginRight: 6 }]} onPress={onCancel}>
                   <Text style={styles.cancelButtonText}>{cancelLabel || t('common.cancel')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity activeOpacity={0.7} style={[styles.deleteButton, { marginLeft: 6 }]} onPress={onConfirm}>
+                <TouchableOpacity activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY} style={[styles.deleteButton, { marginLeft: 6 }]} onPress={onConfirm}>
                   <Text style={styles.deleteButtonText}>{confirmLabel || t('common.delete')}</Text>
                 </TouchableOpacity>
               </View>

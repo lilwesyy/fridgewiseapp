@@ -42,7 +42,8 @@
       "Bash(docker rm:*)",
       "Bash(npx expo install:*)",
       "Bash(cp:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }

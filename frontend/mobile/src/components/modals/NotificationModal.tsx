@@ -10,6 +10,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, EASING_CURVES } from '../../constants/animations';
+import { APP_TYPOGRAPHY } from '../../constants/typography';
+import { INTERACTION_CONFIG, BORDER_RADIUS, SHADOWS, SPACING } from '../../constants/interactions';
 import { HapticService } from '../../services/hapticService';
 import HapticTouchableOpacity from '../common/HapticTouchableOpacity';
 
@@ -169,7 +171,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               {buttons.map((button, index) => (
                 <HapticTouchableOpacity 
                   hapticType={button.style === 'destructive' ? 'medium' : 'light'}
-                  activeOpacity={0.7}
+                  activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY}
                   key={index}
                   style={getButtonStyle(button.style)}
                   onPress={() => {
@@ -207,39 +209,34 @@ const getStyles = (colors: any) => StyleSheet.create({
   modalBox: {
     width: 320,
     backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 28,
+    borderRadius: BORDER_RADIUS.LARGE,
+    padding: SPACING.XL,
     alignItems: 'center',
-    shadowColor: colors.shadow || '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 8,
+    ...SHADOWS.MODAL,
   },
   icon: {
-    marginBottom: 12,
+    marginBottom: SPACING.SM,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    ...APP_TYPOGRAPHY.MODAL_TITLE,
+    marginBottom: SPACING.ELEMENT,
   },
   message: {
-    fontSize: 16,
+    ...APP_TYPOGRAPHY.MODAL_SUBTITLE,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: SPACING.LG,
   },
   buttonsContainer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: SPACING.SM,
     width: '100%',
   },
   button: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: SPACING.SM,
+    paddingHorizontal: SPACING.MD,
+    borderRadius: BORDER_RADIUS.SMALL,
     alignItems: 'center',
   },
   defaultButton: {
@@ -254,8 +251,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.border,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...APP_TYPOGRAPHY.BUTTON_SECONDARY,
   },
   defaultButtonText: {
     color: colors.buttonText,

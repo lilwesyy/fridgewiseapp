@@ -14,7 +14,30 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ANIMATION_DURATIONS, EASING_CURVES } from '../../constants/animations';
+import { APP_TYPOGRAPHY } from '../../constants/typography';
+import { INTERACTION_CONFIG, BORDER_RADIUS, SHADOWS, SPACING } from '../../constants/interactions';
 import { handleRateLimitError, extractErrorFromResponse } from '../../utils/rateLimitHandler';
+
+// Loading spinner component for send button
+const SendingSpinner = () => {
+  const spinValue = useSharedValue(0);
+  
+  useEffect(() => {
+    spinValue.value = withRepeat(
+      withTiming(360, { duration: 1000, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, []);
+  
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spinValue.value}deg` }],
+  }));
+  
+  return (
+    <Animated.View style={[styles.spinnerDot, spinStyle]} />
+  );
+};
 
 // Modern typing indicator component
 const TypingIndicator = () => {
@@ -80,7 +103,9 @@ interface ChatAIModalProps {
 export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAIModalProps) => {
   const { t } = useTranslation();
   const { token } = useAuth();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const styles = getStyles(colors);
   
   // Debug log to check recipe data
   useEffect(() => {
@@ -270,15 +295,15 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
               <View style={styles.headerContent}>
                 <View style={styles.headerLeft}>
                   <View style={styles.iconContainer}>
-                    <Ionicons name="chatbubble-ellipses" size={24} color="#007AFF" />
+                    <Ionicons name="chatbubble-ellipses" size={24} color={colors.primary} />
                   </View>
                   <View>
                     <Text style={styles.title}>FridgeWise AI</Text>
                     <Text style={styles.subtitle}>Assistente Culinario</Text>
                   </View>
                 </View>
-                <TouchableOpacity activeOpacity={0.7} onPress={handleClose} style={styles.closeButton}>
-                  <Ionicons name="close" size={24} color="#6c757d" />
+                <TouchableOpacity activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY} onPress={handleClose} style={styles.closeButton}>
+                  <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -286,7 +311,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
             {/* AI Disclaimer */}
             <View style={styles.aiDisclaimer}>
               <View style={styles.aiDisclaimerHeader}>
-                <Ionicons name="bulb" size={14} color="#007AFF" style={styles.aiIcon} />
+                <Ionicons name="bulb" size={14} color={colors.primary} style={styles.aiIcon} />
                 <Text style={styles.aiDisclaimerTitle}>{t('chatAI.aiGeneratedContent', 'Contenuto Generato da AI')}</Text>
               </View>
               <Text style={styles.aiDisclaimerText}>{t('chatAI.aiDisclaimer', 'Le risposte sono generate dall\'AI e potrebbero non essere sempre accurate. Verifica sempre le istruzioni di cottura e la sicurezza degli ingredienti.')}</Text>
@@ -317,7 +342,7 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
                     </Text>
 
                     {msg.hasModifications && msg.updatedRecipe && (
-                      <TouchableOpacity activeOpacity={0.7}
+                      <TouchableOpacity activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY}
                         style={styles.modificationButton}
                         onPress={() => handleApplyModifications(msg.updatedRecipe)}
                       >
@@ -338,28 +363,77 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
               )}
             </ScrollView>
 
-            {/* Input */}
+            {/* Enhanced Input Section */}
             <View style={styles.inputContainer}>
-              <View style={[styles.inputWrapper, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-                <TextInput
-                  style={styles.textInput}
-                  value={input}
-                  onChangeText={setInput}
-                  placeholder="Scrivi il tuo messaggio..."
-                  placeholderTextColor="#6c757d"
-                  multiline
-                  editable={!isSending}
-                  returnKeyType="send"
-                  onSubmitEditing={handleSend}
-                />
-                <TouchableOpacity activeOpacity={0.7}
-                  style={[styles.sendButton, (!input.trim() || isSending) && styles.sendButtonDisabled]}
-                  onPress={handleSend}
-                  disabled={isSending || !input.trim()}
-                >
-                  <Ionicons name="send" size={20} color="#fff" />
-                </TouchableOpacity>
+              <View style={styles.inputSectionWrapper}>
+                {/* Message counter and typing indicator */}
+                {input.length > 0 && (
+                  <View style={styles.inputMetaRow}>
+                    <Text style={styles.characterCounter}>
+                      {input.length}/500
+                    </Text>
+                    {isSending && (
+                      <View style={styles.sendingIndicator}>
+                        <View style={styles.sendingDot} />
+                        <Text style={styles.sendingText}>Invio...</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+                
+                {/* Main input row */}
+                <View style={styles.inputRow}>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={[styles.textInput, input.length > 50 && styles.textInputExpanded]}
+                      value={input}
+                      onChangeText={setInput}
+                      placeholder={t('chatAI.placeholder')}
+                      placeholderTextColor="#6B7280"
+                      multiline
+                      maxLength={500}
+                      editable={!isSending}
+                      returnKeyType="send"
+                      onSubmitEditing={handleSend}
+                      blurOnSubmit={false}
+                      textAlignVertical="top"
+                    />
+                    
+                    {/* Quick action buttons */}
+                    <View style={styles.inputActions}>
+                      {input.length > 0 && !isSending && (
+                        <TouchableOpacity 
+                          activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY}
+                          style={styles.clearButton}
+                          onPress={() => setInput('')}
+                        >
+                          <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                        </TouchableOpacity>
+                      )}
+                      
+                      <TouchableOpacity
+                        activeOpacity={INTERACTION_CONFIG.ACTIVE_OPACITY}
+                        style={[
+                          styles.sendButton, 
+                          (!input.trim() || isSending) && styles.sendButtonDisabled,
+                          input.trim() && !isSending && styles.sendButtonActive
+                        ]}
+                        onPress={handleSend}
+                        disabled={isSending || !input.trim()}
+                      >
+                        {isSending ? (
+                          <SendingSpinner />
+                        ) : (
+                          <Ionicons name="send" size={18} color={colors.surface} />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+                
               </View>
+              
+              <View style={{ paddingBottom: Math.max(insets.bottom, 16) }} />
             </View>
           </Animated.View>
         </KeyboardAvoidingView>
@@ -385,10 +459,10 @@ export const ChatAIModal = ({ visible, recipe, onClose, onRecipeUpdate }: ChatAI
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
   },
   container: {
     flex: 1,
@@ -396,26 +470,27 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
     maxHeight: '90%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: BORDER_RADIUS.LARGE,
+    borderTopRightRadius: BORDER_RADIUS.LARGE,
+    ...SHADOWS.MODAL,
   },
 
   // Header styles
   header: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: BORDER_RADIUS.LARGE,
+    borderTopRightRadius: BORDER_RADIUS.LARGE,
+    borderBottomWidth: 0,
+    ...SHADOWS.HEADER,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: SPACING.SCREEN_HORIZONTAL,
+    paddingVertical: SPACING.SCREEN_VERTICAL,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -425,44 +500,46 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: SPACING.SM,
+    ...SHADOWS.CARD,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#212529',
+    ...APP_TYPOGRAPHY.MODAL_TITLE,
+    color: colors.text,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6c757d',
+    ...APP_TYPOGRAPHY.MODAL_SUBTITLE,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f8f9fa',
+    borderRadius: BORDER_RADIUS.STANDARD,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
+    ...SHADOWS.CARD,
   },
 
   // Messages styles
   messagesContainer: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   aiDisclaimer: {
-    backgroundColor: '#f8f9fa',
-    padding: 12,
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 8,
-    borderRadius: 8,
+    backgroundColor: colors.card,
+    padding: SPACING.SM,
+    marginHorizontal: SPACING.MD,
+    marginTop: SPACING.ELEMENT,
+    marginBottom: SPACING.ELEMENT,
+    borderRadius: BORDER_RADIUS.STANDARD,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: colors.border,
+    ...SHADOWS.CARD,
   },
   aiDisclaimerHeader: {
     flexDirection: 'row',
@@ -473,21 +550,20 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   aiDisclaimerTitle: {
-    fontSize: 12,
+    ...APP_TYPOGRAPHY.FOOTNOTE,
     fontWeight: '600',
-    color: '#007AFF',
+    color: colors.primary,
   },
   aiDisclaimerText: {
-    fontSize: 11,
-    color: '#6c757d',
-    lineHeight: 14,
+    ...APP_TYPOGRAPHY.CAPTION_1,
+    color: colors.textSecondary,
   },
   messagesContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: SPACING.SCREEN_HORIZONTAL,
+    paddingVertical: SPACING.SCREEN_VERTICAL,
   },
   messageContainer: {
-    marginBottom: 16,
+    marginBottom: SPACING.MD,
   },
   userMessageContainer: {
     alignItems: 'flex-end',
@@ -497,32 +573,27 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     maxWidth: '80%',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: SPACING.MD,
+    paddingVertical: SPACING.SM,
     borderRadius: 18,
   },
   userMessage: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     borderBottomRightRadius: 6,
   },
   aiMessage: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomLeftRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    ...SHADOWS.CARD,
   },
   messageText: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...APP_TYPOGRAPHY.MESSAGE_TEXT,
   },
   userMessageText: {
-    color: '#fff',
+    color: colors.surface,
   },
   aiMessageText: {
-    color: '#212529',
+    color: colors.text,
   },
   typingMessageBubble: {
     paddingVertical: 8,
@@ -535,9 +606,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   typingText: {
-    fontSize: 14,
-    color: '#6c757d',
-    marginRight: 8,
+    ...APP_TYPOGRAPHY.FOOTNOTE,
+    color: colors.textSecondary,
+    marginRight: SPACING.ELEMENT,
   },
   dotsContainer: {
     flexDirection: 'row',
@@ -547,7 +618,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     marginHorizontal: 2,
   },
 
@@ -555,63 +626,130 @@ const styles = StyleSheet.create({
   modificationButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#28a745',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    marginTop: 8,
+    backgroundColor: colors.success,
+    paddingHorizontal: SPACING.SM,
+    paddingVertical: SPACING.ELEMENT,
+    borderRadius: BORDER_RADIUS.STANDARD,
+    marginTop: SPACING.ELEMENT,
     alignSelf: 'flex-start',
+    ...SHADOWS.BUTTON,
   },
   modificationIcon: {
     marginRight: 6,
     marginLeft: -2,
   },
   modificationButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    ...APP_TYPOGRAPHY.BUTTON_SECONDARY,
+    color: colors.surface,
   },
 
-  // Input styles
+  // Enhanced Input styles
   inputContainer: {
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 30,
+    backgroundColor: colors.surface,
+    borderTopWidth: 0,
+    paddingHorizontal: SPACING.SCREEN_HORIZONTAL,
+    paddingTop: SPACING.SCREEN_HORIZONTAL,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    ...SHADOWS.MODAL,
   },
-  inputWrapper: {
+  inputSectionWrapper: {
+    gap: SPACING.SM,
+  },
+  inputMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  characterCounter: {
+    ...APP_TYPOGRAPHY.CAPTION_1,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  sendingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    minHeight: 36,
+    gap: 6,
+  },
+  sendingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+  },
+  sendingText: {
+    ...APP_TYPOGRAPHY.CAPTION_1,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: SPACING.SM,
+  },
+  inputWrapper: {
+    flex: 1,
+    backgroundColor: colors.inputBackground,
+    borderRadius: BORDER_RADIUS.LARGE,
+    paddingHorizontal: SPACING.MD,
+    paddingVertical: SPACING.SM,
+    minHeight: INTERACTION_CONFIG.MIN_TOUCH_TARGET,
+    maxHeight: 120,
+    ...SHADOWS.CARD,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
   },
   textInput: {
-    flex: 1,
-    fontSize: 15,
-    color: '#212529',
+    ...APP_TYPOGRAPHY.INPUT_TEXT,
+    color: colors.text,
     paddingVertical: 0,
-    paddingRight: 8,
-    lineHeight: 18,
+    minHeight: 20,
+    maxHeight: 80,
   },
-  sendButton: {
+  textInputExpanded: {
+    minHeight: 40,
+  },
+  inputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'absolute',
+    right: 8,
+    bottom: 8,
+    gap: 8,
+  },
+  clearButton: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
+    ...SHADOWS.CARD,
+  },
+  sendButton: {
+    width: 32,
+    height: 32,
+    borderRadius: BORDER_RADIUS.STANDARD,
+    backgroundColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.BUTTON,
+  },
+  sendButtonActive: {
+    backgroundColor: colors.primary,
   },
   sendButtonDisabled: {
-    backgroundColor: '#ced4da',
+    backgroundColor: colors.border,
+  },
+  spinnerDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    borderTopColor: 'transparent',
   },
 });
