@@ -93,49 +93,58 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ onNavigateToCamera }
 
 const getStyles = (colors: any) => StyleSheet.create({
   section: {
-    marginTop: 20,
+    marginTop: 32,
     paddingHorizontal: 20,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 16,
+    fontSize: 20, // Allineato al nuovo standard HomeScreen
+    fontWeight: '700', // Bold come SavedScreen
+    color: '#1D1D1F',
+    marginBottom: 20,
+    letterSpacing: -0.3,
   },
   primaryAction: {
     backgroundColor: colors.primary,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 8,
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
   },
   actionIcon: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+    padding: 16,
+    width: 64,
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionContent: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: 20,
   },
   actionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 4,
+    fontSize: 18, // Allineato a SavedScreen recipeTitle
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 6,
+    letterSpacing: -0.2, // Come SavedScreen recipeTitle
   },
   actionDescription: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14, // Allineato a SavedScreen recipeDescription
+    color: 'rgba(255, 255, 255, 0.85)',
+    lineHeight: 20,
+    letterSpacing: -0.05, // Come SavedScreen
   },
   actionArrow: {
-    fontSize: 24,
-    color: 'white',
-    fontWeight: 'bold',
+    fontSize: 20,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '500',
+    marginLeft: 12,
   },
 });

@@ -16,8 +16,16 @@ class ExpoSecurityService {
   private setupSecurityConfig() {
     // Extract hostname from API URL
     const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+    if (!apiUrl) {
+      console.warn('⚠️ EXPO_PUBLIC_API_URL not configured, security service disabled');
+      this.developmentMode = true;
+      this.isEnabled = false;
+      return;
+    }
+
     const hostname = this.extractHostname(apiUrl);
-    
+
     // Configure security based on environment
     if (hostname && apiUrl.startsWith('https://')) {
       // Production HTTPS mode - enable security checks
@@ -69,13 +77,13 @@ class ExpoSecurityService {
 
     } catch (error: any) {
       console.log('🚨 Secure fetch failed:', error);
-      
+
       // For development mode, allow the request but log the issue
       if (this.developmentMode) {
         console.warn('⚠️ Security validation failed in development mode, proceeding with request');
         return fetch(url, options);
       }
-      
+
       throw error;
     }
   }
@@ -84,6 +92,11 @@ class ExpoSecurityService {
     if (!this.isEnabled) return;
 
     const hostname = this.extractHostname(url);
+
+    if (!hostname) {
+      throw new Error(`Invalid URL provided: ${url}`);
+    }
+
     const config = this.securityConfig.find(c => c.hostname === hostname);
 
     if (!config) {
@@ -126,7 +139,7 @@ class ExpoSecurityService {
         ...options,
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
       return response;
     } catch (error) {
@@ -203,7 +216,7 @@ class ExpoSecurityService {
     try {
       const testUrl = `https://${hostname}/api/health`;
       const response = await this.secureFetch(testUrl, { method: 'HEAD' });
-      
+
       console.log('✅ Security configuration test passed for:', hostname);
       return response.ok;
     } catch (error) {

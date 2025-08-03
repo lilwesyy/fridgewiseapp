@@ -115,38 +115,50 @@ const getStyles = (colors: any) => StyleSheet.create({
   welcomeBanner: {
     backgroundColor: colors.primary,
     marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 16,
+    marginTop: 16,
+    borderRadius: 20,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
   },
   bannerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 24,
+    padding: 28,
+    paddingBottom: 24,
   },
   bannerLeft: {
     flex: 1,
   },
   bannerRight: {
-    marginLeft: 16,
+    marginLeft: 20,
   },
   greeting: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
+    fontSize: 15, // Allineato a SavedScreen subtitle
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: '400', // Come SavedScreen subtitle
+    letterSpacing: -0.1,
   },
   userName: {
-    fontSize: 24,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 28, // Mantenuto come SavedScreen title
+    color: '#FFFFFF',
+    fontWeight: '700', // Bold come SavedScreen 
     marginTop: 4,
-    marginBottom: 8,
+    marginBottom: 12,
+    letterSpacing: -0.4, // Come SavedScreen title
   },
   bannerQuote: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
-    lineHeight: 18,
-    fontStyle: 'italic',
-    marginTop: 4,
+    fontSize: 14, // Allineato a SavedScreen emptySubtitle
+    color: 'rgba(255, 255, 255, 0.85)',
+    lineHeight: 20,
+    fontWeight: '400',
+    letterSpacing: -0.05, // Come SavedScreen emptySubtitle
+    maxWidth: '90%',
   },
 });

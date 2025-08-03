@@ -1026,9 +1026,13 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
       }
 
       // Prepare request body
+      const now = new Date();
+      // Subtract 1 second to ensure it's not in the future due to processing time
+      const cookedDate = new Date(now.getTime() - 1000);
+      
       const requestBody = {
         dishPhoto: dishPhotoData,
-        cookedAt: new Date().toISOString(),
+        cookedAt: cookedDate.toISOString(),
       };
 
       // Add recipe to user's collection with photo metadata
@@ -1045,7 +1049,7 @@ export const CookingModeScreen: React.FC<CookingModeScreenProps> = (props) => {
         // Update recipe state to reflect it's now in user's collection
         (recipe as any).isSaved = true;
         (recipe as any).dishPhoto = dishPhotoData;
-        (recipe as any).cookedAt = new Date().toISOString();
+        (recipe as any).cookedAt = cookedDate.toISOString();
 
         // Exit cooking mode and show success notification in the destination screen
         setTimeout(() => {
